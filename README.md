@@ -19,20 +19,33 @@ docs/              # architecture, ADR, guides
 ## Installation locale (5 commandes)
 
 ```bash
-git clone <repo> && cd bruny-shopping
+git clone <repo> && cd e-commerce-brunyshop
 pnpm install            # installe les dépendances
 cp .env.example .env    # crée votre configuration locale
-docker compose up -d    # démarre PostgreSQL + Redis (étape 2)
+pnpm docker:up          # démarre PostgreSQL + Redis + Mailpit
 pnpm db:migrate && pnpm db:seed   # base de données (étape 4)
 ```
 
 ## Scripts
 
-| Commande                   | Rôle                                                |
-| -------------------------- | --------------------------------------------------- |
-| `pnpm lint`                | ESLint sur le frontend (backend ajouté à l'étape 3) |
-| `pnpm format`              | Formatage Prettier                                  |
-| `pnpm test` / `pnpm build` | Tests et builds (activés aux étapes 3/7)            |
+| Commande                   | Rôle                                                           |
+| -------------------------- | -------------------------------------------------------------- |
+| `pnpm lint`                | ESLint sur le frontend (backend ajouté à l'étape 3)            |
+| `pnpm format`              | Formatage Prettier                                             |
+| `pnpm docker:up`           | Démarre PostgreSQL + Redis + Mailpit (attend les healthchecks) |
+| `pnpm docker:down`         | Arrête la stack (données conservées)                           |
+| `pnpm test` / `pnpm build` | Tests et builds (activés aux étapes 3/7)                       |
+
+## Infrastructure locale
+
+| Service           | Image                    | Port host                     | Détails                                           |
+| ----------------- | ------------------------ | ----------------------------- | ------------------------------------------------- |
+| PostgreSQL        | `postgres:18-alpine`     | `15432`                       | Volumes persistants, healthcheck `pg_isready`     |
+| Redis             | `redis:8-alpine`         | `16379`                       | Volume persistant, healthcheck `ping`             |
+| Mailpit           | `axllent/mailpit:latest` | `11025` (SMTP) · `18025` (UI) | Boîte mail de développement                       |
+| MinIO (optionnel) | `minio/minio:latest`     | `19000` · `19001`             | Profil `s3` : `docker compose --profile s3 up -d` |
+
+> **Ports décalés** (15432, 16379…) : cohabitation avec d'autres projets Docker déjà lancés sur la machine. Personnalisables via `.env` (voir `.env.example`). Les ports internes des conteneurs restent standards (5432, 6379). PostgreSQL et Redis ne sont exposés sur l'hôte **qu'en développement**.
 
 ## Qualité
 

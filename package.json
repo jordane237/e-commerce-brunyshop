@@ -6,6 +6,8 @@
   "scripts": {
     "lint": "pnpm -C frontend lint",
     "format": "prettier --write .",
+    "docker:up": "docker compose up -d --wait",
+    "docker:down": "docker compose down",
     "prepare": "husky"
   },
   "lint-staged": {

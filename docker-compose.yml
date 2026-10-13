@@ -1,0 +1,111 @@
+# BRUNY SHOPPING — local development infrastructure
+#
+# Ports map to non-default host ports so this project can run alongside other
+# docker projects on the machine (see .env.example). Container-internal ports
+# stay standard (5432, 6379, ...) so services communicate by service name.
+#
+# Usage:
+#   docker compose up -d        # PostgreSQL + Redis + Mailpit
+#   docker compose up -d --wait # wait until all healthchecks pass
+#   docker compose --profile s3 up -d  # also start MinIO (simulates S3)
+#   docker compose down         # stop (volumes preserved)
+#   docker compose down -v      # stop and wipe data
+
+name: bruny
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: bruny-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bruny}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bruny_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-bruny}
+    volumes:
+      # PostgreSQL 18+: mount at /var/lib/postgresql (data lives in `${PG_VERSION}/docker` beside it)
+      - postgres_data:/var/lib/postgresql
+    ports:
+      - '${DB_HOST_PORT:-15432}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - data
+    # Development only: the database is exposed to the host for local coding.
+    # In production, the database is never exposed and runs on a private network.
+
+  redis:
+    image: redis:8-alpine
+    container_name: bruny-redis
+    restart: unless-stopped
+    command: ['redis-server', '--save', '300', '1', '--loglevel', 'warning']
+    volumes:
+      - redis_data:/data
+    ports:
+      - '${REDIS_HOST_PORT:-16379}:6379'
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli ping | grep PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - data
+    # Development only: Redis is exposed to the host for local coding.
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: bruny-mailpit
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: '1'
+      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+    ports:
+      - '${MAILPIT_SMTP_PORT:-11025}:1025'
+      - '${MAILPIT_UI_PORT:-18025}:8025'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8025/ || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - apps
+
+  minio:
+    image: minio/minio:latest
+    container_name: bruny-minio
+    restart: unless-stopped
+    profiles: [s3]
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-bruny_dev}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-bruny_dev_password}
+    volumes:
+      - minio_data:/data
+    ports:
+      - '${MINIO_API_PORT:-19000}:9000'
+      - '${MINIO_CONSOLE_PORT:-19001}:9001'
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:9000/minio/health/live || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - apps
+
+networks:
+  data:
+    # Database and Redis only — the API joins this network in the "full" profile.
+  apps:
+    # Application services (api, storefront, admin) + mailpit + minio.
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
