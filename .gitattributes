@@ -1,0 +1,17 @@
+# Normalize line endings on commit/checkout
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.docx binary
+*.xlsx binary
+*.pdf binary
+*.zip binary
+*.gz binary
