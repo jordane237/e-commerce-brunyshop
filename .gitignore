@@ -43,8 +43,13 @@ testem.log
 .DS_Store
 Thumbs.db
 
-.nx/cache
-.nx/workspace-data
-.nx/migrate-runs
+.nx
+
 .claude/worktrees
 .claude/settings.local.json
+
+# Session tooling (not project content)
+.freebuff/
+
+# Confidential specs (local only)
+Cahier_des_charges_BRUNY_SHOPPING.docx

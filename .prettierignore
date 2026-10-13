@@ -1,6 +1,8 @@
 # Add files here to ignore them from prettier formatting
-/dist
-/coverage
-/.nx/cache
-/.nx/workspace-data
+dist
+coverage
+node_modules
+.nx
+infra/docker
+Cahier_des_charges_BRUNY_SHOPPING.docx
 pnpm-lock.yaml
