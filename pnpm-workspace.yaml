@@ -1,6 +1,6 @@
 packages:
-  - 'packages/*'
+  - frontend
+  - backend
 
-autoInstallPeers: true
 allowBuilds:
   nx: true

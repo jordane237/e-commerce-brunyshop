@@ -4,7 +4,17 @@ Plateforme e-commerce de chaussures (Cameroun · français · FCFA).
 
 **Stack** : Angular (storefront SSR + admin SPA) · NestJS (monolithe modulaire) · PostgreSQL · Prisma · Redis · BullMQ · Docker · GitHub Actions.
 
-> ⚠️ Projet en cours d'initialisation — l'étape 1 (monorepo + outillage qualité) vient d'être posée. Les applications arrivent dans les étapes suivantes.
+## Structure du dépôt
+
+```
+backend/           # API NestJS + Prisma (monolithe modulaire)
+frontend/          # workspace Nx — applications et bibliothèques Angular
+  apps/storefront/   # boutique publique (SSR + hydratation)
+  apps/admin/        # back-office (SPA)
+  libs/{ui,data-access,util,design-tokens}/
+infra/             # Dockerfiles, Nginx, scripts utilitaires
+docs/              # architecture, ADR, guides
+```
 
 ## Installation locale (5 commandes)
 
@@ -16,30 +26,13 @@ docker compose up -d    # démarre PostgreSQL + Redis (étape 2)
 pnpm db:migrate && pnpm db:seed   # base de données (étape 4)
 ```
 
-## Structure du dépôt (monorepo Nx)
-
-```
-apps/              # applications
-  storefront/      # boutique publique Angular (SSR + hydratation)
-  admin/           # back-office Angular (SPA)
-  api/             # API NestJS
-libs/              # bibliothèques partagées
-  ui/              # composants visuels partagés
-  data-access/     # client API généré (OpenAPI), modèles, stores
-  util/            # pipes (prix FCFA), validateurs (+237), helpers
-  design-tokens/   # variables CSS/SCSS (couleurs, typo, espacements)
-infra/             # Dockerfiles, Nginx, scripts utilitaires
-docs/              # architecture, ADR, guides
-```
-
 ## Scripts
 
-| Commande      | Rôle                               |
-| ------------- | ---------------------------------- |
-| `pnpm lint`   | ESLint sur tout le dépôt           |
-| `pnpm format` | Formatage Prettier                 |
-| `pnpm test`   | Tests unitaires (tous les projets) |
-| `pnpm build`  | Builds de tous les projets         |
+| Commande                   | Rôle                                                |
+| -------------------------- | --------------------------------------------------- |
+| `pnpm lint`                | ESLint sur le frontend (backend ajouté à l'étape 3) |
+| `pnpm format`              | Formatage Prettier                                  |
+| `pnpm test` / `pnpm build` | Tests et builds (activés aux étapes 3/7)            |
 
 ## Qualité
 
