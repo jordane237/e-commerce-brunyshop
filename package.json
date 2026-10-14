@@ -10,6 +10,10 @@
     "docker:down": "docker compose down",
     "dev:api": "pnpm -C backend dev",
     "build": "pnpm -C backend build",
+    "db:migrate": "pnpm -C backend db:migrate",
+    "db:migrate:dev": "pnpm -C backend db:migrate:dev",
+    "db:reset": "pnpm -C backend db:reset",
+    "db:seed": "pnpm -C backend db:seed",
     "prepare": "husky"
   },
   "lint-staged": {
