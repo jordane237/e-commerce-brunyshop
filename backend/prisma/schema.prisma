@@ -27,7 +27,8 @@ enum UserStatus {
 
 model User {
   id              String     @id @default(uuid())
-  email           String     @unique
+  // Email OR phone identifies an account (cachier ACC-01: "téléphone ou email").
+  email           String?    @unique
   phone           String?    @unique
   passwordHash    String
   firstName       String
@@ -51,6 +52,7 @@ model User {
   stockMovements  StockMovement[]
   auditLogs       AuditLog[]
   driverShipments Shipment[]
+  backupCodes     BackupCode[]
 }
 
 model Role {
@@ -79,6 +81,9 @@ model UserRole {
 model RefreshToken {
   id        String    @id @default(uuid())
   userId    String
+  // All tokens issued from one login share a family; reuse of a rotated
+  // token revokes the whole family (cachier 10.2).
+  familyId  String
   tokenHash String    @unique
   expiresAt DateTime
   revokedAt DateTime?
@@ -90,6 +95,7 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([familyId])
 }
 
 model Address {
@@ -550,4 +556,18 @@ model Setting {
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model BackupCode {
+  id       String    @id @default(uuid())
+  userId   String
+  // Argon2id hash of a single-use 2FA recovery code (BOA-04).
+  codeHash String
+  usedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

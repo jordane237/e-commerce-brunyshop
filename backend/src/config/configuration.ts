@@ -1,6 +1,14 @@
 // Typed application configuration derived from validated environment variables.
 import { Environment } from './env.validation';
 
+export interface AuthConfig {
+  secret: string;
+  accessTtl: string;
+  refreshTtl: string;
+  cookieDomain?: string;
+  cookieSecure: boolean;
+}
+
 export interface ApplicationConfig {
   environment: Environment;
   port: number;
@@ -10,6 +18,7 @@ export interface ApplicationConfig {
   publicAdminUrl: string;
   corsOrigins: string[];
   throttle: { ttlSeconds: number; limit: number };
+  auth: AuthConfig;
   isProduction: boolean;
 }
 
@@ -31,6 +40,15 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
     throttle: {
       ttlSeconds: Number(env['THROTTLE_TTL']),
       limit: Number(env['THROTTLE_LIMIT']),
+    },
+    auth: {
+      // Cachier 10.2: access JWT 10-15 min, rotating refresh cookie.
+      secret: String(env['JWT_ACCESS_SECRET']),
+      accessTtl: String(env['JWT_ACCESS_TTL'] ?? '15m'),
+      refreshTtl: String(env['REFRESH_TOKEN_TTL'] ?? '30d'),
+      cookieDomain: env['COOKIE_DOMAIN'] ? String(env['COOKIE_DOMAIN']) : undefined,
+      // Secure requires HTTPS; disabled outside production (local http).
+      cookieSecure: environment === Environment.Production,
     },
     isProduction: environment === Environment.Production,
   };

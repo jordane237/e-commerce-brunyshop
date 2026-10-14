@@ -8,7 +8,11 @@ import {
 } from '@nestjs/terminus';
 import { PrismaService } from '../../infrastructure/database/database.module';
 import { RedisService } from '../../infrastructure/cache/cache.module';
+import { Public } from '../../common/decorators/public.decorator';
 
+// Liveness/readiness answer unauthenticated: Docker healthchecks and probes
+// cannot carry a token.
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(
