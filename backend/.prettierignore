@@ -1,0 +1,5 @@
+# Same ignored scope as the repository root .prettierignore,
+# applied when prettier runs with backend/ as working directory.
+dist
+src/generated
+node_modules

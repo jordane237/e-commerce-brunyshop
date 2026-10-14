@@ -1,6 +1,10 @@
-// Prisma schema - foundation (step 3).
-// Full domain models are added at step 4; see the execution plan.
-// Connection URL lives in prisma.config.ts (Prisma 7 removed datasource url).
+// BRUNY SHOPPING — data model (step 4).
+// Faithful to cahier des charges section 8:
+//   - UUID identifiers everywhere, createdAt/updatedAt on every table
+//   - logical deletion where history must be kept (Product)
+//   - money as integer XAF (RG-PRX-01)
+//   - order line snapshots so later catalog edits never alter order history
+// Connection URL lives in prisma.config.mjs (Prisma 7 removed schema url).
 generator prismaClient {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -11,7 +15,539 @@ datasource db {
   provider = "postgresql"
 }
 
-model HealthProbe {
+// ---------------------------------------------------------------------------
+// Identity & access
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+model User {
+  id              String     @id @default(uuid())
+  email           String     @unique
+  phone           String?    @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  status          UserStatus @default(ACTIVE)
+  // Encrypted at application level before storage.
+  twoFactorSecret String?
+  lastLoginAt     DateTime?
+  // Logical deletion: accounts referenced by orders are never hard-deleted.
+  deletedAt       DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  roles           UserRole[]
+  addresses       Address[]
+  orders          Order[]
+  carts           Cart[]
+  refreshTokens   RefreshToken[]
+  reviews         Review[]
+  wishlists       Wishlist[]
+  stockMovements  StockMovement[]
+  auditLogs       AuditLog[]
+  driverShipments Shipment[]
+}
+
+model Role {
+  id   String  @id @default(uuid())
+  // LIVREUR, STOCK_MANAGER, ORDER_MANAGER, ADMIN, SUPER_ADMIN (section 2).
+  name String  @unique
+  // Permission keys from the section 2 matrix.
+  permissions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users UserRole[]
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Address {
   id        String   @id @default(uuid())
+  userId    String
+  // "Maison", "Bureau", ...
+  label     String
+  city      String
+  // Commune / quartier.
+  district  String
+  line      String
+  // Point de repère (facile à manquer).
+  landmark  String?
+  phone     String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model Category {
+  id      String  @id @default(uuid())
+  name    String
+  slug    String  @unique
+  parentId String?
+  // No SizeGuide entity in the cahier; kept as a plain reference for now.
+  sizeGuideId String?
+  position Int    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  @@index([parentId])
+}
+
+model Brand {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id              String        @id @default(uuid())
+  name            String
+  slug            String        @unique
+  description     String
+  categoryId      String
+  brandId         String
+  status          ProductStatus @default(DRAFT)
+  // Integer XAF amounts (RG-PRX-01).
+  basePrice       Int
+  // Scheduled promotion (RG-PRX-02): active between promoStart and promoEnd.
+  promoPrice      Int?
+  promoStart      DateTime?
+  promoEnd        DateTime?
+  seoTitle        String?
+  seoDescription  String?
+  // Logical deletion: order history must survive catalog removal.
+  deletedAt       DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  category Category        @relation(fields: [categoryId], references: [id])
+  brand    Brand           @relation(fields: [brandId], references: [id])
+  variants ProductVariant[]
+  images   ProductImage[]
+  reviews  Review[]
+  wishlists Wishlist[]
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([status])
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model ProductVariant {
+  id                String   @id @default(uuid())
+  productId         String
+  sku               String   @unique
+  color             String
+  size              String
+  // Override price; falls back to the product basePrice when null.
+  price             Int?
+  // Physical stock (RG-STK-02 decrements atomically).
+  stock             Int      @default(0)
+  // Held for pending online payments (RG-STK-03); available = stock - reservedStock.
+  reservedStock     Int      @default(0)
+  lowStockThreshold Int      @default(5)
+  // Optimistic concurrency for the last pairs (RG-STK-07).
+  version           Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stockMovements StockMovement[]
+  orderItems     OrderItem[]
+  cartItems      CartItem[]
+
+  @@index([productId])
+}
+
+model ProductImage {
+  id           String   @id @default(uuid())
+  productId    String
+  // When set, the image only applies to variants of that color.
+  variantColor String?
+  url          String
+  position     Int      @default(0)
+  alt          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Cart (guest cart identified by token, authenticated cart by userId)
+// ---------------------------------------------------------------------------
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String?
+  // Opaque token for guest carts.
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  variantId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, variantId])
+  @@index([variantId])
+}
+
+// ---------------------------------------------------------------------------
+// Orders, payments, shipping
+// ---------------------------------------------------------------------------
+
+model Order {
+  id     String @id @default(uuid())
+  // Readable, non-guessable reference, e.g. BRN-2610-7K3F (RG-CMD-01).
+  reference String @unique
+  userId      String?
+  // Guest checkout (MVP): identity captured on the order itself.
+  guestName   String?
+  guestPhone  String?
+  status      OrderStatus @default(PENDING_CONFIRMATION)
+  // Integer XAF amounts (RG-PRX-01).
+  subtotal    Int
+  discount    Int           @default(0)
+  shippingFee Int
+  total       Int
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+  // Frozen delivery address (JSON): later address edits never alter history.
+  addressSnapshot Json?
+  // Acquisition context (UTM / referrer snapshot).
+  source         Json?
+  // Anti double-submission guard.
+  idempotencyKey String? @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user     User?         @relation(fields: [userId], references: [id])
+  items    OrderItem[]
+  payments Payment[]
+  shipment Shipment?
+  coupons  OrderCoupon[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([guestPhone])
+}
+
+enum OrderStatus {
+  PENDING_CONFIRMATION
+  AWAITING_PAYMENT
+  CONFIRMED
+  PAID
+  PREPARING
+  SHIPPED
+  DELIVERED
+  DELIVERY_FAILED
+  CANCELLED
+  RETURN_REQUESTED
+  RETURNED
+  REFUNDED
+  EXCHANGED
+}
+
+enum PaymentMethod {
+  // Cash on delivery — MVP (PAY-01).
+  COD
+  // Mobile Money via aggregator — V2 (PAY-02).
+  MOBILE_MONEY
+  // Card via certified provider — V3 (PAY-05).
+  CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model OrderItem {
+  id      String @id @default(uuid())
+  orderId String
+  variantId String
+  // Snapshots: catalog changes must never alter past orders.
+  nameSnapshot  String
+  sizeSnapshot  String
+  colorSnapshot String
+  unitPrice     Int
+  quantity      Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@index([variantId])
+}
+
+model Payment {
+  id      String @id @default(uuid())
+  orderId String
+  // cod, mtn_momo, orange_money, card, ...
+  provider     String
+  // Transaction id returned by the provider (webhook-confirmed).
+  providerRef  String?
+  amount       Int
+  status       PaymentStatus @default(PENDING)
+  // SHA-256 of the raw webhook payload, kept for audit (no raw body at rest).
+  rawPayloadHash String?
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([providerRef])
+}
+
+model Shipment {
+  id      String @id @default(uuid())
+  // 1-1 with the order.
+  orderId String
+  zoneId  String
+  // Assigned to a driver once prepared (nullable in practice).
+  driverId       String?
+  status         ShipmentStatus @default(PENDING)
+  deliveredAt    DateTime?
+  // Cash collected on delivery (COD) handed over.
+  codCollected   Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  order  Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  zone   DeliveryZone  @relation(fields: [zoneId], references: [id])
+  driver User?         @relation(fields: [driverId], references: [id])
+
+  @@unique([orderId])
+  @@index([zoneId])
+  @@index([driverId])
+}
+
+enum ShipmentStatus {
+  PENDING
+  ASSIGNED
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+model DeliveryZone {
+  id            String   @id @default(uuid())
+  name          String
+  cities        String[]
+  // Delivery fee in integer XAF.
+  fee           Int
+  estimatedDays Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  shipments Shipment[]
+}
+
+model Coupon {
+  id    String     @id @default(uuid())
+  code  String     @unique
+  type  CouponType
+  // Percentage (0-100) or XAF amount depending on type.
+  value          Int
+  // Minimum order subtotal to qualify.
+  minAmount      Int?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  // null = unlimited (RG-PRX-03).
+  maxUses        Int?
+  usedCount      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  orders OrderCoupon[]
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model OrderCoupon {
+  orderId String
+  couponId String
+  createdAt DateTime @default(now())
+
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@id([orderId, couponId])
+}
+
+// ---------------------------------------------------------------------------
+// Post-purchase
+// ---------------------------------------------------------------------------
+
+model Review {
+  id        String       @id @default(uuid())
+  productId String
+  userId    String
+  rating    Int
+  comment   String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId, productId])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+// ---------------------------------------------------------------------------
+// Stock, audit, settings
+// ---------------------------------------------------------------------------
+
+model StockMovement {
+  id        String              @id @default(uuid())
+  variantId String
+  // Signed change: negative = decrement.
+  delta     Int
+  reason    StockMovementReason
+  orderId   String?
+  // Author of the movement (manual adjustments always carry a user).
+  userId    String
+  // Stock levels before/after the movement (RG-STK-05 traceability).
+  before    Int
+  after     Int
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id])
+
+  @@index([variantId])
+  @@index([orderId])
+}
+
+enum StockMovementReason {
+  RESTOCK
+  RESERVATION
+  RELEASE
+  PURCHASE
+  CANCELLATION
+  ADJUSTMENT
+  RETURN
+}
+
+model AuditLog {
+  id       String   @id @default(uuid())
+  userId   String
+  action   String
+  entity   String
+  entityId String
+  before   Json?
+  after    Json?
+  ip       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([entity, entityId])
+  @@index([userId])
+}
+
+model Setting {
+  // e.g. currency, store name, support phone, thresholds.
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -23,18 +23,23 @@ git clone <repo> && cd e-commerce-brunyshop
 pnpm install            # installe les dépendances
 cp .env.example .env    # crée votre configuration locale
 pnpm docker:up          # démarre PostgreSQL + Redis + Mailpit
-pnpm db:migrate && pnpm db:seed   # base de données (étape 4)
+pnpm db:migrate && pnpm db:seed   # migrations + données de départ (étape 4)
 ```
+
+> Le seed crée l'admin `admin@brunyshopping.example` (mot de passe : `SEED_ADMIN_PASSWORD` du `.env`), les 5 rôles, le catalogue de démonstration et les zones de livraison. Idempotent : relançable sans dupliquer.
 
 ## Scripts
 
-| Commande                   | Rôle                                                           |
-| -------------------------- | -------------------------------------------------------------- |
-| `pnpm lint`                | ESLint sur le frontend (backend ajouté à l'étape 3)            |
-| `pnpm format`              | Formatage Prettier                                             |
-| `pnpm docker:up`           | Démarre PostgreSQL + Redis + Mailpit (attend les healthchecks) |
-| `pnpm docker:down`         | Arrête la stack (données conservées)                           |
-| `pnpm test` / `pnpm build` | Tests et builds (activés aux étapes 3/7)                       |
+| Commande           | Rôle                                                           |
+| ------------------ | -------------------------------------------------------------- |
+| `pnpm lint`        | ESLint backend + frontend                                      |
+| `pnpm format`      | Formatage Prettier                                             |
+| `pnpm docker:up`   | Démarre PostgreSQL + Redis + Mailpit (attend les healthchecks) |
+| `pnpm docker:down` | Arrête la stack (données conservées)                           |
+| `pnpm dev:api`     | Démarre l'API backend en dev (étape 3)                         |
+| `pnpm build`       | Build du backend (étape 3)                                     |
+| `pnpm db:migrate`  | Applique les migrations Prisma (étape 4)                       |
+| `pnpm db:seed`     | Seed : admin, rôles, catalogue, zones (étape 4)                |
 
 ## Infrastructure locale
 
