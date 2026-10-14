@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { LoggerModule } from 'nestjs-pino';
@@ -10,7 +11,10 @@ import { validateEnv } from './config/env.validation';
 import { loadApplicationConfig } from './config/configuration';
 import { CacheModule, RedisService } from './infrastructure/cache/cache.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -83,13 +87,33 @@ import { HealthModule } from './modules/health/health.module';
     // Shared infrastructure (exported services).
     DatabaseModule,
     CacheModule,
+    // Authentication (cachier §9 contract).
+    AuthModule,
+    // Access JWT signing (global: guards and services resolve JwtService).
+    JwtModule.registerAsync({
+      global: true,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+      }),
+    }),
     // Public health endpoints (liveness/readiness).
     HealthModule,
   ],
   providers: [
     {
       provide: APP_GUARD,
-      // Refusal by default: every route is guarded unless explicitly open.
+      // Refusal by default: every route requires an access token unless @Public.
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      // RBAC on top of authentication (@Roles, cachier §2 matrix).
+      useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      // Rate limiting on top of both (Redis storage).
       useClass: ThrottlerGuard,
     },
   ],

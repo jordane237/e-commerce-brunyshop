@@ -41,15 +41,16 @@ export class EnvVariables {
   @Min(1)
   public THROTTLE_LIMIT!: number;
 
-  // Present in .env.example for later steps; validated loosely until wired.
-  @IsOptional()
+  // Signs access JWTs (>= 48 chars, see .env.example).
   @IsString()
-  public JWT_ACCESS_SECRET?: string;
+  public JWT_ACCESS_SECRET!: string;
 
+  // Access token lifetime, e.g. "15m" (cachier 10.2: 10-15 min).
   @IsOptional()
   @IsString()
   public JWT_ACCESS_TTL?: string;
 
+  // Refresh cookie lifetime, e.g. "30d".
   @IsOptional()
   @IsString()
   public REFRESH_TOKEN_TTL?: string;
