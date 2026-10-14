@@ -4,10 +4,12 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "lint": "pnpm -C frontend lint",
+    "lint": "pnpm -C backend lint && pnpm -C frontend lint",
     "format": "prettier --write .",
     "docker:up": "docker compose up -d --wait",
     "docker:down": "docker compose down",
+    "dev:api": "pnpm -C backend dev",
+    "build": "pnpm -C backend build",
     "prepare": "husky"
   },
   "lint-staged": {
