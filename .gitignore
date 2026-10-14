@@ -53,3 +53,6 @@ Thumbs.db
 
 # Confidential specs (local only)
 Cahier_des_charges_BRUNY_SHOPPING.docx
+
+# generated code (prisma client, rebuilt by `pnpm build`)
+backend/src/generated

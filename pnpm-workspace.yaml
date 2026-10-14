@@ -2,5 +2,12 @@ packages:
   - frontend
   - backend
 
+# Trusted dependency build scripts (official tools only)
 allowBuilds:
   nx: true
+  esbuild: true
+  '@swc/core': true
+  '@scarf/scarf': false
+  prisma: true
+  '@prisma/engines': true
+  '@prisma/client': true

@@ -1,0 +1,17 @@
+// Prisma schema - foundation (step 3).
+// Full domain models are added at step 4; see the execution plan.
+// Connection URL lives in prisma.config.ts (Prisma 7 removed datasource url).
+generator prismaClient {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model HealthProbe {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+}

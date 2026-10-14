@@ -6,3 +6,4 @@ node_modules
 infra/docker
 Cahier_des_charges_BRUNY_SHOPPING.docx
 pnpm-lock.yaml
+backend/src/generated
