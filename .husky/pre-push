@@ -1,0 +1,14 @@
+# Bloque les pushes directs sur la branche `main`.
+#
+# Flux attendu : feature/* -> working -> main.
+# Seul `git release` (via scripts/git-flow.sh) est autorisé à pousser sur main :
+# il exporte ALLOW_MAIN_PUSH=1, ce qui lève ce blocage de façon contrôlée.
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ] && [ "${ALLOW_MAIN_PUSH:-0}" != "1" ]; then
+    echo "✖ Push direct sur 'main' bloqué." >&2
+    echo "  Flux attendu : feature/* -> working -> main (via 'git release')." >&2
+    echo "  Voir docs/WORKFLOW.md." >&2
+    exit 1
+  fi
+done
+exit 0
