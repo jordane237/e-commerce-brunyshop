@@ -5,6 +5,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { LoggerModule } from 'nestjs-pino';
+import { BullModule } from '@nestjs/bullmq';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
+import { QueueModule } from './infrastructure/queue/queue.module';
+import { StorageModule } from './infrastructure/storage/storage.module';
 import { randomUUID } from 'node:crypto';
 
 import { validateEnv } from './config/env.validation';
@@ -13,6 +18,20 @@ import { CacheModule, RedisService } from './infrastructure/cache/cache.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { UsersModule } from './modules/users/users.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { CartModule } from './modules/cart/cart.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { ShippingModule } from './modules/shipping/shipping.module';
+import { PromotionsModule } from './modules/promotions/promotions.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -22,6 +41,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
+      envFilePath: ['../.env', '.env'],
       validate: validateEnv,
       load: [(): Record<string, unknown> => ({ app: loadApplicationConfig(process.env) })],
     }),
@@ -55,6 +75,8 @@ import { RolesGuard } from './common/guards/roles.guard';
               'req.headers.authorization',
               'req.headers.cookie',
               '*.password',
+              '*.email',
+              '*.phone',
               '*.token',
               'password',
               'refreshToken',
@@ -87,6 +109,26 @@ import { RolesGuard } from './common/guards/roles.guard';
     // Shared infrastructure (exported services).
     DatabaseModule,
     CacheModule,
+    EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const redisUrl = new URL(config.getOrThrow<string>('REDIS_URL'));
+        return {
+          connection: {
+            host: redisUrl.hostname,
+            port: Number(redisUrl.port || 6379),
+            username: redisUrl.username || undefined,
+            password: redisUrl.password || undefined,
+            db: redisUrl.pathname.length > 1 ? Number(redisUrl.pathname.slice(1)) : 0,
+            ...(redisUrl.protocol === 'rediss:' ? { tls: {} } : {}),
+          },
+        };
+      },
+    }),
+    QueueModule,
+    StorageModule,
     // Authentication (cachier §9 contract).
     AuthModule,
     // Access JWT signing (global: guards and services resolve JwtService).
@@ -99,6 +141,20 @@ import { RolesGuard } from './common/guards/roles.guard';
     }),
     // Public health endpoints (liveness/readiness).
     HealthModule,
+    CatalogModule,
+    InventoryModule,
+    UsersModule,
+    RolesModule,
+    CartModule,
+    OrdersModule,
+    PaymentsModule,
+    ShippingModule,
+    PromotionsModule,
+    ReviewsModule,
+    WishlistModule,
+    NotificationsModule,
+    AnalyticsModule,
+    SettingsModule,
   ],
   providers: [
     {

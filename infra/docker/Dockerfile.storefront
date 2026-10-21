@@ -1,0 +1,21 @@
+FROM node:24.15-alpine AS build
+WORKDIR /workspace
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY backend/package.json backend/package.json
+COPY frontend/package.json frontend/package.json
+RUN pnpm install --frozen-lockfile
+COPY frontend frontend
+RUN pnpm -C frontend exec ng build storefront --configuration=production
+
+FROM node:24.15-alpine AS runtime
+ENV NODE_ENV=production PORT=4000
+WORKDIR /app
+RUN addgroup -S bruny && adduser -S bruny -G bruny
+COPY --from=build --chown=bruny:bruny /workspace/node_modules ./node_modules
+COPY --from=build --chown=bruny:bruny /workspace/frontend/node_modules ./frontend/node_modules
+COPY --from=build --chown=bruny:bruny /workspace/frontend/dist/apps/storefront ./frontend/dist/apps/storefront
+WORKDIR /app/frontend/dist/apps/storefront/server
+USER bruny
+EXPOSE 4000
+CMD ["node", "server.mjs"]

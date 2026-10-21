@@ -1,7 +1,16 @@
 // Environment variable schema validation.
 // The application refuses to start when a required variable is missing or invalid.
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Min, validateSync } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Min,
+  MinLength,
+  validateSync,
+} from 'class-validator';
 
 export enum Environment {
   Development = 'development',
@@ -18,9 +27,11 @@ export class EnvVariables {
   public PORT!: number;
 
   @IsString()
+  @Matches(/^postgres(?:ql)?:\/\//)
   public DATABASE_URL!: string;
 
   @IsString()
+  @Matches(/^rediss?:\/\//)
   public REDIS_URL!: string;
 
   // Comma-separated allowed origins (whitelist).
@@ -43,6 +54,7 @@ export class EnvVariables {
 
   // Signs access JWTs (>= 48 chars, see .env.example).
   @IsString()
+  @MinLength(48)
   public JWT_ACCESS_SECRET!: string;
 
   // Access token lifetime, e.g. "15m" (cachier 10.2: 10-15 min).
@@ -166,6 +178,14 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
       .map((error) => `  ${error.property}: ${Object.values(error.constraints ?? {}).join(', ')}`)
       .join('\n');
     throw new Error(`Invalid environment variables:\n${details}`);
+  }
+  const origins = String(config.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim());
+  if (origins.length === 0 || origins.some((origin) => !/^https?:\/\/[^\s,]+$/.test(origin))) {
+    throw new Error(
+      'Invalid environment variables:\n  CORS_ORIGINS: must contain comma-separated HTTP(S) origins',
+    );
   }
   return config;
 }

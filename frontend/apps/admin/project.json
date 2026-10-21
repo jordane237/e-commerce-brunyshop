@@ -1,0 +1,46 @@
+{
+  "name": "admin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/admin/src",
+  "tags": ["scope:admin", "type:app"],
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint .",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/admin"],
+      "defaultConfiguration": "production",
+      "options": {
+        "command": "ng build admin --configuration=production"
+      },
+      "configurations": {
+        "production": {
+          "command": "ng build admin --configuration=production"
+        },
+        "development": {
+          "command": "ng build admin --configuration=development"
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "development",
+      "configurations": {
+        "production": {
+          "command": "ng serve admin --host 0.0.0.0 --configuration=production --port=4201"
+        },
+        "development": {
+          "command": "ng serve admin --host 0.0.0.0 --configuration=development --port=4201"
+        }
+      }
+    }
+  }
+}

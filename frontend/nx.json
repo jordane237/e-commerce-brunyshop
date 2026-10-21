@@ -6,26 +6,22 @@
     "production": ["default", "!{projectRoot}/.eslintrc.json", "!{projectRoot}/eslint.config.mjs"],
     "sharedGlobals": []
   },
-  "plugins": [
-    {
-      "plugin": "@nx/js/typescript",
-      "options": {
-        "typecheck": {
-          "targetName": "typecheck"
-        },
-        "build": {
-          "targetName": "build",
-          "configName": "tsconfig.lib.json",
-          "buildDepsName": "build-deps",
-          "watchDepsName": "watch-deps"
-        }
-      }
-    },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
+  // Plugin inference (lint/typecheck with externalDependencies) is disabled:
+  // this workspace lives under the pnpm monorepo root, so Nx cannot build the
+  // `npm:` external nodes it requires (no lockfile at the Nx root). Lint and
+  // dependency edges are declared explicitly in each project.json instead.
+  "plugins": [],
+  "targetDefaults": {
+    "@angular/build:application": {
+      "cache": true,
+      "inputs": ["production", "^production"]
     }
-  ]
+  },
+  "generators": {
+    "@nx/angular:application": {
+      "e2eTestRunner": "none",
+      "style": "scss",
+      "unitTestRunner": "none"
+    }
+  }
 }
