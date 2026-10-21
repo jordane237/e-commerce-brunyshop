@@ -358,8 +358,8 @@ importers:
         version: 0.16.3
     devDependencies:
       '@angular-devkit/core':
-        specifier: ^22.2.2
-        version: 22.2.2(chokidar@5.0.0)
+        specifier: ^22.2.3
+        version: 22.2.3(chokidar@5.0.0)
       '@angular-devkit/schematics':
         specifier: ^22.2.2
         version: 22.2.2(chokidar@5.0.0)
@@ -371,7 +371,7 @@ importers:
         version: 9.39.5
       '@nx/angular':
         specifier: 23.3.0
-        version: 23.3.0(@angular-devkit/build-angular@22.2.2(5d87afa40b238c4098281d4df38f92c1))(@angular-devkit/core@22.2.2(chokidar@5.0.0))(@angular-devkit/schematics@22.2.2(chokidar@5.0.0))(@angular/build@22.2.2(7e4f52e0ca00f7e5b301efa140956b0d))(@babel/traverse@7.29.10(supports-color@10.2.2))(@schematics/angular@22.2.2(chokidar@5.0.0))(@zkochan/js-yaml@0.0.7)(debug@4.4.3(supports-color@10.2.2))(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(rxjs@7.8.2)(supports-color@10.2.2)(typescript@6.0.3)
+        version: 23.3.0(@angular-devkit/build-angular@22.2.2(5d87afa40b238c4098281d4df38f92c1))(@angular-devkit/core@22.2.3(chokidar@5.0.0))(@angular-devkit/schematics@22.2.2(chokidar@5.0.0))(@angular/build@22.2.2(7e4f52e0ca00f7e5b301efa140956b0d))(@babel/traverse@7.29.10(supports-color@10.2.2))(@schematics/angular@22.2.2(chokidar@5.0.0))(@zkochan/js-yaml@0.0.7)(debug@4.4.3(supports-color@10.2.2))(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(rxjs@7.8.2)(supports-color@10.2.2)(typescript@6.0.3)
       '@nx/eslint':
         specifier: 23.3.0
         version: 23.3.0(@babel/traverse@7.29.10(supports-color@10.2.2))(@zkochan/js-yaml@0.0.7)(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(supports-color@10.2.2)
@@ -477,6 +477,15 @@ packages:
 
   '@angular-devkit/core@22.2.2':
     resolution: {integrity: sha512-iQexb5xUON9AkTzvBiMftrHWLguIlYv6M/BOH/sj7U5L8eOPMu8N269WF74xPo4n/X5tusFLqniGI0zolT2Sjg==}
+    engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
+    peerDependencies:
+      chokidar: ^5.0.0
+    peerDependenciesMeta:
+      chokidar:
+        optional: true
+
+  '@angular-devkit/core@22.2.3':
+    resolution: {integrity: sha512-bi1oBjJeg1XCgRrBYSuJikaJV4sO/mcnyFE/0a1H646yHhQpVYoU/M2Vh69Qv8h+YoMfC7RuSxT4LZHaubhhLw==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     peerDependencies:
       chokidar: ^5.0.0
@@ -7622,6 +7631,17 @@ snapshots:
     optionalDependencies:
       chokidar: 5.0.0
 
+  '@angular-devkit/core@22.2.3(chokidar@5.0.0)':
+    dependencies:
+      ajv: 8.20.0
+      ajv-formats: 3.0.1
+      jsonc-parser: 3.3.1
+      picomatch: 4.0.7
+      rxjs: 7.8.2
+      source-map: 0.8.0
+    optionalDependencies:
+      chokidar: 5.0.0
+
   '@angular-devkit/schematics@22.2.2(chokidar@5.0.0)':
     dependencies:
       '@angular-devkit/core': 22.2.2(chokidar@5.0.0)
@@ -10073,9 +10093,9 @@ snapshots:
       '@node-rs/argon2-win32-ia32-msvc': 2.2.2
       '@node-rs/argon2-win32-x64-msvc': 2.2.2
 
-  '@nx/angular@23.3.0(@angular-devkit/build-angular@22.2.2(5d87afa40b238c4098281d4df38f92c1))(@angular-devkit/core@22.2.2(chokidar@5.0.0))(@angular-devkit/schematics@22.2.2(chokidar@5.0.0))(@angular/build@22.2.2(7e4f52e0ca00f7e5b301efa140956b0d))(@babel/traverse@7.29.10(supports-color@10.2.2))(@schematics/angular@22.2.2(chokidar@5.0.0))(@zkochan/js-yaml@0.0.7)(debug@4.4.3(supports-color@10.2.2))(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(rxjs@7.8.2)(supports-color@10.2.2)(typescript@6.0.3)':
+  '@nx/angular@23.3.0(@angular-devkit/build-angular@22.2.2(5d87afa40b238c4098281d4df38f92c1))(@angular-devkit/core@22.2.3(chokidar@5.0.0))(@angular-devkit/schematics@22.2.2(chokidar@5.0.0))(@angular/build@22.2.2(7e4f52e0ca00f7e5b301efa140956b0d))(@babel/traverse@7.29.10(supports-color@10.2.2))(@schematics/angular@22.2.2(chokidar@5.0.0))(@zkochan/js-yaml@0.0.7)(debug@4.4.3(supports-color@10.2.2))(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(rxjs@7.8.2)(supports-color@10.2.2)(typescript@6.0.3)':
     dependencies:
-      '@angular-devkit/core': 22.2.2(chokidar@5.0.0)
+      '@angular-devkit/core': 22.2.3(chokidar@5.0.0)
       '@angular-devkit/schematics': 22.2.2(chokidar@5.0.0)
       '@nx/devkit': 23.3.0(nx@23.3.0)
       '@nx/eslint': 23.3.0(@babel/traverse@7.29.10(supports-color@10.2.2))(@zkochan/js-yaml@0.0.7)(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(supports-color@10.2.2)
@@ -12541,9 +12561,9 @@ snapshots:
     dependencies:
       fast-string-width: 3.0.2
 
-  fdir@6.5.0(picomatch@4.0.4):
+  fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
-      picomatch: 4.0.4
+      picomatch: 4.0.7
 
   figures@3.2.0:
     dependencies:
@@ -14698,8 +14718,8 @@ snapshots:
 
   tinyglobby@0.2.17:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
 
   tinyrainbow@3.2.0: {}
 
