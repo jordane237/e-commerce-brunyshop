@@ -39,7 +39,22 @@ async function bootstrap(): Promise<void> {
   // Security headers (HSTS enforced in production).
   app.use(
     helmet({
-      contentSecurityPolicy: appConfig.isProduction ? undefined : false,
+      contentSecurityPolicy: appConfig.isProduction
+        ? {
+            directives: {
+              defaultSrc: ["'self'"],
+              scriptSrc: ["'self'"],
+              styleSrc: ["'self'", "'unsafe-inline'"],
+              imgSrc: ["'self'", 'data:', 'https:'],
+              fontSrc: ["'self'", 'data:'],
+              connectSrc: ["'self'", ...appConfig.corsOrigins],
+              objectSrc: ["'none'"],
+              baseUri: ["'self'"],
+              frameAncestors: ["'none'"],
+              upgradeInsecureRequests: [],
+            },
+          }
+        : false,
       hsts: appConfig.isProduction ? { maxAge: 31536000, includeSubDomains: true } : false,
     }),
   );

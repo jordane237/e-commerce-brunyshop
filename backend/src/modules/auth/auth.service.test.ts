@@ -172,7 +172,7 @@ describe('AuthService', () => {
     await service.forgotPassword('client@exemple.cm');
 
     expect(redisOps.set).toHaveBeenCalledWith(
-      'auth:reset:client@exemple.cm',
+      expect.stringMatching(/^auth:reset:[0-9a-f]{64}$/),
       expect.stringMatching(/^[0-9a-f]{64}$/),
       'EX',
       900,

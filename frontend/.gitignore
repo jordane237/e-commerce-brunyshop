@@ -1,0 +1,19 @@
+# Dependencies (relative to frontend/, which is the Nx workspace root)
+/node_modules
+
+# Nx
+/.nx/cache
+/.nx/workspace-data
+
+# Frontend build/test caches
+/.angular
+/test-results
+/playwright-report
+/dist
+
+# Environment files (secrets) — keep the example
+.env
+.env.*
+!.env.example
+
+coverage

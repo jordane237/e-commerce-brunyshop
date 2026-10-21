@@ -1,20 +1,18 @@
-# Backend — API BRUNY SHOPPING
+# API BRUNY SHOPPING
 
-Projet **NestJS** (TypeScript strict, monolithe modulaire) + **Prisma** + **PostgreSQL**.
+API NestJS en monolithe modulaire, TypeScript strict, PostgreSQL et Prisma. Le préfixe public est `/api/v1`; Swagger est exposé en environnement non production sur `/api/docs`.
 
-Il est généré/configuré à l'**étape 3** du plan d'exécution : bootstrap, sécurité de base
-(helmet, CORS, validation globale, rate limiting), Swagger, health checks.
+## Commandes
 
-Structure prévue :
+Depuis la racine : `pnpm dev:api`, `pnpm db:migrate`, `pnpm db:seed`, `pnpm -C backend test` et `pnpm -C backend test:e2e`. Les commandes de base nécessitent PostgreSQL et Redis actifs.
 
-```
-backend/
-|-- prisma/            # schema.prisma, migrations/, seed.ts
-|-- src/
-|   |-- main.ts, app.module.ts, config/, common/
-|   |-- infrastructure/ (database, cache, queue, storage, mail, sms, payments)
-|   `-- modules/       # auth, users, roles, catalog, inventory, health, ...
-`-- test/              # tests e2e (supertest)
-```
+## Modules actifs
 
-Préfixe API : `/api/v1`.
+- `auth` : inscription, connexion, renouvellement rotatif, déconnexion, profil, TOTP.
+- `catalog` : catégories, recherche/pagination/filtres, détail et création de produit protégée.
+- `inventory` : point d’extension pour mouvements et réservation de stock.
+- `health` : liveness et readiness (PostgreSQL/Redis).
+- `audit` : journal transactionnel des changements sensibles câblés.
+- Les autres modules métier sont initialisés comme modules vides documentés.
+
+Les contrôleurs n’implémentent pas de logique métier. Les montants sont en entiers XAF, les mots de passe Argon2id et les DTO sont vérifiés globalement.

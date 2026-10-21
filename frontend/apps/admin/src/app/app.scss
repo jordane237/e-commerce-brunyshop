@@ -1,0 +1,93 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+.shell {
+  min-height: 100vh;
+  background: #f5f6f8;
+}
+.shell:has(.sidebar) {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+}
+.sidebar {
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  padding: 28px 20px;
+  background: #1f2a44;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+.brand {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+.brand span {
+  display: block;
+  color: #c9a227;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+}
+.label {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  color: #aeb6c8;
+  margin-top: 50px;
+}
+.sidebar nav a {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: white;
+  text-decoration: none;
+  background: #ffffff14;
+}
+.profile {
+  margin-top: auto;
+  display: grid;
+  gap: 8px;
+}
+.profile small {
+  color: #c5cbd6;
+}
+.profile button {
+  background: transparent;
+  border: 1px solid #ffffff55;
+  color: #fff;
+  border-radius: 7px;
+  padding: 9px;
+  cursor: pointer;
+}
+.shell > main {
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .shell:has(.sidebar) {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    height: auto;
+    position: static;
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .label,
+  .profile small,
+  .profile strong {
+    display: none;
+  }
+  .profile {
+    margin: 0;
+  }
+  .sidebar nav {
+    margin-left: auto;
+    margin-right: 10px;
+  }
+}

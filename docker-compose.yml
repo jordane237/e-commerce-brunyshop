@@ -99,6 +99,123 @@ services:
     networks:
       - apps
 
+  api:
+    profiles: [full]
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    container_name: bruny-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bruny}:${POSTGRES_PASSWORD:-bruny_dev_password}@postgres:5432/${POSTGRES_DB:-bruny}
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-local-development-only-secret-at-least-forty-eight-characters-long}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-30d}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:4200}
+      ADMIN_PUBLIC_URL: ${ADMIN_PUBLIC_URL:-http://localhost:4201}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200,http://localhost:4201}
+      THROTTLE_TTL: ${THROTTLE_TTL:-60}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
+      MAIL_DRIVER: ${MAIL_DRIVER:-mailpit}
+      MAIL_FROM: ${MAIL_FROM:-noreply@brunyshopping.example}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+    ports:
+      - '${API_HOST_PORT:-4000}:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/api/v1/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [apps, data]
+
+  storefront:
+    profiles: [full]
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.storefront
+    container_name: bruny-storefront
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      API_INTERNAL_URL: http://api:4000/api/v1
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:4200}
+      NG_ALLOWED_HOSTS: ${NG_ALLOWED_HOSTS:-localhost,127.0.0.1}
+    expose: ['4000']
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/boutique').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks: [apps]
+
+  admin:
+    profiles: [full]
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.admin
+    container_name: bruny-admin
+    restart: unless-stopped
+    ports:
+      - '${ADMIN_HOST_PORT:-4201}:8080'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://127.0.0.1:8080/ || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [apps]
+
+  gateway:
+    profiles: [full]
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.gateway
+    container_name: bruny-gateway
+    restart: unless-stopped
+    ports:
+      - '${STOREFRONT_HOST_PORT:-4200}:8080'
+    depends_on:
+      storefront:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://127.0.0.1:8080/ || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [apps]
+
 networks:
   data:
     # Database and Redis only — the API joins this network in the "full" profile.
