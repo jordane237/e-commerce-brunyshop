@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: bruny
+          POSTGRES_PASSWORD: ci-password
+          POSTGRES_DB: bruny
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U bruny -d bruny"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://bruny:ci-password@localhost:5432/bruny
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ci-only-secret-that-is-at-least-forty-eight-characters-long
+      JWT_ACCESS_TTL: 15m
+      REFRESH_TOKEN_TTL: 30d
+      CORS_ORIGINS: http://localhost:4200,http://localhost:4201
+      APP_PUBLIC_URL: http://localhost:4200
+      ADMIN_PUBLIC_URL: http://localhost:4201
+      THROTTLE_TTL: 60
+      THROTTLE_LIMIT: 1000
+      SEED_ADMIN_EMAIL: admin@brunyshopping.example
+      SEED_ADMIN_PASSWORD: ci-seed-password-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm -C backend db:migrate
+      - run: pnpm -C backend db:seed
+      - run: pnpm -C backend test:e2e
+      - run: pnpm build
+      - run: pnpm -C frontend exec playwright install --with-deps chromium
+      - name: Start API for browser tests
+        run: |
+          nohup pnpm -C backend start > /tmp/bruny-api.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4000/api/v1/health/ready; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/bruny-api.log
+          exit 1
+      - run: pnpm -C frontend test:e2e
+      - run: pnpm audit --audit-level high

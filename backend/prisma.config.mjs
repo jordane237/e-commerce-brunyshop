@@ -5,9 +5,8 @@ import { defineConfig } from 'prisma/config';
 
 // Prisma 7 no longer loads .env itself (see pris.ly/d/config-url):
 // load it here so DATABASE_URL is available to the CLI.
-if (existsSync('.env')) {
-  process.loadEnvFile('.env');
-}
+if (existsSync('.env')) process.loadEnvFile('.env');
+else if (existsSync('../.env')) process.loadEnvFile('../.env');
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',

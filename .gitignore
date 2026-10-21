@@ -1,12 +1,14 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# compiled output
-dist
-tmp
-out-tsc
+# compiled output (anchored to the repo root)
+/dist
+/tmp
+/out-tsc
 
-# dependencies
-node_modules
+# dependencies (root install only; frontend/ carries its own .gitignore)
+/node_modules
+/frontend/node_modules
+/backend/node_modules
 
 # IDEs and editors
 /.idea
@@ -56,3 +58,8 @@ Cahier_des_charges_BRUNY_SHOPPING.docx
 
 # generated code (prisma client, rebuilt by `pnpm build`)
 backend/src/generated
+
+# Frontend build/test caches
+frontend/.angular/
+frontend/test-results/
+frontend/playwright-report/

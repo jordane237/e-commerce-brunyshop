@@ -1,0 +1,16 @@
+<div class="shell">
+  @if (session.user(); as user) {
+  <aside class="sidebar">
+    <a class="brand" routerLink="/produits">BRUNY <span>ADMIN</span></a>
+    <p class="label">ESPACE DE GESTION</p>
+    <nav><a routerLink="/produits">Catalogue</a></nav>
+    <div class="profile">
+      <strong>{{ user.firstName }} {{ user.lastName }}</strong
+      ><small>{{ user.roles.join(' · ') }}</small
+      ><button type="button" (click)="logout()">Déconnexion</button>
+    </div>
+  </aside>
+  }
+  <main><router-outlet /></main>
+  <bruny-toast [message]="errorMessage()" />
+</div>

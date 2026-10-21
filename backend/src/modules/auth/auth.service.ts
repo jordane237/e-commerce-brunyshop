@@ -249,16 +249,16 @@ export class AuthService {
     }
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
     await this.redisService.redis.set(
-      `${RESET_KEY_PREFIX}${normalized}`,
+      `${RESET_KEY_PREFIX}${sha256hex(normalized)}`,
       sha256hex(code),
       'EX',
       RESET_TTL_SECONDS,
     );
     try {
       await this.mail.sendPasswordResetCode(normalized, code);
-    } catch (error) {
+    } catch {
       // Never let transport failures reveal account existence.
-      this.logger.error(`reset mail delivery failed: ${String(error)}`);
+      this.logger.error('reset mail delivery failed');
     }
   }
 
@@ -266,7 +266,7 @@ export class AuthService {
     const email = dto.email.trim().toLowerCase();
     assertPasswordStrength(dto.newPassword);
 
-    const stored = await this.redisService.redis.getdel(`${RESET_KEY_PREFIX}${email}`);
+    const stored = await this.redisService.redis.getdel(`${RESET_KEY_PREFIX}${sha256hex(email)}`);
     if (!stored || stored !== sha256hex(dto.code)) {
       throw new BadRequestException({ code: 'INVALID_CODE' });
     }
@@ -503,27 +503,35 @@ export class AuthService {
   // --- Lockout (BOA-01) ----------------------------------------------------
 
   private async assertNotLockedOut(lookup: string): Promise<void> {
-    const attempts = Number(
-      (await this.redisService.redis.get(`${LOCK_KEY_PREFIX}${lookup}`)) ?? 0,
-    );
+    const attempts = Number((await this.redisService.redis.get(this.lockKey(lookup))) ?? 0);
     if (attempts >= MAX_LOGIN_ATTEMPTS) {
       throw new UnauthorizedException({ code: 'TOO_MANY_ATTEMPTS' });
     }
   }
 
   private async recordFailedAttempt(lookup: string): Promise<void> {
-    const key = `${LOCK_KEY_PREFIX}${lookup}`;
+    const key = this.lockKey(lookup);
     const attempts = await this.redisService.redis.incr(key);
     if (attempts === 1) {
       await this.redisService.redis.expire(key, LOCKOUT_TTL_SECONDS);
     }
     if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      this.logger.warn(`login lockout engaged for ${lookup}`);
+      this.logger.warn(`login lockout engaged for ${this.maskIdentifier(lookup)}`);
     }
   }
 
   private async clearFailures(lookup: string): Promise<void> {
-    await this.redisService.redis.del(`${LOCK_KEY_PREFIX}${lookup}`);
+    await this.redisService.redis.del(this.lockKey(lookup));
+  }
+
+  private lockKey(identifier: string): string {
+    return `${LOCK_KEY_PREFIX}${sha256hex(identifier)}`;
+  }
+
+  private maskIdentifier(identifier: string): string {
+    const email = identifier.split('@');
+    if (email.length === 2) return `${email[0]?.slice(0, 1) ?? '*'}***@${email[1]}`;
+    return `***${identifier.slice(-2)}`;
   }
 
   private async verifyAgainstDummy(password: string): Promise<boolean> {

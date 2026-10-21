@@ -1,0 +1,15 @@
+<header class="site-header">
+  <a class="brand" routerLink="/boutique" aria-label="BRUNY SHOPPING, accueil"
+    >BRUNY <span>SHOPPING</span></a
+  >
+  <nav aria-label="Navigation principale">
+    <a routerLink="/boutique">Boutique</a>
+    <a routerLink="/panier">Panier ({{ cart.count() }})</a>
+    <a href="https://wa.me/237600000000" target="_blank" rel="noopener">Nous contacter</a>
+  </nav>
+</header>
+<main><router-outlet /></main>
+<footer class="site-footer">
+  BRUNY SHOPPING · Chaussures sélectionnées au Cameroun · Prix en FCFA
+</footer>
+<bruny-toast [message]="errorMessage()" />
