@@ -4,7 +4,7 @@ Fondation d’une boutique en ligne de chaussures pour le Cameroun : interface e
 
 ## Démarrage local
 
-Prérequis : Git, Node.js `24.11.0` (voir `.nvmrc`), pnpm `12.11.2` et Docker Compose.
+Prérequis : Git, Node.js `24.15.0` (voir `.nvmrc` — minimum Angular 22), pnpm `12.11.2` et Docker Compose.
 
 ```bash
 git clone <URL_DU_DEPOT> bruny-shopping
