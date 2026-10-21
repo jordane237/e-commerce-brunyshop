@@ -1,0 +1,46 @@
+{
+  "name": "storefront",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/storefront/src",
+  "tags": ["scope:storefront", "type:app"],
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint .",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/storefront"],
+      "defaultConfiguration": "production",
+      "options": {
+        "command": "ng build storefront --configuration=production"
+      },
+      "configurations": {
+        "production": {
+          "command": "ng build storefront --configuration=production"
+        },
+        "development": {
+          "command": "ng build storefront --configuration=development"
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "defaultConfiguration": "development",
+      "configurations": {
+        "production": {
+          "command": "ng serve storefront --host 0.0.0.0 --configuration=production --port=4200"
+        },
+        "development": {
+          "command": "ng serve storefront --host 0.0.0.0 --configuration=development --port=4200"
+        }
+      }
+    }
+  }
+}

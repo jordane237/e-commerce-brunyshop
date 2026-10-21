@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/coverage
+.git
+.env
+.env.*
+!.env.example
+.nx
+.angular
+backend/src/generated
+Cahier_des_charges_BRUNY_SHOPPING.docx

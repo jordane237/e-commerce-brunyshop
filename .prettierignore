@@ -7,3 +7,8 @@ infra/docker
 Cahier_des_charges_BRUNY_SHOPPING.docx
 pnpm-lock.yaml
 backend/src/generated
+
+# Frontend build/test caches
+frontend/.angular/
+frontend/test-results/
+frontend/playwright-report/

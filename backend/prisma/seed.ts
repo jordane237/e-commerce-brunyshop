@@ -11,9 +11,8 @@ import {
 } from '../src/generated/prisma/client';
 
 // Prisma 7 / tsx do not load .env automatically (see pris.ly/d/config-url).
-if (existsSync('.env')) {
-  process.loadEnvFile('.env');
-}
+if (existsSync('.env')) process.loadEnvFile('.env');
+else if (existsSync('../.env')) process.loadEnvFile('../.env');
 
 // Permission keys from the cahier des charges section 2 (access matrix).
 const ROLES: Array<{ name: string; permissions: string[] }> = [
@@ -66,6 +65,7 @@ const ROLES: Array<{ name: string; permissions: string[] }> = [
       'audit:read',
     ],
   },
+  { name: 'CUSTOMER', permissions: [] },
 ];
 
 const CATEGORIES: Array<{
@@ -109,6 +109,7 @@ const BRANDS = [
   { name: 'UrbanStep', slug: 'urbanstep' },
   { name: 'Sahel Walk', slug: 'sahel-walk' },
   { name: 'Kidzo', slug: 'kidzo' },
+  { name: 'CamoStride', slug: 'camostride' },
 ];
 
 interface SeedVariant {
@@ -211,6 +212,142 @@ const PRODUCTS: SeedProduct[] = [
   },
 ];
 
+const EXTRA_PRODUCTS: SeedProduct[] = [
+  [
+    'Baskets CamoStride Atlas',
+    'baskets-camostride-atlas',
+    'Chaussures robustes au maintien confortable, pensées pour les longues journées.',
+    'chaussures-ville',
+    'camostride',
+    28000,
+  ],
+  [
+    'Sneakers UrbanStep Tempo',
+    'sneakers-urbanstep-tempo',
+    'Sneakers légères et respirantes pour les déplacements urbains.',
+    'sneakers-hommes',
+    'urbanstep',
+    21500,
+  ],
+  [
+    'Sandales Sahel Nomade',
+    'sandales-sahel-nomade',
+    'Sandales souples avec brides réglables pour un confort au quotidien.',
+    'sandales-hommes',
+    'sahel-walk',
+    14500,
+  ],
+  [
+    'Mocassins CamoStride Élégance',
+    'mocassins-camostride-elegance',
+    'Mocassins sobres aux finitions soignées pour les sorties et le bureau.',
+    'chaussures-ville',
+    'camostride',
+    29500,
+  ],
+  [
+    'Baskets Kidzo Sprint',
+    'baskets-kidzo-sprint',
+    'Baskets enfant légères avec fermeture pratique et semelle flexible.',
+    'sneakers-enfants',
+    'kidzo',
+    11000,
+  ],
+  [
+    'Sandales UrbanStep Soleil',
+    'sandales-urbanstep-soleil',
+    'Sandales estivales avec semelle amortissante et brides confortables.',
+    'sandales-femmes',
+    'urbanstep',
+    13500,
+  ],
+  [
+    'Talons CamoStride Chic',
+    'talons-camostride-chic',
+    'Escarpins élégants à talon stable et doublure douce.',
+    'talons',
+    'camostride',
+    24000,
+  ],
+  [
+    'Baskets Sahel Horizon',
+    'baskets-sahel-horizon',
+    'Baskets en cuir souple avec semelle antidérapante.',
+    'chaussures-ville',
+    'sahel-walk',
+    33500,
+  ],
+  [
+    'Sneakers Kidzo Explorer',
+    'sneakers-kidzo-explorer',
+    'Chaussures enfant résistantes adaptées aux jeux et aux sorties.',
+    'sneakers-enfants',
+    'kidzo',
+    12500,
+  ],
+  [
+    'Mules UrbanStep Douceur',
+    'mules-urbanstep-douceur',
+    'Mules faciles à porter avec semelle intérieure moelleuse.',
+    'sandales-femmes',
+    'urbanstep',
+    12000,
+  ],
+  [
+    'Chaussures scolaires Kidzo',
+    'chaussures-scolaires-kidzo',
+    'Chaussures scolaires solides, faciles à nettoyer et confortables.',
+    'chaussures-scolaires',
+    'kidzo',
+    10500,
+  ],
+  [
+    'Sneakers CamoStride Pulse',
+    'sneakers-camostride-pulse',
+    'Sneakers au look contemporain avec maintien renforcé.',
+    'sneakers-hommes',
+    'camostride',
+    26000,
+  ],
+  [
+    'Ballerines Sahel Grâce',
+    'ballerines-sahel-grace',
+    'Ballerines souples à la coupe intemporelle pour tous les jours.',
+    'talons',
+    'sahel-walk',
+    16500,
+  ],
+  [
+    'Sandales Kidzo Fun',
+    'sandales-kidzo-fun',
+    'Sandales enfant à fermeture rapide et semelle souple.',
+    'sandales-hommes',
+    'kidzo',
+    8000,
+  ],
+].map(([name, slug, description, categorySlug, brandSlug, basePrice]) => ({
+  name: String(name),
+  slug: String(slug),
+  description: String(description),
+  categorySlug: String(categorySlug),
+  brandSlug: String(brandSlug),
+  basePrice: Number(basePrice),
+  variants: [],
+}));
+
+function demoVariants(slug: string): SeedVariant[] {
+  const colors = ['Noir', 'Blanc', 'Marron'];
+  const sizes = Array.from({ length: 11 }, (_, index) => String(index + 36));
+  return colors.flatMap((color, colorIndex) =>
+    sizes.map((size, sizeIndex) => ({
+      sku: `${slug.toUpperCase()}-${color.slice(0, 3).toUpperCase()}-${size}`,
+      color,
+      size,
+      stock: 14 - colorIndex * 2 - (sizeIndex % 4),
+    })),
+  );
+}
+
 const ZONES = [
   {
     name: 'Douala',
@@ -254,11 +391,23 @@ async function main(): Promise<void> {
   try {
     // --- Roles (section 2 access matrix) --------------------------------
     for (const role of ROLES) {
-      await prisma.role.upsert({
+      const roleRecord = await prisma.role.upsert({
         where: { name: role.name },
         create: { name: role.name, permissions: role.permissions },
         update: { permissions: role.permissions },
       });
+      for (const key of role.permissions) {
+        const permission = await prisma.permission.upsert({
+          where: { key },
+          create: { key, description: key.replaceAll(':', ' ') },
+          update: { description: key.replaceAll(':', ' ') },
+        });
+        await prisma.rolePermission.upsert({
+          where: { roleId_permissionId: { roleId: roleRecord.id, permissionId: permission.id } },
+          create: { roleId: roleRecord.id, permissionId: permission.id },
+          update: {},
+        });
+      }
     }
 
     // --- Admin account --------------------------------------------------
@@ -324,7 +473,7 @@ async function main(): Promise<void> {
 
     // --- Products, variants, images -------------------------------------
     const now = Date.now();
-    for (const product of PRODUCTS) {
+    for (const product of [...PRODUCTS, ...EXTRA_PRODUCTS]) {
       const category = await prisma.category.findUniqueOrThrow({
         where: { slug: product.categorySlug },
       });
@@ -353,7 +502,7 @@ async function main(): Promise<void> {
         },
       });
 
-      for (const variant of product.variants) {
+      for (const variant of demoVariants(product.slug)) {
         await prisma.productVariant.upsert({
           where: { sku: variant.sku },
           create: {

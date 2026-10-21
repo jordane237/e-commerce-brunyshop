@@ -1,0 +1,14 @@
+# Production overlay: use with `docker compose -f docker-compose.yml -f docker-compose.production.yml up`.
+# PostgreSQL and Redis stay on their private data network and are never host-published.
+services:
+  postgres:
+    ports: !reset []
+  redis:
+    ports: !reset []
+  api:
+    ports: !reset []
+  admin:
+    ports: !reset []
+  gateway:
+    ports: !reset []
+    expose: ['8080']

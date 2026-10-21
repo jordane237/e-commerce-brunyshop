@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+.site-header {
+  height: 76px;
+  padding: 0 clamp(20px, 6vw, 88px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #ececf0;
+  background: #fff;
+}
+.brand {
+  color: #1f2a44;
+  text-decoration: none;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.brand span {
+  color: #c9a227;
+}
+.site-header nav {
+  display: flex;
+  gap: 28px;
+}
+.site-header nav a {
+  color: #1f2a44;
+  text-decoration: none;
+  font-weight: 600;
+}
+.site-footer {
+  margin-top: 80px;
+  background: #1f2a44;
+  color: #fff;
+  padding: 28px clamp(20px, 6vw, 88px);
+  font-size: 0.9rem;
+}
+main {
+  min-height: 70vh;
+}

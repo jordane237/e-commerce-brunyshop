@@ -41,6 +41,12 @@ export class MailService {
         'BRUNY SHOPPING',
       ].join('\n'),
     });
-    this.logger.log(`password reset mail queued for ${to}`);
+    this.logger.log(`password reset mail queued for ${this.maskRecipient(to)}`);
+  }
+
+  private maskRecipient(address: string): string {
+    const [local, domain] = address.split('@');
+    if (!domain || !local) return '[REDACTED]';
+    return `${local.slice(0, 1)}***@${domain}`;
   }
 }

@@ -1,0 +1,907 @@
+﻿"ID","Epopee","Titre","Type","Priorite","Sprint","Semaines","Points","Role","Dependances","Recit","Criteres","Taches"
+"DSG-01","DSG - Design et expérience utilisateur","Choisir la direction artistique (2 pistes de style)","Design","MVP","0","S1–S2","3","Design + PO","—","En tant que propriétaire, je veux comparer deux directions visuelles afin de choisir celle qui reflète la marque et inspire confiance.","[ ] Deux pistes livrées (palette, typographie, ambiance) avec l'accueil mobile en exemple
+[ ] Une recommandation argumentée est fournie
+[ ] Les contrastes de couleurs respectent WCAG AA (4,5:1 texte normal)
+[ ] La piste choisie est documentée dans design/README.md
+[ ] Le logo et les photos existants sont intégrés dans les exemples","1. Rassembler logo, photos, coordonnées, liens Facebook / WhatsApp
+2. Produire les 2 pistes
+3. Vérifier les contrastes
+4. Présenter, recueillir la décision, consigner le choix"
+"DSG-02","DSG - Design et expérience utilisateur","Créer le design system (tokens, composants, états, accessibilité)","Design","MVP","1","S3–S4","5","Design","DSG-01","En tant que développeur, je veux un design system documenté afin de construire toutes les pages de façon cohérente.","[ ] tokens.css / _tokens.scss : couleurs, typographie, espacements, rayons, ombres
+[ ] Catalogue de composants avec états (normal, survol, focus, actif, désactivé, chargement, erreur)
+[ ] Zones tactiles ≥ 44×44 px et focus visible sur tous les composants interactifs
+[ ] Guidelines d'usage (quand utiliser quoi) rédigées
+[ ] Revue d'accessibilité réalisée (contrastes, clavier, lecteur d'écran)","1. Définir les tokens
+2. Concevoir boutons, champs, carte produit, sélecteur de pointure, badges, modales, toasts, tableaux admin
+3. Rédiger les guidelines
+4. Revue accessibilité"
+"DSG-03","DSG - Design et expérience utilisateur","Concevoir les pages de la boutique P01 à P07","Design","MVP","1","S3–S4","8","Design + PO","DSG-02","En tant que client, je veux des pages claires et rapides à comprendre afin de trouver et choisir ma paire facilement sur mobile.","[ ] Accueil, catalogue, recherche, fiche produit, guide des tailles, panier, mini-panier conçus en 360 / 768 / 1280 px
+[ ] Tous les états sont conçus : chargement, vide, erreur, succès
+[ ] Barre d'achat fixe sur la fiche produit mobile (panier + WhatsApp)
+[ ] Le microtexte est rédigé en français clair
+[ ] Validation écrite du propriétaire","1. Concevoir les 7 pages
+2. Rédiger les specs de chaque page
+3. Présenter et corriger
+4. Archiver la version validée"
+"DSG-04","DSG - Design et expérience utilisateur","Concevoir le tunnel de commande et le suivi P08 à P13","Design","MVP","2","S5–S6","5","Design + PO","DSG-02","En tant que client, je veux commander en moins de deux minutes sans créer de compte.","[ ] 3 étapes (coordonnées, livraison, paiement) + confirmation conçues
+[ ] Barre de progression, validation en direct et messages d'erreur précis conçus
+[ ] Écrans d'attente et d'échec de paiement en ligne conçus (V2)
+[ ] Page de suivi public avec chronologie conçue
+[ ] Validation écrite du propriétaire","1. Concevoir P08–P13
+2. Rédiger le microtexte
+3. Tester le parcours sur prototype cliquable
+4. Valider"
+"DSG-05","DSG - Design et expérience utilisateur","Concevoir compte client et pages d'information P14 à P27","Design","MVP","2","S5–S6","5","Design + PO","DSG-02","En tant que visiteur, je veux des pages de compte et d'aide simples et rassurantes.","[ ] Connexion, inscription, mot de passe oublié, compte, commandes, profil, adresses, favoris conçus
+[ ] Contact, FAQ, livraison, retours, à propos, pages légales conçus
+[ ] Pages d'erreur 404, 500, hors ligne, maintenance conçues
+[ ] Suppression de compte avec confirmation claire","1. Concevoir les 14 pages
+2. Rédiger le microtexte et les contenus-types
+3. Valider"
+"DSG-06","DSG - Design et expérience utilisateur","Concevoir le back-office A01 à A16 (mobile et desktop)","Design","MVP","2","S5–S6","8","Design + PO","DSG-02","En tant que gérant, je veux une administration facile à utiliser, y compris depuis mon téléphone.","[ ] Connexion + 2FA, tableau de bord, produits, variantes, stock, commandes, livraisons, clients, promotions, utilisateurs, paramètres, audit conçus
+[ ] Tableaux convertis en cartes empilées sur mobile
+[ ] Vue « Mes livraisons du jour » optimisée mobile
+[ ] Générateur de grille couleurs × pointures conçu","1. Concevoir les 16 pages
+2. Prototyper la création d'un produit avec variantes
+3. Valider avec le gérant"
+"DSG-07","DSG - Design et expérience utilisateur","Revue finale d'accessibilité et de cohérence du design","Design","MVP","2","S5–S6","3","Design + QA","DSG-03, DSG-04, DSG-05, DSG-06","En tant que propriétaire, je veux une revue globale afin d'éviter incohérences et défauts d'accessibilité avant le développement.","[ ] Checklist WCAG 2.1 AA complétée sur toutes les maquettes
+[ ] Incohérences de composants, mots et positions corrigées
+[ ] ux-flows.md à jour avec les 6 parcours clés
+[ ] Gel du design pour le MVP (changements ensuite via backlog)","1. Auditer les maquettes
+2. Corriger
+3. Mettre à jour la documentation
+4. Prononcer le gel"
+"TEC-01","TEC - Fondations techniques","Initialiser le monorepo et le workspace","Technique","MVP","1","S3–S4","3","DevOps / BE","—","En tant qu'équipe, nous voulons un dépôt unique structuré afin de partager le code et les standards entre boutique, admin et API.","[ ] Structure apps/{storefront,admin,api} et libs/{ui,data-access,util,design-tokens} créée
+[ ] Gestionnaire de paquets et version de Node verrouillés (.nvmrc)
+[ ] Installation propre en une commande sur une machine vierge
+[ ] README racine en français avec les prérequis
+[ ] ADR documentant le choix du monorepo","1. Choisir Nx ou workspaces et justifier
+2. Créer la structure
+3. Ajouter .editorconfig, .gitignore, .gitattributes
+4. Rédiger README et ADR"
+"TEC-02","TEC - Fondations techniques","Mettre en place les outils de qualité de code","Technique","MVP","1","S3–S4","3","DevOps","TEC-01","En tant que développeur, je veux que le code soit contrôlé automatiquement afin de garder une base homogène et sûre.","[ ] ESLint avec règles de frontières de modules (une feature ne dépend pas d'une autre feature)
+[ ] Prettier configuré, Husky + lint-staged bloquent un commit non conforme
+[ ] commitlint impose les commits conventionnels
+[ ] TypeScript strict activé partout
+[ ] Dependabot ou Renovate configuré","1. Configurer ESLint/Prettier partagés
+2. Installer Husky, lint-staged, commitlint
+3. Activer strict
+4. Configurer Renovate"
+"TEC-03","TEC - Fondations techniques","Environnement local Docker Compose","Technique","MVP","1","S3–S4","3","DevOps","TEC-01","En tant que développeur, je veux lancer toute l'infrastructure locale en une commande.","[ ] docker compose up démarre PostgreSQL, Redis, Mailpit et MinIO avec healthchecks
+[ ] Volumes persistants, réseaux séparés
+[ ] Aucun mot de passe réel dans les fichiers versionnés
+[ ] Documentation de démarrage en 5 commandes","1. Écrire docker-compose.yml
+2. Ajouter healthchecks
+3. Créer .env.example
+4. Documenter"
+"TEC-04","TEC - Fondations techniques","Bootstrap NestJS : configuration, journaux, erreurs, sécurité de base","Technique","MVP","1","S3–S4","8","Backend","TEC-01, TEC-03","En tant que développeur, je veux une API de base sécurisée et observable afin d'y greffer les modules métier.","[ ] La configuration est validée au démarrage : une variable manquante empêche le démarrage
+[ ] Helmet, CORS en liste blanche, cookie-parser, ValidationPipe (whitelist, forbidNonWhitelisted, transform) actifs
+[ ] Préfixe /api/v1, rate limiting global stocké dans Redis
+[ ] Filtre d'exception global : format d'erreur unique (statusCode, code, message, errors, requestId, timestamp)
+[ ] Logs pino structurés avec requestId et masquage des champs sensibles
+[ ] Arrêt propre (shutdown hooks) et taille de corps limitée","1. Créer l'application et le module de configuration
+2. Brancher helmet, CORS, pipes, throttler
+3. Écrire le filtre d'erreurs et l'intercepteur requestId
+4. Configurer pino
+5. Tests unitaires du filtre"
+"TEC-05","TEC - Fondations techniques","Health checks et documentation OpenAPI","Technique","MVP","1","S3–S4","2","Backend","TEC-04","En tant qu'exploitant, je veux savoir si l'API est saine et la documenter automatiquement.","[ ] /api/v1/health/live et /ready (base de données + Redis) fonctionnels
+[ ] Swagger accessible en développement, désactivé ou protégé en production
+[ ] Schéma OpenAPI exporté en fichier pour la génération du client Angular","1. Installer @nestjs/terminus
+2. Configurer Swagger
+3. Exporter openapi.json en script"
+"TEC-06","TEC - Fondations techniques","Concevoir le schéma Prisma complet et les migrations","Technique","MVP","1","S3–S4","8","Backend","TEC-03","En tant que développeur, je veux un schéma de données complet afin de construire tous les modules sans refonte.","[ ] Modèles : User, Role, Permission, RefreshToken, Address, Category, Brand, Product, ProductVariant, ProductImage, Cart, CartItem, Order, OrderItem, Payment, Shipment, DeliveryZone, Coupon, Review, Wishlist, StockMovement, AuditLog, Setting
+[ ] Identifiants UUID, createdAt / updatedAt, suppression logique (deletedAt) pour produits, utilisateurs, commandes
+[ ] OrderItem conserve des instantanés (nom, pointure, couleur, prix)
+[ ] Index sur slug, SKU, statut, dates ; contraintes d'unicité (sku, email, référence de commande)
+[ ] Montants stockés en entiers (XAF)
+[ ] Migration initiale appliquée sans erreur sur base vide","1. Modéliser les entités et enums (OrderStatus, PaymentStatus, ProductStatus, UserStatus)
+2. Ajouter index et contraintes
+3. Générer la migration
+4. Documenter le schéma (Mermaid)"
+"TEC-07","TEC - Fondations techniques","Données de démonstration (seed)","Technique","MVP","1","S3–S4","3","Backend","TEC-06","En tant que développeur, je veux des données réalistes pour développer et démontrer sans saisie manuelle.","[ ] Rôles SUPER_ADMIN, ADMIN, ORDER_MANAGER, STOCK_MANAGER, LIVREUR, CUSTOMER créés
+[ ] Un super admin de développement dont le mot de passe vient des variables d'environnement
+[ ] 6 catégories, 4 marques, 20 produits avec variantes (pointures 36–46, 3 couleurs) et zones de livraison de test
+[ ] Le seed refuse de s'exécuter en production","1. Écrire seed.ts
+2. Garde-fou NODE_ENV
+3. Scripts db:seed et db:reset"
+"TEC-08","TEC - Fondations techniques","Initialiser les applications Angular (boutique SSR et admin SPA)","Technique","MVP","2","S5–S6","5","Frontend","TEC-01","En tant que développeur, je veux deux applications Angular configurées selon les bonnes pratiques modernes.","[ ] Composants standalone, OnPush, Signals, nouvelle syntaxe @if / @for / @defer
+[ ] Boutique avec SSR et hydratation ; admin en SPA
+[ ] Lazy loading de toutes les fonctionnalités
+[ ] Structure core / layout / features respectée dans les deux applications
+[ ] Build de production réussi pour les deux applications","1. Créer les applications
+2. Activer SSR + hydratation
+3. Configurer routes lazy
+4. Mettre en place les règles de frontières"
+"TEC-09","TEC - Fondations techniques","Générer le client API Angular depuis OpenAPI","Technique","MVP","2","S5–S6","3","Frontend","TEC-05, TEC-08","En tant que développeur frontend, je veux des types et services générés afin d'éviter toute désynchronisation avec l'API.","[ ] Commande pnpm api:generate produit le client dans libs/data-access
+[ ] Les types générés sont utilisés par les stores et services
+[ ] La CI échoue si le client généré n'est pas à jour
+[ ] Documentation de la procédure","1. Choisir le générateur
+2. Écrire le script
+3. Ajouter la vérification en CI"
+"TEC-10","TEC - Fondations techniques","Intégrer les design tokens et les composants UI de base","Technique","MVP","2","S5–S6","5","Frontend","DSG-02, TEC-08","En tant que développeur, je veux une bibliothèque de composants fidèle au design afin de construire rapidement des pages cohérentes.","[ ] libs/design-tokens expose les variables CSS du design validé
+[ ] Composants : Button, Input, Badge, Toast, Skeleton, ProductCard, PriceTag, SizeSelector, Modal, Tabs
+[ ] Chaque composant gère ses états et est accessible au clavier
+[ ] Tests de composants et documentation (Storybook si retenu)","1. Importer les tokens
+2. Développer les composants
+3. Écrire les tests
+4. Documenter"
+"TEC-11","TEC - Fondations techniques","Pipeline d'intégration continue GitHub Actions","DevOps","MVP","1","S3–S4","5","DevOps","TEC-02","En tant qu'équipe, nous voulons que chaque modification soit vérifiée automatiquement.","[ ] Étapes : installation avec cache, lint, types, tests unitaires, build, tests e2e, audit des dépendances
+[ ] La CI échoue si une étape échoue
+[ ] Analyse de secrets accidentellement versionnés
+[ ] Branche principale protégée : pull request relue + CI verte obligatoires","1. Écrire ci.yml
+2. Configurer services PostgreSQL / Redis pour e2e
+3. Protéger la branche"
+"TEC-12","TEC - Fondations techniques","Noyau Angular : intercepteurs, gardes, session, gestion d'erreurs","Technique","MVP","2","S5–S6","8","Frontend","TEC-08, AUT-02","En tant qu'utilisateur, je veux une session fiable et des messages d'erreur compréhensibles.","[ ] Intercepteur d'authentification : jeton d'accès en mémoire, rafraîchissement unique en file d'attente sur 401, requêtes rejouées
+[ ] Intercepteurs : erreurs (toasts en français), chargement, X-Request-Id
+[ ] Gardes fonctionnelles authGuard, roleGuard, guestGuard
+[ ] Session restaurée par rafraîchissement silencieux au démarrage
+[ ] Aucun jeton dans localStorage ou sessionStorage","1. Écrire les intercepteurs et gardes
+2. Service de session à signaux
+3. Gestion globale des erreurs (ErrorHandler)
+4. Tests unitaires"
+"TEC-13","TEC - Fondations techniques","Utilitaires transverses : SEO, prix FCFA, téléphone +237, locale","Technique","MVP","3","S7–S8","3","Frontend","TEC-08","En tant qu'utilisateur, je veux des prix et numéros affichés au format local et des pages bien référencées.","[ ] Pipe fcfa : 15000 s'affiche « 15 000 FCFA » (sans décimale)
+[ ] Validateur téléphone +237 avec message d'erreur clair
+[ ] Service SEO : titre, description, Open Graph, URL canonique par page
+[ ] Locale fr-CM et structure de traduction prêtes (aucun texte en dur)","1. Créer pipe et validateur
+2. Créer le service SEO
+3. Configurer l'i18n
+4. Tests"
+"AUT-01","AUT - Authentification et sécurité","API d'inscription client","Fonctionnalité","MVP","1","S3–S4","3","Backend","TEC-06","En tant que visiteur, je veux créer un compte avec mon téléphone ou mon e-mail afin de suivre mes commandes.","[ ] POST /auth/register valide les données (téléphone +237, e-mail, mot de passe d'au moins 10 caractères)
+[ ] Mot de passe haché avec Argon2id, jamais journalisé
+[ ] Refus des mots de passe courants
+[ ] Doublon d'e-mail ou de téléphone : réponse neutre, sans révéler si le compte existe
+[ ] Consentement enregistré (date, version des CGV)","1. DTO et validation
+2. Service d'inscription
+3. Tests unitaires et e2e"
+"AUT-02","AUT - Authentification et sécurité","API de connexion, JWT court et rafraîchissement par cookie","Sécurité","MVP","1","S3–S4","8","Backend","AUT-01","En tant qu'utilisateur, je veux rester connecté de façon sûre sans que mes jetons soient exposés.","[ ] Jeton d'accès JWT d'une durée de 10 à 15 minutes
+[ ] Refresh token opaque, stocké haché en base, envoyé en cookie HttpOnly, Secure, SameSite
+[ ] Rotation du refresh token à chaque usage
+[ ] POST /auth/login, /auth/refresh, GET /me fonctionnels
+[ ] Les secrets JWT proviennent de la configuration, jamais du code","1. Service de jetons
+2. Entité RefreshToken (famille, expiration, révocation)
+3. Contrôleur auth
+4. Tests e2e du cycle complet"
+"AUT-03","AUT - Authentification et sécurité","Déconnexion, révocation et détection de réutilisation de jeton","Sécurité","MVP","1","S3–S4","5","Backend","AUT-02","En tant qu'utilisateur, je veux que le vol d'un jeton soit détecté et neutralisé.","[ ] POST /auth/logout révoque la session et efface le cookie
+[ ] Réutilisation d'un refresh token déjà utilisé : toute la famille de jetons est révoquée
+[ ] Un événement d'audit est créé lors d'une réutilisation détectée
+[ ] Test e2e prouvant la révocation","1. Implémenter la révocation par famille
+2. Brancher l'audit
+3. Tests"
+"AUT-04","AUT - Authentification et sécurité","Protection contre la force brute et les abus d'authentification","Sécurité","MVP","1","S3–S4","3","Backend","AUT-02","En tant que propriétaire, je veux empêcher les attaques par essais répétés sur les comptes.","[ ] Limite stricte de requêtes sur login, register, forgot-password (par IP et par compte)
+[ ] Verrouillage temporaire du compte après échecs répétés (stocké dans Redis)
+[ ] Messages d'erreur identiques pour mauvais identifiant et mauvais mot de passe
+[ ] Réponse 429 explicite avec délai avant nouvel essai","1. Configurer throttler par route
+2. Compteur d'échecs Redis
+3. Tests"
+"AUT-05","AUT - Authentification et sécurité","Contrôle d'accès par rôles (RBAC) et refus par défaut","Sécurité","MVP","2","S5–S6","5","Backend","AUT-02, TEC-06","En tant que propriétaire, je veux que chaque rôle n'accède qu'à ce qui le concerne.","[ ] Garde JWT globale : toute route est protégée sauf si marquée @Public()
+[ ] Décorateur @Roles() et RolesGuard vérifiant les droits côté serveur
+[ ] Matrice de permissions du cahier des charges appliquée (LIVREUR, STOCK_MANAGER, ORDER_MANAGER, ADMIN, SUPER_ADMIN)
+[ ] Test prouvant 401 sans jeton et 403 sans le bon rôle
+[ ] Un client ne peut lire que ses propres ressources (test IDOR)","1. Écrire guards et décorateurs
+2. Appliquer sur les routes existantes
+3. Tests e2e de permissions"
+"AUT-06","AUT - Authentification et sécurité","Mot de passe oublié et réinitialisation","Fonctionnalité","MVP","5","S11–S12","5","Backend + Frontend","AUT-01, NTF-02","En tant que client, je veux réinitialiser mon mot de passe sans exposer mon compte.","[ ] Demande par e-mail ou téléphone : réponse identique que le compte existe ou non
+[ ] Lien ou code à usage unique, durée courte, invalidé après usage
+[ ] Toutes les sessions actives sont révoquées après changement du mot de passe
+[ ] Limitation de débit appliquée
+[ ] Écrans conformes aux maquettes (P16)","1. Endpoints et jetons de réinitialisation
+2. Envoi via file de notifications
+3. Écrans Angular
+4. Tests"
+"AUT-07","AUT - Authentification et sécurité","Authentification à deux facteurs (TOTP) pour l'administration","Sécurité","MVP","5","S11–S12","8","Backend + Frontend","AUT-02, BO-01","En tant qu'administrateur, je veux un second facteur afin que le vol de mon mot de passe ne suffise pas.","[ ] Activation par QR code, secret chiffré en base
+[ ] Codes de secours à usage unique générés et affichés une seule fois
+[ ] 2FA obligatoire pour ADMIN et SUPER_ADMIN avant tout accès au back-office
+[ ] Réinitialisation du 2FA réservée au SUPER_ADMIN et auditée
+[ ] Tolérance de décalage d'horloge limitée","1. Service TOTP (otplib)
+2. Chiffrement du secret
+3. Écrans d'activation et de vérification
+4. Tests e2e"
+"AUT-08","AUT - Authentification et sécurité","Journal d'audit des actions sensibles","Sécurité","MVP","1","S3–S4","5","Backend","TEC-06","En tant que propriétaire, je veux savoir qui a modifié quoi et quand afin de détecter erreurs et abus.","[ ] Enregistrement (utilisateur, action, entité, avant, après, IP, date) pour : prix, stocks, statuts de commande, rôles, connexions admin, paramètres
+[ ] Journal en lecture seule : aucune API de modification ou de suppression
+[ ] Les données sensibles (mots de passe, jetons) ne sont jamais enregistrées
+[ ] Consultation filtrable par utilisateur, action, date","1. Service et intercepteur d'audit
+2. Endpoint de lecture protégé
+3. Tests"
+"AUT-09","AUT - Authentification et sécurité","Écrans client : connexion et inscription","Fonctionnalité","MVP","3","S7–S8","5","Frontend","AUT-02, DSG-05, TEC-12","En tant que visiteur, je veux me connecter ou m'inscrire facilement depuis mon téléphone.","[ ] Écrans conformes aux maquettes P14 et P15
+[ ] Validation en direct (téléphone +237, force du mot de passe) et messages en français
+[ ] Affichage / masquage du mot de passe, claviers adaptés (tel, email)
+[ ] Après connexion, redirection vers la page d'origine
+[ ] Accessibilité clavier et lecteur d'écran vérifiée","1. Formulaires réactifs typés
+2. Store de session
+3. Tests de composants"
+"AUT-10","AUT - Authentification et sécurité","Écrans admin : connexion, 2FA et déconnexion sur inactivité","Sécurité","MVP","5","S11–S12","5","Frontend","AUT-07, DSG-06","En tant qu'administrateur, je veux une connexion sécurisée et une session qui se ferme toute seule.","[ ] Écran de connexion et saisie du code à 6 chiffres conformes à A01
+[ ] Déconnexion automatique après 30 minutes d'inactivité avec avertissement préalable
+[ ] Verrouillage de l'interface après expiration de session
+[ ] Aucun jeton accessible depuis le stockage du navigateur","1. Écrans
+2. Service d'inactivité
+3. Tests"
+"AUT-11","AUT - Authentification et sécurité","Intégration d'un CAPTCHA sur les formulaires sensibles","Sécurité","MVP","2","S5–S6","3","Backend + Frontend","TEC-04","En tant que propriétaire, je veux limiter les robots sur inscription, connexion, commande et contact.","[ ] CAPTCHA invisible (Turnstile ou équivalent) sur inscription, connexion, commande, contact
+[ ] Jeton vérifié côté serveur avant traitement
+[ ] Dégradation gracieuse si le service est indisponible, avec alerte
+[ ] Aucune clé secrète exposée côté client","1. Choisir le prestataire
+2. Composant Angular
+3. Garde backend
+4. Tests"
+"CAT-01","CAT - Catalogue et fiche produit","API catégories et marques","Fonctionnalité","MVP","1","S3–S4","3","Backend","TEC-06","En tant que client, je veux naviguer par catégories et marques.","[ ] GET /categories renvoie l'arbre hiérarchique avec compteurs de produits publiés
+[ ] GET /brands disponible
+[ ] Réponses mises en cache dans Redis et invalidées à la modification
+[ ] Seuls les éléments actifs sont exposés publiquement","1. Module catalog (catégories, marques)
+2. Cache Redis
+3. Tests"
+"CAT-02","CAT - Catalogue et fiche produit","API liste de produits : filtres, tri, pagination, recherche simple","Fonctionnalité","MVP","2","S5–S6","8","Backend","TEC-06, CAT-01","En tant que client, je veux filtrer et trier le catalogue afin de trouver rapidement ma pointure et mon style.","[ ] GET /products accepte category, size, color, brand, minPrice, maxPrice, inStock, promo, sort, q, page, limit (max 50)
+[ ] Le filtre de pointure ne retient que les variantes réellement en stock
+[ ] Réponse avec meta (total, pages) et compteurs par filtre
+[ ] Requêtes paramétrées uniquement, index adaptés, temps de réponse p95 < 300 ms sur 1 000 produits
+[ ] Seuls les produits publiés sont visibles","1. Construire les requêtes Prisma
+2. Ajouter les index
+3. Cache court
+4. Tests unitaires et e2e"
+"CAT-03","CAT - Catalogue et fiche produit","API fiche produit avec variantes et disponibilités","Fonctionnalité","MVP","2","S5–S6","5","Backend","CAT-02","En tant que client, je veux voir toutes les couleurs et pointures disponibles d'un produit.","[ ] GET /products/:slug renvoie description, images par couleur, variantes, prix et prix promo actif
+[ ] Le stock exposé est le stock disponible (physique moins réservé), jamais le stock brut interne
+[ ] Produits similaires renvoyés (même catégorie, gamme de prix)
+[ ] 404 pour un produit non publié ou inexistant","1. Service produit
+2. Calcul du prix promo selon les dates
+3. Tests"
+"CAT-04","CAT - Catalogue et fiche produit","API d'administration des produits et variantes","Fonctionnalité","MVP","2","S5–S6","8","Backend","CAT-03, AUT-05, AUT-08","En tant que gérant, je veux créer et modifier des produits avec leurs variantes sans intervention technique.","[ ] POST/PATCH/DELETE (archivage) /admin/products et PUT /admin/products/:id/variants
+[ ] Génération de variantes couleurs × pointures avec SKU unique automatique
+[ ] Statuts Brouillon / Publié / Archivé, slug unique, duplication d'un produit
+[ ] Accès réservé à STOCK_MANAGER, ADMIN, SUPER_ADMIN
+[ ] Chaque modification de prix ou de stock est inscrite au journal d'audit","1. DTO et validation
+2. Service avec transactions
+3. Génération des SKU
+4. Tests"
+"CAT-05","CAT - Catalogue et fiche produit","Téléversement sécurisé des images produits","Sécurité","MVP","2","S5–S6","5","Backend","TEC-03, AUT-05","En tant que gérant, je veux téléverser des photos sans risque pour le site.","[ ] URL signée de téléversement (POST /admin/media/presign)
+[ ] Contrôle du type réel du fichier (signature) et de la taille maximale
+[ ] Fichier renommé, stocké hors de tout dossier exécutable
+[ ] Vignettes et formats WebP générés automatiquement
+[ ] Un fichier non image est refusé avec un message clair","1. Interface StorageProvider (local, S3, Cloudinary)
+2. Validation et traitement d'images
+3. Tests"
+"CAT-06","CAT - Catalogue et fiche produit","Guides des tailles : données et API","Fonctionnalité","MVP","2","S5–S6","3","Backend","TEC-06","En tant que client, je veux un guide des tailles fiable afin de limiter les erreurs de pointure.","[ ] Table de conversion EU / US / UK / cm pour homme, femme et enfant
+[ ] GET /size-guides/:categoryId disponible
+[ ] Contenu modifiable par l'administration
+[ ] Données initiales fournies par le propriétaire et vérifiées","1. Modèle et seed
+2. Endpoint
+3. Tests"
+"CAT-07","CAT - Catalogue et fiche produit","Page d'accueil de la boutique","Fonctionnalité","MVP","3","S7–S8","5","Frontend","DSG-03, CAT-02, TEC-10","En tant que visiteur arrivant de Facebook, je veux comprendre l'offre en quelques secondes.","[ ] Conforme à la maquette P01 : bannière, catégories en pastilles, Nouveautés, Meilleures ventes, Promotions, réassurance, lien Facebook
+[ ] Rendu côté serveur, image principale préchargée
+[ ] LCP inférieur à 2,5 s en 4G simulée
+[ ] Squelettes de chargement et état d'erreur avec action de reprise","1. Composants de sections
+2. Appels API via le client généré
+3. Tests de composants
+4. Mesure Lighthouse"
+"CAT-08","CAT - Catalogue et fiche produit","Page catalogue avec filtres synchronisés dans l'URL","Fonctionnalité","MVP","3","S7–S8","8","Frontend","CAT-02, DSG-03, TEC-10","En tant que client, je veux filtrer par pointure, couleur et prix, et pouvoir partager le résultat.","[ ] Grille responsive : 2 colonnes mobile, 3 à 4 desktop
+[ ] Filtres et tri synchronisés avec les paramètres d'URL ; retour arrière fonctionnel
+[ ] Filtres dans un tiroir sur mobile avec bouton « Voir N résultats »
+[ ] Puces de filtres actifs supprimables, bouton de réinitialisation
+[ ] État « Aucun résultat » avec suggestions ; squelettes de chargement
+[ ] Rendu serveur de la première page de résultats","1. Store du catalogue (signals)
+2. Composants de filtres
+3. Pagination ou « Voir plus »
+4. Tests e2e"
+"CAT-09","CAT - Catalogue et fiche produit","Recherche de produits (version de base)","Fonctionnalité","MVP","4","S9–S10","3","Frontend","CAT-02","En tant que client, je veux rechercher une chaussure par nom, marque ou catégorie.","[ ] Champ avec temporisation de 300 ms et annulation des requêtes obsolètes
+[ ] Page de résultats conforme à P03
+[ ] État sans résultat avec suggestions
+[ ] Champ accessible (label, rôle de recherche, clavier)","1. Composant de recherche
+2. Store
+3. Tests"
+"CAT-10","CAT - Catalogue et fiche produit","Fiche produit : galerie, couleurs, pointures, achat","Fonctionnalité","MVP","3","S7–S8","13","Frontend","CAT-03, DSG-03, TEC-10","En tant que client, je veux choisir ma couleur et ma pointure en étant sûr de ce que j'achète.","[ ] Galerie multi-angles : miniatures, glissement tactile, zoom
+[ ] Pastilles de couleur qui mettent à jour galerie, prix et disponibilité
+[ ] Pointures épuisées grisées et barrées ; mention « Plus que X » sous le seuil
+[ ] Bouton « Ajouter au panier » inactif tant que couleur et pointure ne sont pas choisies, avec message explicite
+[ ] Barre d'achat fixe mobile (panier + WhatsApp)
+[ ] Onglets Description, Livraison, Retours ; produits similaires
+[ ] Rendu serveur avec métadonnées et données structurées schema.org Product","1. Composants (galerie, sélecteurs)
+2. Store du produit
+3. Intégration SEO
+4. Tests e2e du choix de variante"
+"CAT-11","CAT - Catalogue et fiche produit","Guide des tailles (modale) et partage du produit","Fonctionnalité","MVP","4","S9–S10","3","Frontend","CAT-06, CAT-10","En tant que client, je veux savoir quelle pointure choisir et partager un produit à un proche.","[ ] Modale avec tableau de conversion, méthode de mesure en 3 étapes illustrée, conseil « entre deux tailles »
+[ ] Boutons de partage Facebook, WhatsApp, copie du lien
+[ ] Aperçu Open Graph correct (image, titre, prix) vérifié avec l'outil de débogage de partage Facebook
+[ ] Fonctionnement au clavier et fermeture par Échap","1. Composant modale
+2. Service de partage
+3. Tests"
+"CAT-12","CAT - Catalogue et fiche produit","Prix promotionnels programmés","Fonctionnalité","MVP","4","S9–S10","3","Backend","CAT-04","En tant que gérant, je veux programmer une promotion afin qu'elle s'active et s'arrête toute seule.","[ ] Prix promo avec dates de début et de fin par produit
+[ ] Le prix appliqué est calculé côté serveur à l'instant de la requête
+[ ] Affichage du prix barré et du pourcentage d'économie côté client
+[ ] Un prix promo supérieur au prix normal est refusé","1. Logique de prix effectif
+2. Validation
+3. Tests de bornes de dates"
+"STK-01","STK - Stock et inventaire","Décrément de stock atomique et protection contre la survente","Fonctionnalité","MVP","2","S5–S6","8","Backend","TEC-06, CAT-04","En tant que propriétaire, je veux que deux clients ne puissent jamais acheter la même dernière paire.","[ ] Le décrément s'exécute dans la même transaction que la création de commande
+[ ] Mise à jour conditionnelle (stock >= quantité) : si elle échoue, la commande est refusée avec un message clair
+[ ] Le stock ne devient jamais négatif
+[ ] Un test de concurrence (deux requêtes simultanées sur la dernière paire) montre qu'une seule réussit
+[ ] Chaque décrément crée un mouvement de stock traçable","1. Service d'inventaire
+2. Requête atomique ou champ de version
+3. Tests de concurrence automatisés"
+"STK-02","STK - Stock et inventaire","Ajustements manuels de stock avec motif et historique","Fonctionnalité","MVP","4","S9–S10","5","Backend","STK-01, AUT-05","En tant que gestionnaire de stock, je veux corriger un stock en expliquant pourquoi.","[ ] POST /admin/variants/:id/stock-adjust exige un motif (réception, inventaire, casse, retour, autre)
+[ ] Chaque ajustement crée un StockMovement (avant, après, utilisateur, date, commande liée)
+[ ] GET de l'historique filtrable par variante et par période
+[ ] Réservé à STOCK_MANAGER, ADMIN, SUPER_ADMIN ; action inscrite au journal d'audit","1. Service et endpoints
+2. Validation du motif
+3. Tests"
+"STK-03","STK - Stock et inventaire","Alertes de stock bas","Fonctionnalité","MVP","3","S7–S8","3","Backend","STK-01, NTF-01","En tant que gérant, je veux être prévenu avant la rupture d'une pointure.","[ ] Seuil bas configurable par variante, valeur globale par défaut dans les paramètres
+[ ] Une seule alerte est envoyée jusqu'au réapprovisionnement (pas de spam)
+[ ] L'alerte apparaît dans le tableau de bord et part par notification interne
+[ ] L'événement stock.low est émis","1. Événement de domaine
+2. Abonné de notifications
+3. Tests"
+"STK-04","STK - Stock et inventaire","Réservation temporaire de stock pendant le paiement en ligne","Fonctionnalité","V2","8","S17–S18","8","Backend","STK-01, PAY-03","En tant que client payant en ligne, je veux que ma paire soit réservée pendant que je paie.","[ ] Réservation de 10 à 15 minutes à l'initiation du paiement
+[ ] Libération automatique si le paiement n'aboutit pas (tâche planifiée)
+[ ] Stock disponible = physique − réservé, partout dans l'application
+[ ] Un paiement tardif sur une réservation expirée est traité correctement (remboursement ou re-vérification)","1. Champ reservedStock
+2. Tâche planifiée de libération
+3. Tests de cas limites"
+"STK-05","STK - Stock et inventaire","Écran admin de gestion du stock","Fonctionnalité","MVP","4","S9–S10","5","Frontend","STK-02, DSG-06","En tant que gestionnaire de stock, je veux voir et corriger les stocks rapidement, y compris sur mobile.","[ ] Vue par variante avec filtres (rupture, stock bas, catégorie) et recherche
+[ ] Ajustement rapide avec motif obligatoire
+[ ] Historique des mouvements consultable
+[ ] Export CSV de l'état du stock
+[ ] Affichage en cartes sur mobile","1. Écrans et store
+2. Export CSV
+3. Tests"
+"CRT-01","CRT - Panier","API de validation du panier","Fonctionnalité","MVP","2","S5–S6","5","Backend","CAT-03","En tant que client, je veux voir des prix et des disponibilités exacts avant de commander.","[ ] POST /cart/validate recalcule prix, promotions et stock de chaque ligne
+[ ] Réponse listant les écarts (prix changé, stock insuffisant, produit retiré)
+[ ] Aucun prix fourni par le client n'est jamais utilisé
+[ ] Quantité maximale par ligne limitée au stock disponible","1. Service de panier
+2. Tests de cas d'écart"
+"CRT-02","CRT - Panier","Store de panier Angular persistant (compatible SSR)","Fonctionnalité","MVP","3","S7–S8","5","Frontend","TEC-12, CRT-01","En tant que visiteur, je veux que mon panier soit conservé quand je ferme ou recharge la page.","[ ] Panier invité conservé dans localStorage avec protection pour le rendu serveur
+[ ] Ajout, suppression, modification de quantité via signals
+[ ] Revalidation par l'API à l'ouverture du panier et du tunnel
+[ ] Aucune donnée sensible stockée
+[ ] Message clair en cas de changement de prix ou de rupture","1. Store à signaux
+2. Persistance sûre
+3. Tests unitaires"
+"CRT-03","CRT - Panier","Mini-panier (tiroir) après ajout","Fonctionnalité","MVP","3","S7–S8","3","Frontend","CRT-02, DSG-03","En tant que client, je veux confirmer visuellement l'ajout et pouvoir continuer ou commander.","[ ] Tiroir latéral avec résumé, nombre d'articles dans l'en-tête mis à jour
+[ ] Boutons « Continuer mes achats » et « Commander »
+[ ] Focus géré et fermeture par Échap pour l'accessibilité","1. Composant
+2. Tests"
+"CRT-04","CRT - Panier","Page panier","Fonctionnalité","MVP","3","S7–S8","5","Frontend","CRT-02, DSG-03","En tant que client, je veux vérifier mon panier avant de commander.","[ ] Lignes avec image, nom, couleur, pointure, prix, quantité (bornée au stock), suppression
+[ ] Récapitulatif : sous-total, remise, livraison estimée, total en FCFA
+[ ] Bandeau de réassurance : paiement à la livraison, échange de pointure
+[ ] État de panier vide avec action de retour au catalogue","1. Page et composants
+2. Tests e2e"
+"CRT-05","CRT - Panier","Panier serveur et fusion à la connexion","Fonctionnalité","V2","8","S17–S18","5","Backend + Frontend","CRT-02, AUT-02","En tant que client connecté, je veux retrouver mon panier sur un autre appareil.","[ ] GET / PUT /cart pour les utilisateurs connectés
+[ ] À la connexion, le panier invité est fusionné avec le panier serveur sans doublon
+[ ] Les lignes devenues invalides sont signalées, pas silencieusement supprimées","1. Endpoints
+2. Logique de fusion
+3. Tests"
+"ORD-01","ORD - Commande et suivi","API de création de commande (idempotente, transactionnelle, sécurisée)","Fonctionnalité","MVP","3","S7–S8","13","Backend","CRT-01, STK-01, AUT-11","En tant que client, je veux passer commande de façon fiable, même avec une connexion instable.","[ ] POST /orders (invité ou connecté) exige un en-tête Idempotency-Key : un renvoi ne crée pas de doublon
+[ ] Prix, remises, frais de livraison et total recalculés côté serveur uniquement
+[ ] Création de la commande, des lignes avec instantanés et décrément du stock dans une seule transaction
+[ ] Numéro de commande lisible et non devinable (ex. BRN-2610-7K3F)
+[ ] Limites anti-abus par numéro de téléphone et par IP ; CAPTCHA vérifié
+[ ] Mode paiement à la livraison : statut initial PENDING_CONFIRMATION
+[ ] Événement order.created émis pour les notifications","1. DTO et validation stricte
+2. Service de commande transactionnel
+3. Générateur de référence
+4. Tests unitaires, e2e et de concurrence"
+"ORD-02","ORD - Commande et suivi","Machine à états des statuts de commande","Fonctionnalité","MVP","4","S9–S10","5","Backend","ORD-01","En tant que gérant, je veux que les commandes suivent un parcours cohérent sans transition impossible.","[ ] Statuts : PENDING_CONFIRMATION, AWAITING_PAYMENT, CONFIRMED, PAID, PREPARING, SHIPPED, DELIVERED, DELIVERY_FAILED, CANCELLED, RETURN_REQUESTED, RETURNED, REFUNDED
+[ ] Seules les transitions du cahier des charges sont acceptées ; les autres renvoient 409
+[ ] PATCH /admin/orders/:id/status vérifie le rôle (LIVREUR limité aux statuts de livraison)
+[ ] Chaque changement est horodaté, attribué et audité","1. Table des transitions
+2. Service de workflow
+3. Tests de toutes les transitions autorisées et interdites"
+"ORD-03","ORD - Commande et suivi","Tunnel de commande en 3 étapes (écrans)","Fonctionnalité","MVP","4","S9–S10","13","Frontend","ORD-01, DSG-04, CRT-04","En tant que client, je veux commander en moins de deux minutes sur mobile, sans créer de compte.","[ ] Étapes Coordonnées, Livraison, Paiement avec barre de progression
+[ ] Champs : nom, téléphone +237 validé, e-mail facultatif, ville, quartier, point de repère
+[ ] Modes de livraison avec frais et délais calculés par l'API
+[ ] Paiement à la livraison sélectionné par défaut ; Mobile Money indiqué « bientôt » tant que V2 n'est pas livrée
+[ ] Case CGV obligatoire, liens vers retours et confidentialité
+[ ] Bouton désactivé pendant l'envoi (anti-double soumission) + clé d'idempotence
+[ ] Brouillon conservé en cas de rechargement ; CAPTCHA invisible
+[ ] Erreurs de validation affichées à côté du champ avec la façon de corriger","1. Formulaires typés par étape
+2. Store du tunnel
+3. Intégration API
+4. Tests e2e du parcours complet"
+"ORD-04","ORD - Commande et suivi","Page de confirmation de commande et lien WhatsApp","Fonctionnalité","MVP","4","S9–S10","5","Frontend","ORD-03","En tant que client, je veux être certain que ma commande est enregistrée et pouvoir la confirmer sur WhatsApp.","[ ] Numéro de commande bien visible et copiable
+[ ] Récapitulatif des articles, du total, de l'adresse et des prochaines étapes
+[ ] Bouton « Confirmer sur WhatsApp » avec message prérempli contenant la référence
+[ ] Lien vers la page de suivi
+[ ] La page n'est accessible qu'avec le jeton de la commande (pas d'énumération)","1. Page
+2. Génération du lien WhatsApp
+3. Tests"
+"ORD-05","ORD - Commande et suivi","API de suivi public de commande","Fonctionnalité","MVP","4","S9–S10","3","Backend","ORD-02","En tant que client, je veux suivre ma commande avec mon numéro et mon téléphone.","[ ] POST /orders/track exige référence et téléphone
+[ ] Réponse identique, sans fuite d'information, que la référence ou le téléphone soit faux
+[ ] Limitation de débit stricte contre l'énumération
+[ ] Seules les informations utiles sont renvoyées (statuts, articles, pas de données de contact complètes)","1. Endpoint
+2. Tests de non-fuite d'information"
+"ORD-06","ORD - Commande et suivi","Page de suivi de commande","Fonctionnalité","MVP","4","S9–S10","3","Frontend","ORD-05, DSG-04","En tant que client, je veux voir où en est ma commande.","[ ] Formulaire numéro + téléphone, puis chronologie des statuts
+[ ] Bouton d'aide WhatsApp contextualisé avec la référence
+[ ] Message d'erreur neutre en cas de non-correspondance
+[ ] Lien vers la demande d'échange pour une commande livrée (V2)","1. Page et composant timeline
+2. Tests"
+"ORD-07","ORD - Commande et suivi","Annulation de commande avec remise en stock","Fonctionnalité","MVP","5","S11–S12","5","Backend","ORD-02, STK-02","En tant que gestionnaire de commandes, je veux annuler une commande et récupérer le stock automatiquement.","[ ] POST /admin/orders/:id/cancel exige un motif
+[ ] Le stock des lignes est réintégré dans la même transaction avec mouvement tracé
+[ ] Annulation impossible après expédition (409)
+[ ] Action auditée et notifiée au client","1. Service d'annulation
+2. Tests de remise en stock"
+"ORD-08","ORD - Commande et suivi","Création manuelle de commande (ventes Facebook / WhatsApp)","Fonctionnalité","MVP","5","S11–S12","5","Backend + Frontend","ORD-01, BO-01","En tant que gérant, je veux enregistrer une vente prise par message afin de centraliser toutes mes commandes et mon stock.","[ ] Formulaire admin : client, articles (recherche produit, couleur, pointure), livraison, mode de paiement
+[ ] Même logique de prix, de stock et de numérotation que la commande en ligne
+[ ] Source « manuelle » enregistrée pour les statistiques
+[ ] Action auditée","1. Endpoint admin
+2. Écran de création
+3. Tests"
+"ORD-09","ORD - Commande et suivi","Retours et échanges de pointure","Fonctionnalité","V2","9","S19–S20","8","Backend + Frontend","ORD-02, STK-02","En tant que client, je veux échanger une pointure de façon simple et claire.","[ ] Demande possible depuis une commande livrée dans le délai affiché
+[ ] Statuts RETURN_REQUESTED, RETURNED, EXCHANGED, REFUNDED gérés
+[ ] Réception, contrôle puis remise en stock ou remplacement tracés
+[ ] Notification du client à chaque étape","1. Modèle de retour
+2. Écrans client et admin
+3. Tests"
+"PAY-01","PAY - Paiement","Paiement à la livraison avec confirmation avant expédition","Fonctionnalité","MVP","4","S9–S10","5","Backend","ORD-01, ORD-02","En tant que gérant, je veux limiter les faux ordres sur les commandes payées à la livraison.","[ ] Une commande en paiement à la livraison reste PENDING_CONFIRMATION jusqu'à confirmation par appel ou WhatsApp
+[ ] Impossible de passer en PREPARING sans confirmation enregistrée
+[ ] Seuil configurable de montant au-delà duquel une confirmation est obligatoire
+[ ] L'encaissement à la livraison est enregistré (codCollected) par le livreur ou le gestionnaire","1. Règle métier
+2. Champ d'encaissement
+3. Tests"
+"PAY-02","PAY - Paiement","Interface PaymentProvider et adaptateur factice","Technique","MVP","4","S9–S10","3","Backend","TEC-04","En tant que développeur, je veux pouvoir changer de prestataire de paiement sans refondre le code.","[ ] Interface PaymentProvider (initiate, verifyWebhook, refund, status) définie
+[ ] Adaptateur factice utilisable en développement et en test
+[ ] Sélection du prestataire par variable de configuration
+[ ] Aucune dépendance métier envers un prestataire précis","1. Définir l'interface
+2. Adaptateur factice
+3. Tests"
+"PAY-03","PAY - Paiement","Intégration Mobile Money : initiation du paiement","Fonctionnalité","V2","8","S17–S18","13","Backend","PAY-02, STK-04","En tant que client, je veux payer avec Mobile Money depuis mon téléphone.","[ ] POST /payments/initiate crée un paiement et appelle l'agrégateur officiel choisi
+[ ] Montant calculé côté serveur, jamais fourni par le client
+[ ] Statut AWAITING_PAYMENT avec expiration
+[ ] Environnement bac à sable utilisé pour tous les tests, clés de production séparées
+[ ] Timeouts et circuit breaker sur les appels externes","1. Adaptateur du prestataire réel
+2. Entité Payment
+3. Tests en bac à sable"
+"PAY-04","PAY - Paiement","Webhooks de paiement signés, idempotents et réconciliés","Sécurité","V2","8","S17–S18","8","Backend","PAY-03","En tant que propriétaire, je veux qu'un paiement ne soit validé que s'il est authentique.","[ ] Signature du webhook vérifiée ; une signature invalide est rejetée et journalisée
+[ ] Montant, devise et référence comparés à la commande
+[ ] Un même webhook reçu deux fois ne produit qu'un seul effet
+[ ] Seul le webhook (pas la redirection du navigateur) peut passer une commande en PAID
+[ ] Tâche de réconciliation périodique avec le relevé du prestataire","1. Contrôleur de webhook
+2. Stockage de l'empreinte du message
+3. Tâche de réconciliation
+4. Tests : succès, doublon, falsifié, montant erroné"
+"PAY-05","PAY - Paiement","Écrans d'attente, d'échec et de reprise du paiement","Fonctionnalité","V2","9","S19–S20","5","Frontend","PAY-03, DSG-04","En tant que client, je veux savoir où en est mon paiement et pouvoir réessayer.","[ ] Écran d'attente avec instruction claire et suivi du statut (SSE ou interrogation)
+[ ] Écrans d'échec et d'expiration avec « Réessayer » ou « Changer de mode »
+[ ] Aucun double paiement possible depuis l'interface
+[ ] Texte en français clair, sans jargon","1. Pages et store
+2. Tests e2e avec adaptateur factice"
+"PAY-06","PAY - Paiement","Remboursements et factures PDF","Fonctionnalité","V2","10","S21–S22","8","Backend + Frontend","PAY-04, ORD-09","En tant que gérant, je veux rembourser et fournir des factures conformes.","[ ] Remboursement total ou partiel traçable, lié au paiement d'origine
+[ ] Facture PDF générée à la demande avec numéro séquentiel et mentions requises
+[ ] Téléchargement depuis l'espace client et l'administration
+[ ] Mentions légales de facturation validées par le propriétaire","1. Service de remboursement
+2. Générateur PDF
+3. Écrans
+4. Tests"
+"PAY-07","PAY - Paiement","Paiement par carte bancaire via prestataire certifié","Fonctionnalité","V3","13","S27–S28","13","Backend + Frontend","PAY-04","En tant que client, je veux payer par carte en toute sécurité.","[ ] Intégration d'un prestataire certifié : aucune donnée de carte ne transite par nos serveurs
+[ ] Prise en charge de l'authentification forte du prestataire
+[ ] Webhooks et réconciliation identiques au Mobile Money
+[ ] Parcours testé en bac à sable avec cas d'échec","1. Choisir le prestataire
+2. Intégration
+3. Tests"
+"SHP-01","SHP - Livraison","Zones de livraison, tarifs et délais (API + administration)","Fonctionnalité","MVP","4","S9–S10","5","Backend + Frontend","TEC-06, BO-01","En tant que gérant, je veux définir où je livre, combien et en combien de temps.","[ ] CRUD des zones : villes couvertes, frais, délai estimé, modes proposés (domicile, point relais, retrait)
+[ ] Écran d'administration conforme à A10
+[ ] Zones inactives non proposées au client
+[ ] Modifications auditées","1. Modèle et API
+2. Écran admin
+3. Tests"
+"SHP-02","SHP - Livraison","API de devis de livraison","Fonctionnalité","MVP","4","S9–S10","3","Backend","SHP-01","En tant que client, je veux connaître les frais et le délai avant de valider.","[ ] POST /shipping/quote renvoie frais, délai et modes selon la ville
+[ ] Ville hors zone : message clair et alternative (contacter par WhatsApp)
+[ ] Les frais finaux de la commande viennent de cette même logique serveur","1. Service de devis
+2. Tests"
+"SHP-03","SHP - Livraison","Livreurs et assignation des commandes","Fonctionnalité","MVP","5","S11–S12","5","Backend + Frontend","SHP-01, ORD-02","En tant que gestionnaire, je veux assigner une commande à un livreur et suivre son état.","[ ] Création de comptes LIVREUR par le SUPER_ADMIN
+[ ] Assignation d'une commande à un livreur depuis le détail de la commande
+[ ] Un livreur ne voit que les commandes qui lui sont assignées (test IDOR)
+[ ] Historique d'assignation conservé","1. Modèle Shipment
+2. Endpoints
+3. Écrans
+4. Tests de permissions"
+"SHP-04","SHP - Livraison","Vue mobile « Mes livraisons du jour »","Fonctionnalité","MVP","5","S11–S12","5","Frontend","SHP-03, DSG-06","En tant que livreur, je veux voir mes livraisons du jour et les mettre à jour depuis mon téléphone.","[ ] Liste ordonnée avec adresse, point de repère, téléphone et montant à encaisser
+[ ] Boutons Appeler et WhatsApp
+[ ] Changement de statut Expédiée → Livrée / Échec avec motif
+[ ] Utilisable à une main, lisible en plein soleil (contraste élevé)","1. Écran optimisé mobile
+2. Tests e2e"
+"SHP-05","SHP - Livraison","Échec de livraison et nouvelle tentative","Fonctionnalité","MVP","6","S13–S14","3","Backend","SHP-03, ORD-02","En tant que gestionnaire, je veux traiter un client absent ou un refus.","[ ] Statut DELIVERY_FAILED avec motif obligatoire (absent, refus, adresse introuvable)
+[ ] Nouvelle tentative possible (retour à SHIPPED) ou annulation avec remise en stock
+[ ] Compteur de tentatives et alerte après deux échecs","1. Règles de workflow
+2. Tests"
+"ACC-01","ACC - Compte client","Espace compte : tableau de bord et profil","Fonctionnalité","MVP","5","S11–S12","5","Frontend","AUT-09, DSG-05","En tant que client, je veux gérer mes informations facilement.","[ ] Tableau de bord avec accès rapide aux commandes, adresses, favoris
+[ ] Modification du profil et du mot de passe (ancien mot de passe exigé)
+[ ] Routes protégées par authGuard
+[ ] Conforme aux maquettes P17 et P19","1. Pages
+2. Services de profil
+3. Tests"
+"ACC-02","ACC - Compte client","Historique des commandes et « Commander à nouveau »","Fonctionnalité","MVP","5","S11–S12","5","Frontend + Backend","ORD-01, ACC-01","En tant que client, je veux retrouver mes commandes et en refaire une facilement.","[ ] GET /me/orders et /me/orders/:id ne renvoient que les commandes du client connecté
+[ ] Cartes avec statut coloré accompagné d'une icône
+[ ] « Commander à nouveau » ajoute au panier les articles encore disponibles et signale les autres","1. API
+2. Pages
+3. Test IDOR
+4. Tests e2e"
+"ACC-03","ACC - Compte client","Suppression du compte et droit à l'effacement","Sécurité","MVP","6","S13–S14","5","Backend + Frontend","ACC-01","En tant que client, je veux pouvoir supprimer mon compte et mes données personnelles.","[ ] Confirmation en deux temps avec rappel des conséquences
+[ ] Les données personnelles sont supprimées ou anonymisées ; les commandes conservent uniquement ce que la comptabilité exige
+[ ] Sessions révoquées, e-mail de confirmation envoyé
+[ ] Procédure documentée dans la politique de confidentialité","1. Service d'anonymisation
+2. Écran
+3. Tests"
+"ACC-04","ACC - Compte client","Carnet d'adresses","Fonctionnalité","V2","8","S17–S18","3","Frontend + Backend","ACC-01","En tant que client, je veux enregistrer mes adresses pour commander plus vite.","[ ] Ajout, modification, suppression d'adresses
+[ ] Adresse par défaut préremplie dans le tunnel de commande
+[ ] Accès limité au propriétaire des adresses","1. API
+2. Écran
+3. Intégration au tunnel"
+"ACC-05","ACC - Compte client","Favoris (liste de souhaits)","Fonctionnalité","V2","9","S19–S20","3","Frontend + Backend","ACC-01, CAT-08","En tant que client, je veux mettre de côté les modèles qui me plaisent.","[ ] Bouton favori sur la carte produit et la fiche
+[ ] Favoris synchronisés pour un client connecté, locaux pour un visiteur
+[ ] Page Mes favoris avec état vide","1. API
+2. Store
+3. Écran"
+"ACC-06","ACC - Compte client","Avis clients modérés","Fonctionnalité","V2","9","S19–S20","8","Backend + Frontend","ORD-02, BO-01","En tant que client, je veux lire des avis fiables avant d'acheter.","[ ] Seuls les acheteurs d'un produit livré peuvent laisser un avis
+[ ] Avis publié après modération par l'administration
+[ ] Note moyenne et nombre d'avis affichés sur la fiche et en données structurées
+[ ] Protection contre le spam et les contenus abusifs","1. Modèle et API
+2. Écran de modération
+3. Affichage
+4. Tests"
+"BO-01","BO - Back-office (administration)","Structure de l'administration : mise en page, navigation, droits d'affichage","Fonctionnalité","MVP","3","S7–S8","8","Frontend","TEC-08, TEC-12, DSG-06","En tant que membre de l'équipe, je veux une administration claire qui n'affiche que ce que mon rôle permet.","[ ] Navigation latérale repliable sur desktop et barre basse sur mobile
+[ ] Menus affichés selon le rôle ; les routes sont protégées par authGuard et roleGuard
+[ ] Fil d'Ariane, titre de page, notifications d'actions
+[ ] États d'erreur 403 et session expirée gérés
+[ ] Rappel : la sécurité réelle reste côté serveur (RBAC de l'API)","1. Layout admin
+2. Configuration des routes par rôle
+3. Tests"
+"BO-02","BO - Back-office (administration)","Tableau de bord : API de statistiques et écran","Fonctionnalité","MVP","5","S11–S12","8","Backend + Frontend","ORD-02, STK-03, BO-01","En tant que gérant, je veux voir l'état de mon activité en un coup d'œil.","[ ] Indicateurs : chiffre d'affaires (jour, semaine, mois), nombre de commandes, panier moyen, nouveaux clients
+[ ] Commandes par statut avec accès direct aux commandes à traiter
+[ ] Alertes de stock bas et ruptures par pointure
+[ ] Courbe des ventes avec sélecteur de période
+[ ] Agrégats optimisés (index, cache) : réponse < 500 ms
+[ ] Affichage limité pour les rôles non administrateurs","1. Requêtes d'agrégats
+2. Endpoint /admin/dashboard/stats
+3. Cartes KPI et graphiques
+4. Tests"
+"BO-03","BO - Back-office (administration)","Liste des produits (recherche, filtres, actions groupées)","Fonctionnalité","MVP","3","S7–S8","5","Frontend","CAT-04, BO-01","En tant que gestionnaire de stock, je veux retrouver et gérer mes produits rapidement.","[ ] Tableau sur desktop, cartes sur mobile
+[ ] Recherche, filtres (catégorie, statut, stock), tri, pagination
+[ ] Actions groupées : publier, masquer, archiver
+[ ] Badges de statut Brouillon / Publié / Archivé","1. Écran et store
+2. Tests"
+"BO-04","BO - Back-office (administration)","Formulaire produit en onglets","Fonctionnalité","MVP","4","S9–S10","13","Frontend","CAT-04, BO-03, DSG-06","En tant que gérant, je veux créer un produit complet sans aide technique.","[ ] Onglets : Informations, Variantes et stock, Images, Tarifs, SEO
+[ ] Validation en direct et messages d'erreur clairs ; avertissement avant de quitter avec des modifications non enregistrées
+[ ] Enregistrement en brouillon ou publication
+[ ] Aperçu de la fiche produit telle que vue par le client (V2 : aperçu complet)
+[ ] Duplication d'un produit existant","1. Formulaire réactif typé multi-onglets
+2. Intégration API
+3. Tests e2e : création de produit jusqu'à publication"
+"BO-05","BO - Back-office (administration)","Générateur de grille de variantes couleurs × pointures","Fonctionnalité","MVP","4","S9–S10","8","Frontend","BO-04, CAT-04","En tant que gérant, je veux saisir mes pointures et couleurs en quelques clics.","[ ] Sélection des couleurs et d'une plage de pointures génère la grille complète
+[ ] SKU automatique modifiable, stock initial par cellule, seuil d'alerte par variante
+[ ] Saisie en masse (remplir toute une colonne ou une ligne)
+[ ] Les variantes déjà vendues ne peuvent pas être supprimées (archivage)","1. Composant de grille
+2. Règles de génération
+3. Tests"
+"BO-06","BO - Back-office (administration)","Téléversement d'images par glisser-déposer","Fonctionnalité","MVP","4","S9–S10","5","Frontend","CAT-05, BO-04","En tant que gérant, je veux ajouter et ordonner les photos d'un produit facilement.","[ ] Plusieurs fichiers à la fois, barre de progression, aperçu
+[ ] Réorganisation par glisser-déposer, image principale, rattachement à une couleur
+[ ] Refus clair des fichiers trop lourds ou non conformes
+[ ] Fonctionne depuis un téléphone (sélection depuis la galerie ou l'appareil photo)","1. Composant d'envoi
+2. Intégration URL signée
+3. Tests"
+"BO-07","BO - Back-office (administration)","Gestion des catégories, marques et guides de tailles","Fonctionnalité","MVP","4","S9–S10","5","Frontend + Backend","CAT-01, CAT-06, BO-01","En tant que gérant, je veux organiser mon catalogue.","[ ] Arborescence de catégories modifiable (ajout, déplacement, désactivation)
+[ ] Gestion des marques avec logo
+[ ] Édition du guide des tailles par catégorie
+[ ] Impossible de supprimer une catégorie contenant des produits sans réaffectation","1. Écrans
+2. Endpoints admin
+3. Tests"
+"BO-08","BO - Back-office (administration)","Liste des commandes avec filtres par statut","Fonctionnalité","MVP","5","S11–S12","5","Frontend + Backend","ORD-02, BO-01","En tant que gestionnaire de commandes, je veux voir d'un coup d'œil ce qu'il faut traiter.","[ ] GET /admin/orders avec filtres (statut, date, ville, paiement, livreur) et recherche par numéro, nom, téléphone
+[ ] Onglets colorés par statut avec compteurs
+[ ] Pagination et tri ; rôle LIVREUR limité à ses commandes
+[ ] Cartes empilées sur mobile","1. Endpoint de liste
+2. Écran
+3. Tests de permissions"
+"BO-09","BO - Back-office (administration)","Détail d'une commande et actions de traitement","Fonctionnalité","MVP","5","S11–S12","13","Frontend","BO-08, ORD-02, ORD-07, SHP-03","En tant que gestionnaire, je veux traiter une commande de la confirmation à la livraison depuis un seul écran.","[ ] Articles (modèle, couleur, pointure), client, adresse, paiement, chronologie, notes internes
+[ ] Boutons de changement de statut limités aux transitions autorisées
+[ ] Boutons Appeler et WhatsApp avec modèle de message de confirmation prérempli
+[ ] Annulation avec motif, assignation à un livreur, saisie de l'encaissement
+[ ] Seules les actions autorisées pour le rôle sont affichées","1. Écran de détail
+2. Composant timeline
+3. Modèles de messages
+4. Tests e2e du traitement complet"
+"BO-10","BO - Back-office (administration)","Gestion des clients","Fonctionnalité","MVP","6","S13–S14","5","Frontend + Backend","ACC-02, BO-01","En tant que gérant, je veux connaître mes clients et leur historique.","[ ] Liste, recherche et fiche client avec historique des commandes et notes internes
+[ ] Blocage d'un compte (avec motif)
+[ ] Visibilité des données personnelles selon le rôle (ORDER_MANAGER : données limitées)
+[ ] Export réservé aux clients ayant consenti au marketing (V2)","1. Endpoints
+2. Écrans
+3. Tests de permissions"
+"BO-11","BO - Back-office (administration)","Paramètres de la boutique et bannières d'accueil","Fonctionnalité","MVP","6","S13–S14","5","Frontend + Backend","TEC-06, BO-01","En tant que gérant, je veux modifier les informations et bannières du site sans développeur.","[ ] Nom, logo, coordonnées, numéro WhatsApp, horaires, réseaux sociaux
+[ ] Bannières d'accueil (image, texte, lien, dates d'affichage)
+[ ] Seuils de stock bas, seuil de confirmation obligatoire, moyens de paiement actifs
+[ ] Textes des pages (FAQ, livraison, retours) éditables (V2 pour l'éditeur complet)
+[ ] Chaque modification est auditée","1. Modèle Setting
+2. Endpoints
+3. Écrans
+4. Tests"
+"BO-12","BO - Back-office (administration)","Gestion des utilisateurs internes et des rôles","Sécurité","MVP","6","S13–S14","5","Frontend + Backend","AUT-05, AUT-07","En tant que super administrateur, je veux gérer l'équipe et ses droits.","[ ] Création, désactivation et changement de rôle d'un membre
+[ ] Mot de passe provisoire à changer à la première connexion
+[ ] Réinitialisation du 2FA d'un membre, auditée
+[ ] Un utilisateur ne peut pas modifier son propre rôle ni se supprimer lui-même
+[ ] Réservé au SUPER_ADMIN","1. Endpoints
+2. Écrans
+3. Tests de permissions"
+"BO-13","BO - Back-office (administration)","Consultation du journal d'audit","Sécurité","MVP","6","S13–S14","3","Frontend","AUT-08, BO-01","En tant que propriétaire, je veux consulter l'historique des actions sensibles.","[ ] Tableau filtrable par utilisateur, action, entité, période
+[ ] Affichage des valeurs avant et après
+[ ] Lecture seule, aucun bouton de modification ou de suppression
+[ ] Export CSV réservé au SUPER_ADMIN","1. Écran
+2. Export
+3. Tests"
+"BO-14","BO - Back-office (administration)","Impression des bons de préparation, de livraison et des factures","Fonctionnalité","V2","10","S21–S22","5","Frontend","BO-09, PAY-06","En tant que gestionnaire, je veux imprimer les documents nécessaires au colis.","[ ] Bon de préparation (articles, pointures, emplacements)
+[ ] Bon de livraison avec montant à encaisser
+[ ] Mise en page A4 correcte à l'impression
+[ ] Génération groupée de plusieurs bons","1. Modèles d'impression
+2. Tests visuels"
+"BO-15","BO - Back-office (administration)","Codes promo et promotions","Fonctionnalité","V2","8","S17–S18","8","Backend + Frontend","BO-01, CRT-04","En tant que gérant, je veux lancer des offres et suivre leur usage.","[ ] Types : pourcentage, montant fixe, livraison offerte
+[ ] Règles : période, plafond de remise, montant minimum, nombre d'utilisations, cumul interdit par défaut
+[ ] Validation exclusivement côté serveur ; message précis en cas de refus
+[ ] Rapport d'utilisation par code","1. Modèle Coupon
+2. Moteur de règles
+3. Écrans admin et panier
+4. Tests"
+"BO-16","BO - Back-office (administration)","Import et export CSV des produits et du stock","Fonctionnalité","V2","9","S19–S20","5","Backend + Frontend","CAT-04, STK-02","En tant que gérant, je veux charger mon catalogue en masse.","[ ] Modèle de fichier CSV téléchargeable
+[ ] Validation ligne par ligne avec rapport d'erreurs avant import
+[ ] Import atomique ou rapport clair des lignes ignorées
+[ ] Les mouvements de stock créés par import sont tracés et audités","1. Parseur et validations
+2. Écran d'import
+3. Tests"
+"BO-17","BO - Back-office (administration)","Modération des avis clients","Fonctionnalité","V2","9","S19–S20","3","Frontend","ACC-06","En tant que gérant, je veux valider ou refuser les avis avant publication.","[ ] Liste des avis en attente avec produit et commande liés
+[ ] Publication, refus avec motif, signalement
+[ ] Action auditée","1. Écran
+2. Tests"
+"NTF-01","NTF - Notifications","Service de notifications et file de tâches BullMQ","Technique","MVP","2","S5–S6","5","Backend","TEC-04, TEC-03","En tant que système, je veux envoyer les messages de façon fiable sans ralentir les requêtes.","[ ] File BullMQ avec nouvelles tentatives exponentielles et file des échecs (dead-letter)
+[ ] Interfaces e-mail, SMS, WhatsApp avec adaptateurs factices en développement
+[ ] Modèles de messages versionnés en français
+[ ] Aucun contenu sensible dans les journaux ; téléphone partiellement masqué
+[ ] Tableau de suivi des tâches échouées","1. Module notifications
+2. Workers
+3. Adaptateurs factices
+4. Tests"
+"NTF-02","NTF - Notifications","Confirmation de commande par SMS ou e-mail","Fonctionnalité","MVP","5","S11–S12","5","Backend","NTF-01, ORD-01","En tant que client, je veux recevoir la confirmation de ma commande.","[ ] Message envoyé à la création avec numéro de commande, récapitulatif et lien de suivi
+[ ] Choix du canal selon les informations fournies (téléphone ou e-mail)
+[ ] Échec d'envoi : nouvelle tentative et alerte interne, sans bloquer la commande
+[ ] Prestataire SMS officiel ; contenu conforme au consentement","1. Abonné à order.created
+2. Modèles
+3. Tests"
+"NTF-03","NTF - Notifications","Notifications internes : nouvelle commande et stock bas","Fonctionnalité","MVP","5","S11–S12","3","Backend","NTF-01, STK-03","En tant que gérant, je veux être alerté des événements importants.","[ ] Alerte à chaque nouvelle commande à confirmer
+[ ] Alerte de stock bas (une fois par seuil franchi)
+[ ] Canal configurable (e-mail, WhatsApp interne)
+[ ] Pastille de notifications dans l'administration","1. Abonnés d'événements
+2. Préférences
+3. Tests"
+"NTF-04","NTF - Notifications","Notifications automatiques de statut via WhatsApp Business API","Fonctionnalité","V2","9","S19–S20","8","Backend","NTF-01, ORD-02","En tant que client, je veux être prévenu à chaque étape de ma commande.","[ ] Messages envoyés aux changements de statut (confirmée, expédiée, livrée)
+[ ] Modèles de messages approuvés par la plateforme officielle
+[ ] Consentement vérifié avant tout envoi marketing ; désinscription possible
+[ ] Repli sur SMS en cas d'échec","1. Adaptateur WhatsApp
+2. Modèles
+3. Tests en environnement de test"
+"NTF-05","NTF - Notifications","Rappels de paniers abandonnés","Fonctionnalité","V3","11","S23–S24","8","Backend","NTF-04, CRT-05","En tant que gérant, je veux relancer les paniers oubliés.","[ ] Détection d'un panier avec coordonnées inactif depuis un délai configurable
+[ ] Un seul rappel par panier, avec lien de reprise
+[ ] Envoi uniquement avec consentement explicite
+[ ] Taux de récupération mesuré dans le tableau de bord","1. Tâche planifiée
+2. Modèle de message
+3. Mesure"
+"MKT-01","MKT - Pages, SEO et marketing","Pages statiques et pages légales","Fonctionnalité","MVP","3","S7–S8","5","Frontend","DSG-05, CNT-03","En tant que visiteur, je veux comprendre la boutique, ses conditions et mes droits.","[ ] Pages : À propos, FAQ, Livraison, Retours et échanges, Guide des tailles, CGV, Confidentialité, Mentions légales
+[ ] Sommaire ancré sur les pages longues, lisibilité optimale
+[ ] Contenu validé par le propriétaire (et par un professionnel pour le volet juridique)
+[ ] Rendu serveur, balises titre et description","1. Pages
+2. Intégration des textes
+3. Tests"
+"MKT-02","MKT - Pages, SEO et marketing","Formulaire de contact protégé","Fonctionnalité","MVP","3","S7–S8","3","Frontend + Backend","AUT-11, NTF-01","En tant que visiteur, je veux poser une question facilement.","[ ] Champs minimaux, validation, CAPTCHA, limitation de débit
+[ ] Message transmis à l'équipe par e-mail et enregistré
+[ ] Boutons directs WhatsApp, appel et Facebook
+[ ] Confirmation claire à l'utilisateur","1. Endpoint
+2. Écran
+3. Tests"
+"MKT-03","MKT - Pages, SEO et marketing","SEO technique : sitemap, robots, canoniques, Open Graph, données structurées","Fonctionnalité","MVP","5","S11–S12","5","Frontend + Backend","TEC-13, CAT-10","En tant que propriétaire, je veux que mes produits soient trouvés sur Google et bien partagés sur Facebook.","[ ] sitemap.xml généré par l'API, robots.txt, URLs canoniques, slugs lisibles
+[ ] Balises Open Graph et Twitter Card sur toutes les pages publiques
+[ ] Données structurées Product, Offer, BreadcrumbList validées avec les outils officiels
+[ ] Les pages de panier, commande et compte sont exclues de l'indexation
+[ ] Code 404 réel pour les pages inexistantes","1. Génération du sitemap
+2. Service SEO
+3. Validation avec outils officiels"
+"MKT-04","MKT - Pages, SEO et marketing","Pixel Meta, UTM et bandeau de consentement","Fonctionnalité","MVP","3","S7–S8","5","Frontend","TEC-13","En tant que propriétaire, je veux mesurer l'efficacité de mes publicités Facebook dans le respect du consentement.","[ ] Événements ViewContent, AddToCart, InitiateCheckout, Purchase envoyés avec les bonnes valeurs
+[ ] Traceurs activés seulement après consentement ; choix mémorisé et modifiable
+[ ] Paramètres UTM conservés jusqu'à la commande et enregistrés avec elle
+[ ] Aucun double comptage d'achat lors du rechargement de la confirmation","1. Service d'analytique
+2. Bandeau de consentement
+3. Tests avec l'outil officiel de vérification du Pixel"
+"MKT-05","MKT - Pages, SEO et marketing","Analytics et Search Console","Technique","MVP","6","S13–S14","2","Frontend","MKT-04","En tant que propriétaire, je veux suivre le trafic et l'indexation.","[ ] Analytics configuré avec respect du consentement
+[ ] Propriété validée dans la Search Console et sitemap soumis
+[ ] Objectifs de conversion définis (commande, clic WhatsApp)","1. Configuration
+2. Vérification"
+"MKT-06","MKT - Pages, SEO et marketing","Bouton WhatsApp flottant et liens de contact","Fonctionnalité","MVP","3","S7–S8","3","Frontend","TEC-10","En tant que client, je veux joindre la boutique en un geste.","[ ] Bouton flottant discret sur toutes les pages publiques, avec message prérempli selon la page
+[ ] Masqué pendant le tunnel de paiement, remplacé par un lien d'aide
+[ ] Numéro et message lus depuis les paramètres de la boutique
+[ ] Accessible (libellé, focus, taille)","1. Composant
+2. Génération du lien
+3. Tests"
+"MKT-07","MKT - Pages, SEO et marketing","Flux de catalogue Facebook / Instagram","Fonctionnalité","V2","10","S21–S22","5","Backend","CAT-03, MKT-03","En tant que propriétaire, je veux synchroniser mon catalogue avec Facebook et Instagram.","[ ] GET /feeds/facebook protégé par jeton, format conforme à la documentation officielle
+[ ] Produits publiés en stock uniquement, prix et images à jour
+[ ] Actualisation automatique planifiée
+[ ] Contrôle des erreurs de flux signalé","1. Générateur de flux
+2. Planification
+3. Validation avec l'outil officiel"
+"MKT-08","MKT - Pages, SEO et marketing","API de conversions Meta côté serveur","Fonctionnalité","V3","11","S23–S24","5","Backend","MKT-04","En tant que propriétaire, je veux une mesure publicitaire fiable malgré les bloqueurs de traceurs.","[ ] Événements d'achat envoyés depuis le serveur avec déduplication par identifiant d'événement
+[ ] Données personnelles hachées avant envoi, consentement respecté
+[ ] Qualité de correspondance suivie dans les outils officiels","1. Service d'envoi
+2. Déduplication
+3. Tests"
+"QA-01","QA - Qualité, sécurité et performance","Tests de bout en bout des parcours critiques (Playwright)","Qualité","MVP","6","S13–S14","8","QA / Frontend","ORD-03, BO-09","En tant qu'équipe, nous voulons détecter automatiquement les régressions sur les parcours qui font vendre.","[ ] Parcours achat invité : recherche → fiche → pointure → panier → commande → confirmation → suivi
+[ ] Parcours admin : création de produit avec variantes → publication → traitement d'une commande
+[ ] Exécutés en CI sur les navigateurs Chromium et WebKit en format mobile
+[ ] Échec bloquant pour la fusion d'une modification","1. Écrire les scénarios
+2. Jeux de données de test
+3. Intégration CI"
+"QA-02","QA - Qualité, sécurité et performance","Tests de sécurité des accès : droits, IDOR, énumération","Sécurité","MVP","6","S13–S14","8","QA / Backend","AUT-05, ORD-05, ACC-02","En tant que propriétaire, je veux la preuve qu'un utilisateur ne peut pas accéder aux données d'un autre.","[ ] Un client ne lit ni ne modifie les commandes, adresses ou favoris d'un autre
+[ ] Un LIVREUR ne voit que ses livraisons et n'accède pas aux paramètres
+[ ] Toutes les routes /admin renvoient 401 sans jeton et 403 sans le bon rôle
+[ ] Le suivi public ne permet aucune énumération (réponses et temps identiques)
+[ ] Tests automatisés intégrés à la CI","1. Matrice de tests par rôle
+2. Tests e2e
+3. Rapport"
+"QA-03","QA - Qualité, sécurité et performance","Analyse de sécurité : OWASP ZAP, dépendances, secrets, en-têtes","Sécurité","MVP","6","S13–S14","8","QA / DevOps","OPS-02","En tant que propriétaire, je veux un contrôle indépendant avant l'ouverture au public.","[ ] Scan OWASP ZAP sur l'environnement de préproduction sans vulnérabilité critique ou élevée ouverte
+[ ] Audit des dépendances sans vulnérabilité critique
+[ ] Aucun secret dans l'historique du dépôt
+[ ] En-têtes de sécurité (CSP, HSTS, etc.) vérifiés sur le domaine réel
+[ ] Rapport écrit et correctifs suivis","1. Exécuter les scans
+2. Corriger
+3. Rédiger le rapport"
+"QA-04","QA - Qualité, sécurité et performance","Budget de performance et Lighthouse en CI","Qualité","MVP","5","S11–S12","5","Frontend / DevOps","TEC-11, CAT-08","En tant que client sur connexion lente, je veux un site rapide.","[ ] Lighthouse mobile ≥ 90 sur accueil, catalogue et fiche produit
+[ ] JavaScript initial < 200 Ko gzip, LCP < 2,5 s sur 4G simulée
+[ ] Images WebP responsives, chargement différé hors écran, polices limitées à 2 familles
+[ ] La CI signale tout dépassement du budget","1. Configurer Lighthouse CI
+2. Optimiser les points bloquants
+3. Documenter le budget"
+"QA-05","QA - Qualité, sécurité et performance","Tests de charge et de concurrence de stock","Qualité","MVP","6","S13–S14","5","QA / DevOps","STK-01, OPS-02","En tant que propriétaire, je veux que le site tienne un pic de trafic après une publicité.","[ ] Scénarios de charge réalistes (consultation et commande) exécutés sur la préproduction
+[ ] Au moins 500 utilisateurs simultanés supportés sans erreur 5xx
+[ ] Test de concurrence : 50 commandes simultanées sur 1 paire, une seule réussit
+[ ] Goulots identifiés et corrigés","1. Scripts de charge
+2. Analyse des résultats
+3. Correctifs"
+"QA-06","QA - Qualité, sécurité et performance","Audit d'accessibilité (WCAG 2.1 AA)","Qualité","MVP","6","S13–S14","5","QA / Frontend","CAT-10, ORD-03","En tant qu'utilisateur ayant un handicap ou un téléphone modeste, je veux utiliser le site sans obstacle.","[ ] axe-core sans violation critique sur les pages principales
+[ ] Parcours d'achat complet réalisable au clavier uniquement
+[ ] Test avec un lecteur d'écran sur la fiche produit et le tunnel
+[ ] Lisible à 200 % de zoom sans perte de contenu","1. Tests automatisés
+2. Tests manuels
+3. Corrections"
+"QA-07","QA - Qualité, sécurité et performance","Recette fonctionnelle selon les critères du MVP","Qualité","MVP","6","S13–S14","8","PO + testeurs","Tous les tickets MVP","En tant que propriétaire, je veux valider que le site répond au besoin avant de l'ouvrir au public.","[ ] Les 12 critères de recette du cahier des charges sont vérifiés un à un
+[ ] 3 à 5 testeurs externes réalisent le parcours d'achat sur téléphone sans aide
+[ ] Toutes les anomalies bloquantes sont corrigées ; les autres sont classées dans le backlog
+[ ] Rapport de recette signé par le propriétaire","1. Plan de recette
+2. Sessions de test
+3. Suivi des anomalies
+4. Signature"
+"QA-08","QA - Qualité, sécurité et performance","Compatibilité sur appareils et navigateurs réels","Qualité","MVP","6","S13–S14","3","QA","QA-01","En tant que client, je veux que le site fonctionne sur mon téléphone.","[ ] Test sur au moins 3 téléphones Android (dont un modèle d'entrée de gamme) et 1 iPhone
+[ ] Navigateurs : Chrome, Safari, Firefox, Edge, Samsung Internet (2 dernières versions)
+[ ] Problèmes d'affichage et de performance documentés puis corrigés","1. Plan d'appareils
+2. Exécution
+3. Corrections"
+"OPS-01","OPS - Exploitation et déploiement","Dockerfiles multi-étapes et configuration Nginx","DevOps","MVP","3","S7–S8","5","DevOps","TEC-08, TEC-04","En tant qu'exploitant, je veux des images légères et sûres.","[ ] Dockerfiles multi-étapes pour api, storefront et admin ; utilisateur non-root ; .dockerignore
+[ ] Nginx : reverse proxy, compression, en-têtes de sécurité, cache des ressources statiques
+[ ] Analyse des vulnérabilités des images intégrée à la CI
+[ ] Base de données et Redis non exposés publiquement dans la configuration de production","1. Écrire les Dockerfiles
+2. Configurer Nginx
+3. Scanner les images"
+"OPS-02","OPS - Exploitation et déploiement","Environnements staging et production, HTTPS et domaine","DevOps","MVP","5","S11–S12","8","DevOps","OPS-01, CNT-06","En tant qu'exploitant, je veux des environnements séparés et sécurisés.","[ ] Serveur ou plateforme provisionné avec pare-feu, SSH par clé uniquement
+[ ] Domaine configuré avec HTTPS, HSTS, redirection HTTP vers HTTPS
+[ ] Staging avec données anonymisées et paiement en mode test
+[ ] Sous-domaine séparé pour l'administration (admin.), avec restriction d'accès supplémentaire envisagée","1. Provisionner
+2. Configurer DNS et certificats
+3. Déployer le staging"
+"OPS-03","OPS - Exploitation et déploiement","CDN, pare-feu applicatif et protection DDoS","DevOps","MVP","5","S11–S12","3","DevOps","OPS-02","En tant que propriétaire, je veux protéger le site contre les attaques courantes et accélérer l'affichage.","[ ] CDN devant le site avec cache des images et ressources statiques
+[ ] Règles WAF et limitation de débit actives
+[ ] Origine du serveur accessible seulement via le CDN
+[ ] Mode « sous attaque » documenté","1. Configurer le CDN
+2. Règles de sécurité
+3. Documentation"
+"OPS-04","OPS - Exploitation et déploiement","Sauvegardes automatiques chiffrées et test de restauration","DevOps","MVP","6","S13–S14","5","DevOps","OPS-02","En tant que propriétaire, je veux pouvoir retrouver mes données après un incident.","[ ] Sauvegarde quotidienne chiffrée, stockée hors du serveur principal
+[ ] Objectifs documentés : perte de données maximale 24 h, reprise en 4 h
+[ ] Une restauration complète est réalisée avec succès sur un environnement de test avant le lancement
+[ ] Procédure de restauration écrite et testée, rotation des sauvegardes définie","1. Script de sauvegarde
+2. Stockage externe
+3. Test de restauration
+4. Documentation"
+"OPS-05","OPS - Exploitation et déploiement","Supervision, alertes et suivi des erreurs","DevOps","MVP","6","S13–S14","5","DevOps","OPS-02","En tant qu'exploitant, je veux être alerté avant les clients.","[ ] Surveillance de disponibilité du site, de l'API et du paiement
+[ ] Suivi d'erreurs (front et back) avec identifiant de requête
+[ ] Alertes sur erreurs 5xx, échecs de paiement, espace disque, mémoire
+[ ] Tableau de bord de santé accessible à l'équipe","1. Outils de supervision
+2. Règles d'alerte
+3. Test d'alerte réel"
+"OPS-06","OPS - Exploitation et déploiement","Pipeline de déploiement avec migrations et retour arrière","DevOps","MVP","6","S13–S14","5","DevOps","TEC-11, OPS-02","En tant qu'exploitant, je veux déployer sans interruption et pouvoir revenir en arrière.","[ ] Déploiement automatique sur staging, manuel validé en production
+[ ] Migrations de base rétrocompatibles exécutées avant le démarrage de la nouvelle version
+[ ] Retour à la version précédente en moins de 10 minutes
+[ ] Versions taguées et journal des modifications","1. Pipeline de déploiement
+2. Procédure de retour arrière
+3. Test à blanc"
+"OPS-07","OPS - Exploitation et déploiement","Gestion des secrets et variables de production","Sécurité","MVP","5","S11–S12","3","DevOps","OPS-02","En tant que propriétaire, je veux qu'aucune clé ne soit exposée.","[ ] Secrets stockés dans un gestionnaire de secrets ou variables d'environnement protégées
+[ ] Aucun secret dans Git ; .env.example complet et commenté
+[ ] Clés distinctes pour développement, staging et production
+[ ] Rotation planifiée et procédure en cas de fuite","1. Configurer le stockage
+2. Documenter la rotation
+3. Audit des secrets"
+"OPS-08","OPS - Exploitation et déploiement","Plan de réponse aux incidents et runbook","DevOps","MVP","6","S13–S14","3","DevOps + PO","OPS-05","En tant qu'équipe, nous voulons savoir quoi faire quand quelque chose tombe.","[ ] Runbook couvrant : site inaccessible, survente, suspicion de piratage, paiement non reconnu, pic de trafic
+[ ] Contacts et rôles d'astreinte pendant les deux semaines de suivi renforcé
+[ ] Page de maintenance prête, modèle de message de communication aux clients
+[ ] Simulation d'un incident réalisée avant le lancement","1. Rédiger le runbook
+2. Préparer la page de maintenance
+3. Exercice de simulation"
+"CNT-01","CNT - Contenu, formation, juridique et lancement","Séance photo des produits","Contenu","MVP","1","S3–S4","8","PO / photographe","—","En tant que client, je veux de belles photos nettes sous plusieurs angles pour choisir en confiance.","[ ] 5 à 6 angles par modèle : face, profil, dessus, semelle, détail, porté
+[ ] Fond neutre et lumière identiques pour tous les produits ; ratio constant (4:5 ou 1:1)
+[ ] Les 30 à 50 produits les plus vendus sont prêts avant la fin de la phase de construction
+[ ] Fichiers nommés selon une convention (modele-couleur-angle)","1. Acheter ou louer le matériel de base
+2. Réaliser la séance
+3. Trier et nommer
+4. Livrer aux développeurs"
+"CNT-02","CNT - Contenu, formation, juridique et lancement","Rédaction et saisie des fiches produits","Contenu","MVP","5","S11–S12","8","PO / contenu","CNT-01, BO-04","En tant que client, je veux des descriptions claires et complètes.","[ ] Pour chaque produit : nom, description, matière, semelle, entretien, catégorie, marque, couleurs, pointures, prix, stock initial exact
+[ ] Stock initial issu d'un inventaire physique vérifié
+[ ] Textes sans copie de contenus protégés par des droits
+[ ] Catalogue complet saisi ou importé avant la recette","1. Modèle de fiche
+2. Inventaire du stock
+3. Saisie ou import CSV"
+"CNT-03","CNT - Contenu, formation, juridique et lancement","Politiques de livraison, d'échange et textes du site","Contenu","MVP","3","S7–S8","5","PO","—","En tant que client, je veux connaître clairement les règles de livraison et d'échange.","[ ] Zones, tarifs et délais de livraison réels définis
+[ ] Politique d'échange de pointure : délai, état de l'article, emballage, qui paie le transport
+[ ] Textes À propos, FAQ, accueil rédigés en français clair
+[ ] Texte relu par une personne extérieure à l'équipe","1. Rédiger
+2. Faire relire
+3. Transmettre pour intégration"
+"CNT-04","CNT - Contenu, formation, juridique et lancement","Formation du gérant et guide utilisateur","Contenu","MVP","6","S13–S14","5","Dev + PO","BO-09, QA-07","En tant que gérant, je veux savoir utiliser l'administration sans aide.","[ ] Sessions de formation pour chaque rôle (gérant, stock, commandes, livreur)
+[ ] Guide illustré en français : ajouter un produit, ajuster le stock, traiter une commande, livrer
+[ ] Chaque personne formée réalise l'exercice réel correspondant à son rôle
+[ ] Contact d'assistance défini pour les deux premières semaines","1. Préparer le support
+2. Animer les sessions
+3. Recueillir les questions"
+"CNT-05","CNT - Contenu, formation, juridique et lancement","Plan de lancement et campagne de pré-lancement","Marketing","MVP","6","S13–S14","5","PO / marketing","CNT-01","En tant que propriétaire, je veux que le lancement attire immédiatement des acheteurs.","[ ] Annonce « le site arrive » sur la page Facebook et collecte de numéros WhatsApp pour accès prioritaire
+[ ] Offre de lancement définie (ex. livraison offerte) et configurée dans le système
+[ ] Visuels, textes et calendrier de publication prêts
+[ ] Campagne Meta Ads préparée avec audiences et budget de test
+[ ] Lancement restreint (clients fidèles) puis ouverture publique planifiés","1. Calendrier éditorial
+2. Création des visuels
+3. Configuration des campagnes"
+"CNT-06","CNT - Contenu, formation, juridique et lancement","Validation juridique et conformité","Juridique","MVP","4","S9–S10","5","PO / conseil juridique","MKT-01","En tant que propriétaire, je veux être en règle avant d'ouvrir le site.","[ ] CGV, politique de confidentialité, mentions légales relues par un professionnel compétent au Cameroun
+[ ] Durées de conservation et procédure d'effacement définies
+[ ] Obligations liées à l'activité en ligne vérifiées auprès des administrations compétentes
+[ ] Documents validés avant la mise en production","1. Rédiger les projets
+2. Consulter un professionnel
+3. Intégrer les versions finales"
+"CNT-07","CNT - Contenu, formation, juridique et lancement","Démarches d'accès au paiement Mobile Money","Juridique","V2","3","S7–S8","3","PO","—","En tant que propriétaire, je veux que l'accès au paiement en ligne soit prêt quand le développement commencera.","[ ] Prestataires officiels comparés (frais, délais, documentation, bac à sable)
+[ ] Dossier complet déposé via les canaux officiels uniquement
+[ ] Accès bac à sable obtenu avant le début de PAY-03
+[ ] Aucune clé communiquée à un tiers non autorisé","1. Comparer
+2. Constituer le dossier
+3. Obtenir le bac à sable"
+"EVO-01","EVO - Évolutions V2 / V3","Application web installable (PWA)","Fonctionnalité","V2","10","S21–S22","5","Frontend","QA-04","En tant que client régulier, je veux installer le site sur mon écran d'accueil.","[ ] Manifest, icônes, service worker avec mise en cache de la coque applicative
+[ ] Page hors ligne personnalisée et invitation discrète à l'installation
+[ ] Aucun cache de données sensibles ou de pages de compte
+[ ] Critères d'installation validés par Lighthouse","1. Service worker
+2. Manifest
+3. Tests"
+"EVO-02","EVO - Évolutions V2 / V3","Recherche avancée : suggestions et tolérance aux fautes","Fonctionnalité","V3","12","S25–S26","8","Backend + Frontend","CAT-09","En tant que client, je veux trouver mon produit même avec une faute de frappe.","[ ] Suggestions instantanées avec miniature, nom et prix
+[ ] Tolérance aux fautes et synonymes (ex. « basket » = « sneakers »)
+[ ] Recherches populaires et historique récent
+[ ] Temps de réponse < 200 ms ; évaluation d'un moteur dédié justifiée","1. Évaluer index trigram ou moteur dédié
+2. Implémenter
+3. Tests"
+"EVO-03","EVO - Évolutions V2 / V3","Analyses avancées et exports","Fonctionnalité","V3","13","S27–S28","8","Backend + Frontend","BO-02","En tant que gérant, je veux comprendre ce qui se vend et d'où viennent mes clients.","[ ] Top produits, pointures, catégories, origine du trafic (Facebook, WhatsApp, direct)
+[ ] Entonnoir de conversion (visite → panier → commande)
+[ ] Exports CSV et PDF
+[ ] Données agrégées, sans exposer d'informations personnelles inutiles","1. Agrégats
+2. Graphiques
+3. Exports"
+"EVO-04","EVO - Évolutions V2 / V3","Réassort suggéré et programme de fidélité","Fonctionnalité","V3","13","S27–S28","8","Backend + Frontend","EVO-03, STK-03","En tant que gérant, je veux savoir quoi recommander au fournisseur et récompenser mes clients fidèles.","[ ] Suggestions de réassort selon les ventes récentes et le stock restant
+[ ] Points de fidélité ou remises par seuil d'achats, règles configurables
+[ ] Consentement et transparence sur l'usage des données
+[ ] Rapport d'efficacité du programme","1. Calculs
+2. Règles
+3. Écrans"
+"EVO-05","EVO - Évolutions V2 / V3","Étude d'opportunité d'une application mobile native","Étude","V3","12","S25–S26","3","PO + architecte","EVO-01","En tant que propriétaire, je veux décider d'une application mobile sur la base de données réelles.","[ ] Analyse de l'usage (part mobile, clients récurrents, taux d'installation de la PWA)
+[ ] Comparaison PWA avancée, application hybride, application native avec coûts et délais
+[ ] Recommandation argumentée présentée au propriétaire
+[ ] Décision go / no-go consignée","1. Collecter les données
+2. Rédiger l'étude
+3. Présenter"
+"OPS-09","OPS - Exploitation et déploiement","Mise en production, lancement restreint puis ouverture publique","DevOps","MVP","7","S15–S16","5","DevOps + PO","QA-07, OPS-04, OPS-05, OPS-08, CNT-04, CNT-06","En tant que propriétaire, je veux ouvrir le site en toute sécurité, d'abord à un petit groupe puis au public.","[ ] Checklist de mise en production du document de roadmap entièrement cochée (feu vert signé)
+[ ] Lancement restreint de 3 à 5 jours (clients fidèles) sans erreur bloquante
+[ ] Ouverture publique puis première campagne Meta Ads
+[ ] Surveillance quotidienne pendant 2 semaines ; tout bug bloquant corrigé sous 24 h
+[ ] Compte rendu de lancement rédigé","1. Exécuter la checklist
+2. Déploiement en production
+3. Suivi quotidien
+4. Compte rendu"
+"CNT-08","CNT - Contenu, formation, juridique et lancement","Revue J+7 et J+14 et arbitrage du backlog V2","Marketing","MVP","7","S15–S16","3","PO + équipe","OPS-09","En tant que propriétaire, je veux décider de la suite à partir des chiffres réels.","[ ] Chiffres analysés : visites, conversion, abandon, livraisons réussies, incidents
+[ ] Retours clients regroupés et classés
+[ ] Backlog V2 repriorisé et validé
+[ ] Cibles de KPI recalibrées avec les valeurs réelles","1. Extraire les indicateurs
+2. Atelier de priorisation
+3. Mettre à jour le backlog"
