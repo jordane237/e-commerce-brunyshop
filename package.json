@@ -27,11 +27,15 @@
     "prepare": "husky"
   },
   "lint-staged": {
+    "backend/**/*.{js,mjs,cjs,ts}": [
+      "pnpm -C backend exec eslint --fix",
+      "prettier --write"
+    ],
     "frontend/**/*.{js,mjs,cjs,ts,tsx}": [
       "pnpm -C frontend exec eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md,scss,css,html,yml,yaml}": [
+    "*.{json,scss,css,html,yml,yaml}": [
       "prettier --write"
     ]
   },
