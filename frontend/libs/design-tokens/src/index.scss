@@ -1,18 +1,26 @@
+// BRUNY SHOPPING — design-tokens entry point.
+// Emits the :root custom properties used by both Angular apps.
+// Keep tokens.css (plain CSS mirror) in sync when values change.
+@use 'tokens' as *;
+
+@include bs-css-variables;
+
 :root {
-  --color-ink: #1f2a44;
-  --color-accent: #c9a227;
-  --color-surface: #ffffff;
-  --color-muted: #f4f3ef;
-  --color-danger: #a5232d;
-  --font-body: Inter, ui-sans-serif, system-ui, sans-serif;
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --shadow-card: 0 10px 30px rgb(31 42 68 / 8%);
+  // Legacy aliases consumed by the existing storefront/admin styles.
+  --color-ink: var(--bs-color-text);
+  --color-accent: var(--bs-color-accent);
+  --color-surface: var(--bs-color-surface);
+  --color-muted: var(--bs-color-surface-muted);
+  --color-danger: var(--bs-color-danger);
+  --font-body: var(--bs-font-family-base);
+  --space-1: var(--bs-space-1);
+  --space-2: var(--bs-space-2);
+  --space-3: var(--bs-space-3);
+  --space-4: var(--bs-space-4);
+  --space-6: var(--bs-space-6);
+  --space-8: var(--bs-space-8);
+  --radius-sm: var(--bs-radius-sm);
+  --radius-md: var(--bs-radius-md);
+  --radius-lg: var(--bs-radius-lg);
+  --shadow-card: var(--bs-shadow-md);
 }

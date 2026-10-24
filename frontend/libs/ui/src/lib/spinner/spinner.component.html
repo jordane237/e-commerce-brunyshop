@@ -1,0 +1,10 @@
+<span
+  class="bs-spinner"
+  [class.bs-spinner--sm]="size === 'sm'"
+  [class.bs-spinner--lg]="size === 'lg'"
+  [class.bs-spinner--inline]="inline"
+  role="status"
+>
+  <span class="bs-spinner__circle" aria-hidden="true"></span>
+  <span class="bs-spinner__label">{{ label }}</span>
+</span>

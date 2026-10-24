@@ -1,0 +1,109 @@
+:host {
+  display: block;
+}
+
+.bs-toggle {
+  display: grid;
+  gap: var(--bs-space-1);
+  font-family: var(--bs-font-family-base);
+}
+
+.bs-toggle__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bs-space-4);
+  min-height: var(--bs-touch-target);
+  cursor: pointer;
+}
+
+.bs-toggle__label {
+  color: var(--bs-color-text);
+  font-size: var(--bs-font-size-sm);
+  line-height: var(--bs-line-height-normal);
+}
+
+.bs-toggle__control {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.bs-toggle__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  margin: 0;
+}
+
+.bs-toggle__track {
+  display: inline-flex;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+  padding: 2px;
+  border-radius: var(--bs-radius-full);
+  background: var(--bs-color-neutral-400);
+  transition: background-color var(--bs-duration-fast) var(--bs-easing-standard);
+}
+
+.bs-toggle__thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bs-color-surface);
+  box-shadow: var(--bs-shadow-sm);
+  transition: transform var(--bs-duration-fast) var(--bs-easing-standard);
+}
+
+.bs-toggle__input:checked + .bs-toggle__track {
+  background: var(--bs-color-primary);
+}
+
+.bs-toggle__input:checked + .bs-toggle__track .bs-toggle__thumb {
+  transform: translateX(20px);
+}
+
+.bs-toggle__input:focus-visible + .bs-toggle__track {
+  outline: none;
+  box-shadow: var(--bs-shadow-focus);
+}
+
+.bs-toggle__input:disabled + .bs-toggle__track {
+  background: var(--bs-color-neutral-300);
+  cursor: not-allowed;
+}
+
+.bs-toggle__message {
+  margin: 0;
+  color: var(--bs-color-text-muted);
+  font-size: var(--bs-font-size-xs);
+}
+
+.bs-toggle__message--error {
+  color: var(--bs-color-danger-strong);
+  font-weight: var(--bs-font-weight-semibold);
+}
+
+.bs-toggle--error .bs-toggle__track {
+  box-shadow: 0 0 0 1px var(--bs-color-danger);
+}
+
+.bs-toggle--disabled .bs-toggle__row {
+  cursor: not-allowed;
+}
+
+.bs-toggle--disabled .bs-toggle__label {
+  color: var(--bs-color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-toggle__track,
+  .bs-toggle__thumb {
+    transition: none;
+  }
+}

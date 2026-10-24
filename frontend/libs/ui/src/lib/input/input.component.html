@@ -1,0 +1,57 @@
+<div
+  class="bs-field"
+  [class.bs-field--error]="!!error"
+  [class.bs-field--disabled]="disabled || loading"
+>
+  <label class="bs-field__label" [attr.for]="fieldId">
+    {{ label }}
+    @if (required) {
+      <span class="bs-field__required" aria-hidden="true">*</span>
+    }
+  </label>
+
+  <div class="bs-field__control">
+    @if (prefix) {
+      <span class="bs-field__prefix">{{ prefix }}</span>
+    }
+    @if (icon) {
+      <span class="bs-field__icon"><bruny-icon [name]="icon" [size]="18" /></span>
+    }
+    <input
+      class="bs-field__input"
+      [id]="fieldId"
+      [name]="name"
+      [type]="inputType"
+      [value]="value"
+      [placeholder]="placeholder"
+      [attr.autocomplete]="autocomplete"
+      [attr.inputmode]="inputMode"
+      [attr.aria-invalid]="error ? 'true' : null"
+      [attr.aria-describedby]="describedBy"
+      [attr.aria-required]="required ? 'true' : null"
+      [disabled]="disabled || loading"
+      [required]="required"
+      (input)="onInput($event)"
+    />
+    @if (loading) {
+      <span class="bs-field__status"><bruny-spinner size="sm" [inline]="true" /></span>
+    }
+    @if (type === 'password') {
+      <button
+        class="bs-field__action"
+        type="button"
+        [attr.aria-label]="revealed ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+        [attr.aria-pressed]="revealed"
+        (click)="toggleReveal()"
+      >
+        <bruny-icon [name]="revealed ? 'eye-off' : 'eye'" [size]="18" />
+      </button>
+    }
+  </div>
+
+  @if (error) {
+    <p class="bs-field__error" [id]="errorId" role="alert">{{ error }}</p>
+  } @else if (hint) {
+    <p class="bs-field__hint" [id]="hintId">{{ hint }}</p>
+  }
+</div>
