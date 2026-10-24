@@ -10,12 +10,28 @@ Prérequis : Git, Node.js `24.15.0` (voir `.nvmrc` — minimum Angular 22), pnpm
 git clone <URL_DU_DEPOT> bruny-shopping
 cd bruny-shopping
 pnpm install
-cp .env.example .env   # définir au minimum DATABASE_URL, REDIS_URL et JWT_ACCESS_SECRET
+cp .env.example .env   # remplacer chaque CHANGE_ME
 pnpm docker:up
+```
+
+`pnpm docker:up` lance `docker compose up -d --wait` : la commande ne rend la main qu’une fois **PostgreSQL, Redis, Mailpit et MinIO** sains. Les quatre services sont accessibles uniquement sur `127.0.0.1` :
+
+| Service    | Adresse locale              | Usage                            | Volume persistant |
+| ---------- | --------------------------- | -------------------------------- | ----------------- |
+| PostgreSQL | `127.0.0.1:15432`           | Base de données                  | `postgres_data`   |
+| Redis      | `127.0.0.1:16379`           | Cache et sessions                | `redis_data`      |
+| Mailpit    | `http://127.0.0.1:18025`    | Boîte mail de test (SMTP `11025`) | `mailpit_data`    |
+| MinIO      | `http://127.0.0.1:19001`    | Console S3 (API `19000`)         | `minio_data`      |
+
+MinIO n’est plus publié sur Docker Hub depuis septembre 2026. Le service utilise **Silo**, un build maintenu du serveur MinIO open source : même API S3, même console, mêmes variables `MINIO_*` et même endpoint de santé.
+
+Appliquer ensuite les migrations et le jeu de démonstration :
+
+```bash
 pnpm db:migrate && pnpm db:seed
 ```
 
-Lancer ensuite l’API avec `pnpm dev:api`, la boutique avec `pnpm dev:storefront` et l’administration avec `pnpm dev:admin`. La boutique est disponible sur `http://localhost:4200`, l’admin sur `http://localhost:4201`, l’API sur `http://localhost:4000/api/v1` et Swagger en développement sur `http://localhost:4000/api/docs`.
+Lancer l’API avec `pnpm dev:api`, la boutique avec `pnpm dev:storefront` et l’administration avec `pnpm dev:admin`. La boutique est disponible sur `http://localhost:4200`, l’admin sur `http://localhost:4201`, l’API sur `http://localhost:4000/api/v1` et Swagger en développement sur `http://localhost:4000/api/docs`.
 
 Le mot de passe du compte seed est lu depuis `SEED_ADMIN_PASSWORD`. Le seed est réservé au développement et refuse de créer le compte administrateur en production.
 
@@ -23,7 +39,7 @@ Le mot de passe du compte seed est lu depuis `SEED_ADMIN_PASSWORD`. Le seed est 
 
 | Commande                                                  | Description                                                     |
 | --------------------------------------------------------- | --------------------------------------------------------------- |
-| `pnpm docker:up` / `pnpm docker:down`                     | Démarrer / arrêter PostgreSQL, Redis et Mailpit                 |
+| `pnpm docker:up` / `pnpm docker:down`                     | Démarrer / arrêter PostgreSQL, Redis, Mailpit et MinIO          |
 | `pnpm dev:api` / `pnpm dev:storefront` / `pnpm dev:admin` | Démarrer un composant en développement                          |
 | `pnpm build`                                              | Compiler l’API, le storefront SSR et l’admin                    |
 | `pnpm lint` / `pnpm typecheck`                            | Vérifier le style et les types                                  |
@@ -42,7 +58,9 @@ Le mot de passe du compte seed est lu depuis `SEED_ADMIN_PASSWORD`. Le seed est 
 
 ## Configuration
 
-Copier `.env.example` vers `.env`; chaque variable y est décrite. Les secrets réels ne doivent jamais être commités. Les ports PostgreSQL et Redis publiés par Compose ne servent qu’au développement local. Pour la configuration sans ports de base de données exposés, voir `docker-compose.production.yml`.
+Copier `.env.example` vers `.env` et remplacer chaque `CHANGE_ME` ; chaque variable y est décrite. Les secrets réels ne doivent jamais être commités et `.env` est ignoré par Git. `docker compose up` échoue volontairement avec un message explicite si `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` ou `JWT_ACCESS_SECRET` manquent.
+
+Les ports sont publiés sur `127.0.0.1` uniquement, et les services sont isolés par réseau (`backend`, `mail`, `storage`, `edge`). Pour la configuration sans ports d’infrastructure exposés, voir `docker-compose.production.yml`.
 
 ## Vérifications
 
