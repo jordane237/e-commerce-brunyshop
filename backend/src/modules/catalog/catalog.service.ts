@@ -149,7 +149,40 @@ export class CatalogService {
               color: variant.color.trim(),
               size: variant.size.trim(),
               price: variant.price,
-              stock: variant.stock,
+            })),
+          },
+        },
+      });
+      await this.auditLog.record(transaction, {
+        userId,
+        action: 'PRODUCT_CREATED',
+        entity: 'Product',
+        entityId: product.id,
+        ip,
+      });
+      return product;
+    });
+  }
+
+  async updateProduct(dto: CreateProductDto, slug: string, userId: string, ip?: string) {
+    return this.prisma.$transaction(async (transaction) => {
+      const product = await transaction.product.update({
+        where: { slug },
+        data: {
+          name: dto.name.trim(),
+          slug: dto.slug,
+          description: dto.description.trim(),
+          categoryId: dto.categoryId,
+          brandId: dto.brandId,
+          basePrice: dto.basePrice,
+          status: 'DRAFT',
+          variants: {
+            deleteMany: {},
+            create: dto.variants.map((variant) => ({
+              sku: variant.sku.trim(),
+              color: variant.color.trim(),
+              size: variant.size.trim(),
+              price: variant.price,
             })),
           },
         },
@@ -157,11 +190,10 @@ export class CatalogService {
       });
       await this.auditLog.record(transaction, {
         userId,
-        action: 'catalog.product.create',
+        action: 'PRODUCT_UPDATED',
         entity: 'Product',
         entityId: product.id,
         ip,
-        after: { slug: product.slug, name: product.name, status: 'DRAFT' },
       });
       return product;
     });

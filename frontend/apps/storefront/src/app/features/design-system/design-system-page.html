@@ -1,0 +1,516 @@
+<main class="ds-page">
+  <header class="ds-hero">
+    <p class="ds-eyebrow">BRUNY SHOPPING · DESIGN SYSTEM</p>
+    <h1>Composants &amp; tokens</h1>
+    <p class="ds-intro">
+      Référence vivante du design system mobile-first. Les valeurs proviennent de
+      <code>design1/bruny shopping/bruny shopping.png</code> ; les hypothèses et corrections
+      d’accessibilité sont documentées dans <code>docs/design-system/</code>.
+    </p>
+    <div class="ds-hero-badges">
+      <bruny-badge variant="accent">WCAG AA</bruny-badge>
+      <bruny-badge variant="neutral">Angular 22.2.2</bruny-badge>
+      <bruny-badge variant="success" [dot]="true">Tokens actifs</bruny-badge>
+    </div>
+  </header>
+
+  <section class="ds-section" aria-labelledby="ds-colors">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">01 · Fondations</p>
+      <h2 id="ds-colors">Couleurs</h2>
+    </div>
+    <div class="ds-swatches">
+      <div class="ds-swatch">
+        <span class="ds-swatch__color ds-swatch--primary"></span>
+        <strong>Bleu Nuit</strong>
+        <code>#131B2E</code>
+        <small>Primaire · 16,41:1 sur canvas</small>
+      </div>
+      <div class="ds-swatch">
+        <span class="ds-swatch__color ds-swatch--accent"></span>
+        <strong>Or Chaud</strong>
+        <code>#C89B3C</code>
+        <small>Décor · texte : #8A6A1F</small>
+      </div>
+      <div class="ds-swatch">
+        <span class="ds-swatch__color ds-swatch--canvas"></span>
+        <strong>Blanc Cassé</strong>
+        <code>#FAFAF7</code>
+        <small>Canvas</small>
+      </div>
+      <div class="ds-swatch">
+        <span class="ds-swatch__color ds-swatch--whatsapp"></span>
+        <strong>WhatsApp</strong>
+        <code>#25D366</code>
+        <small>CTA : #0F7A40 + blanc</small>
+      </div>
+      <div class="ds-swatch">
+        <span class="ds-swatch__color ds-swatch--danger"></span>
+        <strong>Rouge Promo</strong>
+        <code>#D62839</code>
+        <small>Erreur · blanc 4,97:1</small>
+      </div>
+      <div class="ds-swatch">
+        <span class="ds-swatch__color ds-swatch--success"></span>
+        <strong>Vert Succès</strong>
+        <code>#1E8E5A</code>
+        <small>Texte : #0F7A40</small>
+      </div>
+    </div>
+
+    <div class="ds-type-scale">
+      <p class="ds-type-display">L’Artisanat Africain Élite</p>
+      <p class="ds-type-h2">Titre de section</p>
+      <p class="ds-type-body">
+        Corps de texte en Plus Jakarta Sans, interligne 1,65 pour les paragraphes longs.
+      </p>
+      <p class="ds-type-label">MICRO-LIBELLÉ · +0,08 EM</p>
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-buttons">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">02 · Actions</p>
+      <h2 id="ds-buttons">Button</h2>
+      <p>
+        Une seule action primaire par écran. Le vert WhatsApp est réservé aux actions de contact.
+      </p>
+    </div>
+
+    <div class="ds-demo">
+      <p class="ds-demo-label">Variantes</p>
+      <div class="ds-row">
+        <bruny-button variant="primary"
+          ><bruny-icon bsIcon name="cart" [size]="18" />Ajouter au panier</bruny-button
+        >
+        <bruny-button variant="secondary"
+          ><bruny-icon bsIcon name="check-circle" [size]="18" />Voir le guide des
+          tailles</bruny-button
+        >
+        <bruny-button variant="ghost"
+          ><bruny-icon bsIcon name="heart" [size]="18" />Partager le modèle</bruny-button
+        >
+        <bruny-button variant="danger"
+          ><bruny-icon bsIcon name="trash" [size]="18" />Annuler</bruny-button
+        >
+        <bruny-button variant="whatsapp"
+          ><bruny-icon bsIcon name="whatsapp" [size]="18" />Commander via WhatsApp</bruny-button
+        >
+      </div>
+    </div>
+
+    <div class="ds-demo">
+      <p class="ds-demo-label">Tailles</p>
+      <div class="ds-row ds-row--center">
+        <bruny-button size="sm">Petit</bruny-button>
+        <bruny-button size="md">Standard</bruny-button>
+        <bruny-button size="lg">Grand</bruny-button>
+        <bruny-button [iconOnly]="true" ariaLabel="Fermer" variant="ghost">
+          <bruny-icon name="close" [size]="18" />
+        </bruny-button>
+      </div>
+    </div>
+
+    <div class="ds-demo">
+      <p class="ds-demo-label">États</p>
+      <div class="ds-row ds-row--center">
+        <bruny-button>Normal</bruny-button>
+        <bruny-button [disabled]="true">Désactivé</bruny-button>
+        <bruny-button [loading]="true">Traitement sécurisé…</bruny-button>
+        <bruny-button variant="ghost" [disabled]="true">Pointure épuisée</bruny-button>
+      </div>
+      <p class="ds-note">Hover, focus et active sont visibles au survol et au clavier.</p>
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-fields">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">03 · Saisie</p>
+      <h2 id="ds-fields">Input &amp; Select</h2>
+      <p>
+        Hauteur de 48 px, label associé, aide et erreur annoncées via <code>aria-describedby</code>.
+      </p>
+    </div>
+
+    <div class="ds-form-grid">
+      <bruny-input
+        label="Nom et prénom"
+        name="ds-name"
+        [value]="name()"
+        (valueChange)="name.set($event)"
+        hint="Tel qu’il apparaîtra sur le bordereau."
+        [required]="true"
+      />
+      <bruny-input
+        label="Numéro WhatsApp"
+        name="ds-phone"
+        type="tel"
+        prefix="+237"
+        inputMode="tel"
+        placeholder="694 28 10 44"
+        [value]="phone()"
+        (valueChange)="phone.set($event)"
+        hint="L’appel avant livraison est inclus."
+        [required]="true"
+      />
+      <bruny-input
+        label="Recherche"
+        name="ds-search"
+        type="search"
+        icon="search"
+        placeholder="Mocassins, Richelieu, pointures…"
+      />
+      <bruny-input
+        label="Mot de passe"
+        name="ds-password"
+        type="password"
+        autocomplete="current-password"
+        [value]="password()"
+        (valueChange)="password.set($event)"
+        hint="12 caractères minimum."
+      />
+      <bruny-input
+        label="Adresse e-mail"
+        name="ds-email"
+        type="email"
+        inputMode="email"
+        [value]="errorValue()"
+        (valueChange)="errorValue.set($event)"
+        error="Saisissez une adresse e-mail valide."
+        [required]="true"
+      />
+      <bruny-input
+        label="Champ désactivé"
+        name="ds-disabled"
+        value="Non modifiable"
+        [disabled]="true"
+        hint="Le champ est indisponible."
+      />
+      <bruny-input
+        label="Champ en chargement"
+        name="ds-loading"
+        value="Vérification…"
+        [loading]="true"
+      />
+      <bruny-select
+        label="Ville de livraison"
+        name="ds-city"
+        [options]="[
+          { value: 'douala', label: 'Douala — 24 h' },
+          { value: 'yaounde', label: 'Yaoundé — 24 h' },
+          { value: 'bafoussam', label: 'Bafoussam — 72 h' }
+        ]"
+        [value]="city()"
+        (valueChange)="city.set($event)"
+        hint="Les frais sont calculés à l’étape suivante."
+        [required]="true"
+      />
+      <bruny-select
+        label="Mode de paiement"
+        name="ds-payment-select"
+        [options]="[{ value: 'cod', label: 'Paiement à la livraison' }]"
+        value="cod"
+        error="Sélectionnez un mode de paiement."
+      />
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-choices">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">04 · Choix</p>
+      <h2 id="ds-choices">Checkbox, Radio &amp; Toggle</h2>
+    </div>
+
+    <div class="ds-three-cols">
+      <div class="ds-card">
+        <p class="ds-demo-label">Checkbox</p>
+        <bruny-checkbox
+          label="Recevoir les nouveautés"
+          name="ds-newsletter"
+          [checked]="newsletter()"
+          (checkedChange)="newsletter.set($event)"
+          hint="Un message par semaine, pas plus."
+        />
+        <bruny-checkbox
+          label="Sélection partielle"
+          name="ds-indeterminate"
+          [indeterminate]="indeterminate()"
+          [checked]="false"
+        />
+        <bruny-checkbox
+          label="J’accepte les conditions générales"
+          name="ds-terms"
+          [checked]="terms()"
+          (checkedChange)="terms.set($event)"
+          error="Vous devez accepter les conditions."
+        />
+        <bruny-checkbox label="Option désactivée" name="ds-check-disabled" [disabled]="true" />
+      </div>
+
+      <div class="ds-card">
+        <p class="ds-demo-label">Radio</p>
+        <bruny-radio
+          label="Paiement à la livraison"
+          name="ds-payment"
+          value="livraison"
+          [checked]="payment() === 'livraison'"
+          (selected)="payment.set($event)"
+          hint="Espèces, Orange Money ou MTN MoMo."
+        />
+        <bruny-radio
+          label="Paiement en ligne"
+          name="ds-payment"
+          value="en-ligne"
+          [checked]="payment() === 'en-ligne'"
+          (selected)="payment.set($event)"
+          hint="Bientôt disponible."
+          [disabled]="true"
+        />
+        <bruny-radio
+          label="Choix avec erreur"
+          name="ds-payment"
+          value="erreur"
+          error="Ce mode n’est pas disponible à Douala."
+        />
+      </div>
+
+      <div class="ds-card">
+        <p class="ds-demo-label">Toggle</p>
+        <bruny-toggle
+          label="Notifications de livraison"
+          name="ds-notifications"
+          [checked]="notifications()"
+          (checkedChange)="notifications.set($event)"
+          hint="SMS et WhatsApp à chaque étape."
+        />
+        <bruny-toggle label="Mode désactivé" name="ds-toggle-disabled" [disabled]="true" />
+        <bruny-toggle label="Mode en chargement" name="ds-toggle-loading" [loading]="true" />
+        <bruny-toggle
+          label="Option avec erreur"
+          name="ds-toggle-error"
+          error="Impossible d’activer cette option."
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-badges">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">05 · Signaux</p>
+      <h2 id="ds-badges">Badges &amp; prix</h2>
+    </div>
+
+    <div class="ds-demo">
+      <p class="ds-demo-label">Badges</p>
+      <div class="ds-row">
+        <bruny-badge variant="promo">-25% PROMO</bruny-badge>
+        <bruny-badge variant="new">NOUVEAU</bruny-badge>
+        <bruny-badge variant="accent">EXCLUSIF BRUNY</bruny-badge>
+        <bruny-badge variant="danger">DERNIÈRES PIÈCES</bruny-badge>
+        <bruny-badge variant="success" [dot]="true">En stock Douala</bruny-badge>
+        <bruny-badge variant="warning">Stock faible</bruny-badge>
+        <bruny-badge variant="info">En préparation</bruny-badge>
+        <bruny-badge variant="neutral">Brouillon</bruny-badge>
+        <bruny-badge variant="outline">Archivé</bruny-badge>
+      </div>
+    </div>
+
+    <div class="ds-demo">
+      <p class="ds-demo-label">Prix</p>
+      <div class="ds-row ds-row--center">
+        <bruny-price-tag [amount]="27500" />
+        <bruny-price-tag [amount]="21900" [compareAt]="27500" size="lg" />
+        <bruny-price-tag [amount]="8000" size="sm" />
+      </div>
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-sizes">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">06 · E-commerce</p>
+      <h2 id="ds-sizes">Size Selector</h2>
+      <p>Zone tactile de 44 px, état sélectionné, stock faible et pointure épuisée.</p>
+    </div>
+
+    <div class="ds-card ds-card--wide">
+      <bruny-size-selector
+        [sizes]="['40', '41', '42', '43', '44']"
+        [selected]="size()"
+        [lowStock]="['42']"
+        [unavailable]="['43']"
+        (selectedSize)="size.set($event)"
+      />
+      <p class="ds-note">Sélection courante : {{ size() }}</p>
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-product">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">07 · Produit</p>
+      <h2 id="ds-product">Product Card</h2>
+    </div>
+
+    <div class="ds-product-grid">
+      <bruny-product-card
+        [product]="product"
+        [showAdd]="true"
+        [isNew]="true"
+        (add)="showToast('success', 'Mocassin ajouté au panier')"
+      />
+      <bruny-product-card [product]="product" [loading]="true" />
+      <div class="ds-card">
+        <p class="ds-demo-label">État de chargement</p>
+        <p class="ds-note">
+          La carte affiche des squelettes pendant le chargement. Le bouton ci-dessous bascule
+          l’exemple de gauche.
+        </p>
+        <bruny-button variant="ghost" (click)="toggleProductLoading()">
+          {{ productLoading() ? 'Afficher la carte' : 'Afficher le squelette' }}
+        </bruny-button>
+        <bruny-product-card [product]="product" [loading]="productLoading()" />
+      </div>
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-loaders">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">08 · Chargement</p>
+      <h2 id="ds-loaders">Skeleton &amp; Spinner</h2>
+    </div>
+    <div class="ds-two-cols">
+      <div class="ds-card">
+        <p class="ds-demo-label">Skeleton</p>
+        <bruny-skeleton width="100%" height="120px" radius="lg" />
+        <bruny-skeleton variant="text" [lines]="3" height="0.9rem" />
+        <bruny-skeleton variant="circle" height="56px" />
+      </div>
+      <div class="ds-card">
+        <p class="ds-demo-label">Spinner</p>
+        <div class="ds-row ds-row--center">
+          <bruny-spinner size="sm" />
+          <bruny-spinner size="md" />
+          <bruny-spinner size="lg" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-overlays">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">09 · Superposition</p>
+      <h2 id="ds-overlays">Modal &amp; Toast</h2>
+    </div>
+
+    <div class="ds-two-cols">
+      <div class="ds-card">
+        <p class="ds-demo-label">Modal</p>
+        <p class="ds-note">
+          Focus déplacé dans la boîte, piégé par Tab, fermé par Échap ou clic sur le voile.
+        </p>
+        <bruny-button (click)="modalOpen.set(true)">Ouvrir la modale</bruny-button>
+      </div>
+
+      <div class="ds-card">
+        <p class="ds-demo-label">Toast</p>
+        <div class="ds-row">
+          <bruny-button variant="primary" (click)="showToast('success', 'Commande confirmée.')">
+            Succès
+          </bruny-button>
+          <bruny-button variant="danger" (click)="showToast('error', 'Le paiement a échoué.')">
+            Erreur
+          </bruny-button>
+          <bruny-button
+            variant="ghost"
+            (click)="showToast('warning', 'Stock faible sur la pointure 42.')"
+          >
+            Avertissement
+          </bruny-button>
+          <bruny-button variant="ghost" (click)="showToast('info', 'Votre colis est en route.')">
+            Info
+          </bruny-button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ds-section" aria-labelledby="ds-table">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">10 · Admin</p>
+      <h2 id="ds-table">Table</h2>
+      <p>Tri, pagination, chargement, état vide et actions par ligne.</p>
+    </div>
+
+    <div class="ds-row ds-row--center">
+      <bruny-button size="sm" variant="ghost" (click)="tableLoading.set(!tableLoading())">
+        {{ tableLoading() ? 'Arrêter le chargement' : 'Simuler le chargement' }}
+      </bruny-button>
+      <bruny-button size="sm" variant="ghost" (click)="tableEmpty.set(!tableEmpty())">
+        {{ tableEmpty() ? 'Afficher les lignes' : 'Vider le tableau' }}
+      </bruny-button>
+    </div>
+
+    <bruny-table
+      caption="Commandes récentes"
+      [columns]="columns"
+      [rows]="visibleRows()"
+      [loading]="tableLoading()"
+      emptyMessage="Aucune commande ne correspond à ce filtre."
+      [page]="page()"
+      [pageSize]="pageSize"
+      [total]="tableTotal()"
+      [sortKey]="sortKey()"
+      [sortDirection]="sortDirection()"
+      [actions]="actions"
+      (sortChange)="onSort($event)"
+      (pageChange)="onPage($event)"
+      (action)="onTableAction($event)"
+    />
+  </section>
+
+  <section class="ds-section ds-section--a11y" aria-labelledby="ds-a11y">
+    <div class="ds-section-heading">
+      <p class="ds-eyebrow">11 · Accessibilité</p>
+      <h2 id="ds-a11y">Repères de revue</h2>
+    </div>
+    <ul class="ds-checklist">
+      <li>Zones tactiles : 44 × 44 px minimum sur boutons, champs, choix, pointures et actions.</li>
+      <li>Focus visible : double anneau navy de 4 px, contraste 16,4:1 sur le canvas.</li>
+      <li>
+        Contrastes : le doré et le vert WhatsApp de la maquette ont été corrigés ; ratios dans le
+        rapport.
+      </li>
+      <li>
+        Clavier : Tab, Shift+Tab, Entrée, Espace, Échap et flèches (select natif) fonctionnent.
+      </li>
+      <li>
+        Lecteur d’écran : labels, <code>aria-invalid</code>, <code>aria-describedby</code>,
+        <code>role="alert"</code> et live regions.
+      </li>
+      <li>Mouvement : toutes les animations respectent <code>prefers-reduced-motion</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<bruny-modal
+  [open]="modalOpen()"
+  (openChange)="modalOpen.set($event)"
+  title="Choisir une pointure"
+  id="ds-size-modal"
+>
+  <p>
+    Cette modale est un exemple réel : le focus est déplacé dans la boîte, Tab reste piégé et la
+    touche Échap referme la fenêtre.
+  </p>
+  <p class="ds-note">Fermez avec Échap, le bouton de fermeture ou le clic sur le voile.</p>
+  <div bsModalFooter class="ds-modal-actions">
+    <bruny-button variant="ghost" (click)="modalOpen.set(false)">Annuler</bruny-button>
+    <bruny-button (click)="modalOpen.set(false)">Confirmer la pointure</bruny-button>
+  </div>
+</bruny-modal>
+
+<bruny-toast
+  [message]="toastMessage()"
+  [variant]="toastVariant()"
+  [duration]="5000"
+  (closed)="clearToast()"
+/>

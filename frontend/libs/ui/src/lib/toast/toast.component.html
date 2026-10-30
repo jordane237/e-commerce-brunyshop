@@ -1,0 +1,32 @@
+@if (visible()) {
+  <div
+    class="bs-toast"
+    [class.bs-toast--success]="variant === 'success'"
+    [class.bs-toast--error]="variant === 'error'"
+    [class.bs-toast--warning]="variant === 'warning'"
+    [class.bs-toast--info]="variant === 'info'"
+    [attr.role]="isAssertive() ? 'alert' : 'status'"
+    [attr.aria-live]="isAssertive() ? 'assertive' : 'polite'"
+    aria-atomic="true"
+  >
+    <span class="bs-toast__icon" aria-hidden="true">
+      <bruny-icon [name]="icon()" [size]="20" />
+    </span>
+    <div class="bs-toast__content">
+      @if (title) {
+        <p class="bs-toast__title">{{ title }}</p>
+      }
+      <p class="bs-toast__message">{{ message }}</p>
+    </div>
+    @if (closable) {
+      <button
+        class="bs-toast__close"
+        type="button"
+        aria-label="Fermer la notification"
+        (click)="close()"
+      >
+        <bruny-icon name="close" [size]="18" />
+      </button>
+    }
+  </div>
+}

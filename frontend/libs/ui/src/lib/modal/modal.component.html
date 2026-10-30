@@ -1,0 +1,35 @@
+@if (open) {
+  <div class="bs-modal__overlay" (mousedown)="onBackdrop($event)">
+    <div
+      #dialog
+      class="bs-modal"
+      [class.bs-modal--sm]="size === 'sm'"
+      [class.bs-modal--lg]="size === 'lg'"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="id + '-title'"
+      tabindex="-1"
+      (keydown)="onKeydown($event)"
+    >
+      <header class="bs-modal__header">
+        <h2 class="bs-modal__title" [id]="id + '-title'">{{ title }}</h2>
+        <button
+          class="bs-modal__close"
+          type="button"
+          aria-label="Fermer la fenêtre"
+          (click)="close()"
+        >
+          <bruny-icon name="close" [size]="20" />
+        </button>
+      </header>
+
+      <div class="bs-modal__body">
+        <ng-content />
+      </div>
+
+      <footer class="bs-modal__footer">
+        <ng-content select="[bsModalFooter]" />
+      </footer>
+    </div>
+  </div>
+}
