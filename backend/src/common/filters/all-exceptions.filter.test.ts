@@ -31,7 +31,10 @@ function catchWith(
   request: Record<string, unknown>,
 ): Captured {
   const captured: Captured = {};
-  const response = {
+  const response: {
+    status: (code: number) => typeof response;
+    json: (body: NormalizedErrorBody) => typeof response;
+  } = {
     status: (code: number): typeof response => {
       captured.status = code;
       return response;
