@@ -4,7 +4,7 @@ Fondation d’une boutique en ligne de chaussures pour le Cameroun : interface e
 
 ## Démarrage local
 
-Prérequis : Git, Node.js `24.11.0` (voir `.nvmrc`), pnpm `12.11.2` et Docker Compose.
+Prérequis : Git, Node.js `24.15.0` (voir `.nvmrc` — minimum Angular 22), pnpm `12.11.2` et Docker Compose.
 
 ```bash
 git clone <URL_DU_DEPOT> bruny-shopping
@@ -55,6 +55,34 @@ pnpm test:e2e
 ```
 
 Les tests e2e ont besoin de PostgreSQL et Redis, puis des migrations appliquées. Pour une vérification SSR, lancer l’API et le storefront puis consulter le HTML retourné par `curl -s http://localhost:4200/boutique`.
+
+## Qualité de code
+
+Le monorepo applique une chaîne d’outils de qualité, activée à chaque commit :
+
+| Outil           | Rôle                                                              | Fichier de config                          |
+| --------------- | ----------------------------------------------------------------- | ------------------------------------------ |
+| **ESLint**      | Règles statiques + **frontières de modules** (frontend Nx et backend NestJS) | `frontend/eslint.config.mjs`, `backend/eslint.config.mjs` |
+| **Prettier**    | Formatage uniforme (2 espaces, LF, guillemets simples, 100 colonnes) | `.prettierrc`, `.prettierignore`           |
+| **Husky** v9    | Hooks Git : `pre-commit` (lint-staged), `commit-msg` (commitlint), `pre-push` (protège `main`) | `.husky/`                                  |
+| **lint-staged** | Applique ESLint + Prettier aux fichiers stagés uniquement        | `package.json` (champ `lint-staged`)       |
+| **commitlint**  | Messages de commit en **Conventional Commits**                    | `commitlint.config.mjs`                    |
+| **Renovate**    | Mises à jour des dépendances (groupées Angular, Nx, NestJS, Prisma, tooling) | `renovate.json`                            |
+
+### Frontières de modules
+
+- **Frontend (Nx)** : la règle `@nx/enforce-module-boundaries` applique des `depConstraints` à partir des tags de chaque projet (`type:app`, `type:ui`, `type:util`, `type:data-access`, `type:styles`). Une feature/app ne peut pas dépendre d’une autre feature/app, uniquement des couches infra.
+- **Backend (NestJS)** : `no-restricted-imports` interdit les imports directs entre modules frères dans `src/modules/**`. On passe par la composition NestJS (`imports: [...]`) ou le code partagé dans `src/common/`.
+
+### Commandes de vérification
+
+```bash
+pnpm lint        # ESLint backend + frontend (frontières incluses)
+pnpm typecheck   # tsc --noEmit backend + frontend (strict)
+pnpm format      # Prettier : formate tout sauf *.md
+```
+
+Les hooks Husky bloquent un commit non conforme : message hors Conventional Commits rejeté par commitlint, fichiers mal formatés reformatés par lint-staged avant commit.
 
 ## Documentation et limites connues
 

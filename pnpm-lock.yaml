@@ -375,6 +375,9 @@ importers:
       '@nx/eslint':
         specifier: 23.3.0
         version: 23.3.0(@babel/traverse@7.29.10(supports-color@10.2.2))(@zkochan/js-yaml@0.0.7)(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(supports-color@10.2.2)
+      '@nx/eslint-plugin':
+        specifier: 23.3.0
+        version: 23.3.0(@babel/traverse@7.29.10(supports-color@10.2.2))(@typescript-eslint/parser@8.71.1(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(supports-color@10.2.2)(typescript@6.0.3)
       '@nx/js':
         specifier: 23.3.0
         version: 23.3.0(@babel/traverse@7.29.10(supports-color@10.2.2))(nx@23.3.0)(supports-color@10.2.2)
@@ -2858,6 +2861,17 @@ packages:
     peerDependencies:
       nx: '>= 22 <= 24 || ^23.0.0-0'
 
+  '@nx/eslint-plugin@23.3.0':
+    resolution: {integrity: sha512-BlB1A//ysBUN0C/f/zZ7f8xT1eWqux6DGoJBqLa+z94PpWIsEViRnD7ftdCx//EeTi83nsaDN4Wsb2cspZhfdw==}
+    peerDependencies:
+      '@typescript-eslint/parser': ^8.0.0
+      eslint-config-prettier: ^10.0.0
+    peerDependenciesMeta:
+      '@typescript-eslint/parser':
+        optional: true
+      eslint-config-prettier:
+        optional: true
+
   '@nx/eslint@23.3.0':
     resolution: {integrity: sha512-gYfB57vBDIFfu+QxZpoKThR9VRgUSgvSm+wheOom6wuPgqPIvAcsg17JklRVGd52j7AAyH5RlaFvjhEo6IsY6w==}
     peerDependencies:
@@ -4414,6 +4428,9 @@ packages:
   confbox@0.3.1:
     resolution: {integrity: sha512-cKUSoKa8YxFZZSmraVi7onONx3amu77ngK3kGpsYHDH7drPwCRkQE1RYMPlLRrMtnciRj274XNRxcHxnKmDSnA==}
 
+  confusing-browser-globals@1.0.11:
+    resolution: {integrity: sha512-JsPKdmh8ZkmnHxDk55FZ1TqVLvEQTvoByJZRN9jzI0UjxK/QgAmsphz7PGtqgPieQZ/CQcHWXCR7ATDNhGe+YA==}
+
   connect-history-api-fallback@2.0.0:
     resolution: {integrity: sha512-U73+6lQFmfiNPrYbXqr6kZ1i1wiRqXnp2nhMsINseWXO8lDau0LGEffJ8kQi4EjLZympVgRdvqjAgiZ1tgzDDA==}
     engines: {node: '>=0.8'}
@@ -4896,6 +4913,10 @@ packages:
     resolution: {integrity: sha512-j6PAQ2uUr79PZhBjP5C5fhl8e39FmRnOjsD5lGnWrFU8i2G776tBK7+nP8KuQUTTyAZUwfQqXAgrVH5MbH9CYQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
+  espree@9.6.1:
+    resolution: {integrity: sha512-oruZaFkjorTpF32kDSI5/75ViwGeZginGGy2NoOSg3Q9bnwlnmDm4HLnkl0RE3n+njDXR037aY1+x58Z/zFdwQ==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
   esquery@1.7.0:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
     engines: {node: '>=0.10'}
@@ -5134,6 +5155,10 @@ packages:
 
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
+    engines: {node: '>=18'}
+
+  globals@17.13.0:
+    resolution: {integrity: sha512-RwMTC61u7hrG3ZJMkZQOK4JLJrKS8QtoTii63EmWvFXHqycY9FObBJQCbsLxSO8kjKhWE5kV1GC+Vb1g3RI0Zg==}
     engines: {node: '>=18'}
 
   gopd@1.2.0:
@@ -5463,6 +5488,10 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  jsonc-eslint-parser@2.4.2:
+    resolution: {integrity: sha512-1e4qoRgnn448pRuMvKGsFFymUCquZV0mpGgOyIKNgD3JVDTsVJyRBGH/Fm0tBb8WsWGgmB1mDe6/yJMQM37DUA==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
   jsonc-parser@3.3.1:
     resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
@@ -10118,6 +10147,32 @@ snapshots:
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
+  '@nx/eslint-plugin@23.3.0(@babel/traverse@7.29.10(supports-color@10.2.2))(@typescript-eslint/parser@8.71.1(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(supports-color@10.2.2)(typescript@6.0.3)':
+    dependencies:
+      '@nx/devkit': 23.3.0(nx@23.3.0)
+      '@nx/js': 23.3.0(@babel/traverse@7.29.10(supports-color@10.2.2))(nx@23.3.0)(supports-color@10.2.2)
+      '@phenomnomnominal/tsquery': 6.2.0(typescript@6.0.3)
+      '@typescript-eslint/type-utils': 8.71.1(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.71.1(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
+      confusing-browser-globals: 1.0.11
+      globals: 17.13.0
+      jsonc-eslint-parser: 2.4.2
+      picocolors: 1.1.1
+      semver: 7.8.5
+      tslib: 2.8.1
+    optionalDependencies:
+      '@typescript-eslint/parser': 8.71.1(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
+    transitivePeerDependencies:
+      - '@babel/traverse'
+      - '@swc-node/register'
+      - '@swc/cli'
+      - '@swc/core'
+      - eslint
+      - nx
+      - supports-color
+      - typescript
+      - verdaccio
+
   '@nx/eslint@23.3.0(@babel/traverse@7.29.10(supports-color@10.2.2))(@zkochan/js-yaml@0.0.7)(eslint@9.39.5(jiti@2.6.1)(supports-color@10.2.2))(nx@23.3.0)(supports-color@10.2.2)':
     dependencies:
       '@nx/devkit': 23.3.0(nx@23.3.0)
@@ -11820,6 +11875,8 @@ snapshots:
 
   confbox@0.3.1: {}
 
+  confusing-browser-globals@1.0.11: {}
+
   connect-history-api-fallback@2.0.0: {}
 
   content-disposition@0.5.4:
@@ -12346,6 +12403,12 @@ snapshots:
       acorn-jsx: 5.3.2(acorn@8.19.0)
       eslint-visitor-keys: 4.2.1
 
+  espree@9.6.1:
+    dependencies:
+      acorn: 8.19.0
+      acorn-jsx: 5.3.2(acorn@8.19.0)
+      eslint-visitor-keys: 3.4.3
+
   esquery@1.7.0:
     dependencies:
       estraverse: 5.3.0
@@ -12706,6 +12769,8 @@ snapshots:
 
   globals@14.0.0: {}
 
+  globals@17.13.0: {}
+
   gopd@1.2.0: {}
 
   graceful-fs@4.2.11: {}
@@ -12991,6 +13056,13 @@ snapshots:
   json-stable-stringify-without-jsonify@1.0.1: {}
 
   json5@2.2.3: {}
+
+  jsonc-eslint-parser@2.4.2:
+    dependencies:
+      acorn: 8.19.0
+      eslint-visitor-keys: 3.4.3
+      espree: 9.6.1
+      semver: 7.8.5
 
   jsonc-parser@3.3.1: {}
 
