@@ -24,6 +24,10 @@
     "db:migrate:dev": "pnpm -C backend db:migrate:dev",
     "db:reset": "pnpm -C backend db:reset",
     "db:seed": "pnpm -C backend db:seed",
+    "openapi:export": "pnpm -C backend openapi:export",
+    "openapi:check": "pnpm -C backend openapi:export && git diff --exit-code backend/openapi.json",
+    "prisma:generate": "pnpm -C backend prisma generate",
+    "prisma:migrate": "pnpm -C backend prisma migrate deploy",
     "prepare": "husky"
   },
   "lint-staged": {

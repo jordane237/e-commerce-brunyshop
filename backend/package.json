@@ -14,7 +14,10 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "openapi:export": "node -e \"const {NestFactory}=require('@nestjs/core');const{SwaggerModule,DocumentBuilder}=require('@nestjs/swagger');async function main(){const app=await NestFactory.createApplicationContext(require('./dist/src/app.module.js').AppModule);const doc=SwaggerModule.createDocument(app,new DocumentBuilder().build());require('fs').writeFileSync(require('path').join(__dirname,'openapi.json'),JSON.stringify(doc,null,2));}\""
   },
   "dependencies": {
     "@nest-lab/throttler-storage-redis": "^1.2.0",

@@ -1,74 +1,278 @@
+# CI Pipeline — GitHub Actions
+#
+# Tec 11 — Pipeline d'intégration continue
+#
+# Jobs :
+#   quality        : lint + typecheck + tests unitaires (+ coverage)
+#   build          : build backend + frontend (needs: quality)
+#   e2e            : test E2E avec services PostgreSQL + Redis (needs: build)
+#   security       : gitleaks + audit des dépendances (parallèle à quality)
+#   openapi-check  : vérifie que openapi.json est à jour (needs: quality)
+#   ci-success     : agrégateur (required status check pour la protection de branch)
+#
+# Règles :
+#   - Aucune étape critique en continue-on-error
+#   - Cache pnpm activé partout
+#   - Versions d'actions épinglées en @v4
+#   - Images Docker des services épinglées
+#   - Healthchecks obligatoires pour les services E2E
+
 name: CI
 
 on:
   pull_request:
+    branches: [main]
   push:
-    branches: [main, master]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
+  pull-requests: read
+  security-events: write
 
 jobs:
-  validate:
+  # ─────────────────────────────────────────────────────────────
+  # Job 1 — quality (lint + types + tests unitaires)
+  # ─────────────────────────────────────────────────────────────
+  quality:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:18-alpine
-        env:
-          POSTGRES_USER: bruny
-          POSTGRES_PASSWORD: ci-password
-          POSTGRES_DB: bruny
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U bruny -d bruny"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-      redis:
-        image: redis:8-alpine
-        ports: ['6379:6379']
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s --health-timeout 3s --health-retries 10
-    env:
-      NODE_ENV: development
-      PORT: 4000
-      DATABASE_URL: postgresql://bruny:ci-password@localhost:5432/bruny
-      REDIS_URL: redis://localhost:6379
-      JWT_ACCESS_SECRET: ci-only-secret-that-is-at-least-forty-eight-characters-long
-      JWT_ACCESS_TTL: 15m
-      REFRESH_TOKEN_TTL: 30d
-      CORS_ORIGINS: http://localhost:4200,http://localhost:4201
-      APP_PUBLIC_URL: http://localhost:4200
-      ADMIN_PUBLIC_URL: http://localhost:4201
-      THROTTLE_TTL: 60
-      THROTTLE_LIMIT: 1000
-      SEED_ADMIN_EMAIL: admin@brunyshopping.example
-      SEED_ADMIN_PASSWORD: ci-seed-password-only
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 12.11.2
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm -C backend db:migrate
-      - run: pnpm -C backend db:seed
-      - run: pnpm -C backend test:e2e
-      - run: pnpm build
-      - run: pnpm -C frontend exec playwright install --with-deps chromium
-      - name: Start API for browser tests
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test -- --coverage
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 2 — build (backend + frontend)
+  # ─────────────────────────────────────────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: quality
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: |
+            backend/dist
+            frontend/dist
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 3 — e2e (tests end-to-end avec services Postgres + Redis)
+  # ─────────────────────────────────────────────────────────────
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: brunyshop_test
+          POSTGRES_PASSWORD: brunyshop_test
+          POSTGRES_DB: brunyshop_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://brunyshop_test:brunyshop_test@localhost:5432/brunyshop_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-only-secret-that-is-at-least-thirty-two-characters-long-abcdefg' }}
+      COOKIE_SECRET: ${{ secrets.COOKIE_SECRET || 'ci-cookie-secret-at-least-thirty-two-characters-long-12345678' }}
+      SEED_SUPER_ADMIN_EMAIL: admin@brunyshopping.example
+      SEED_SUPER_ADMIN_PASSWORD: ci-test-password-only
+      CORS_ORIGINS: http://localhost:4200
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm prisma:generate
+
+      - name: Run Prisma migrate deploy
+        run: pnpm prisma:migrate
+
+      - name: Run db:seed
+        run: pnpm db:seed
+
+      - name: Run e2e tests
+        run: pnpm test:e2e
+
+      - name: Upload e2e reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 4 — security (gitleaks + audit des dépendances)
+  # ─────────────────────────────────────────────────────────────
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 5 — openapi-check (vérifie que openapi.json est à jour)
+  # ─────────────────────────────────────────────────────────────
+  openapi-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: quality
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Export OpenAPI spec
+        run: pnpm -C backend openapi:export
+
+      - name: Check OpenAPI spec is up to date
+        run: git diff --exit-code backend/openapi.json
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 6 — ci-success (agrégateur)
+  # ─────────────────────────────────────────────────────────────
+  ci-success:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [quality, build, e2e, security, openapi-check]
+    if: always()
+    steps:
+      - name: Aggregate job results
         run: |
-          nohup pnpm -C backend start > /tmp/bruny-api.log 2>&1 &
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:4000/api/v1/health/ready; then exit 0; fi
-            sleep 2
+          overall_success=true
+          for job in quality build e2e security openapi-check; do
+            result="${{ needs.$job.result }}"
+            echo "Job '$job' result: $result"
+            if [ "$result" != "success" ]; then
+              overall_success=false
+            fi
           done
-          cat /tmp/bruny-api.log
-          exit 1
-      - run: pnpm -C frontend test:e2e
-      - run: pnpm audit --audit-level high
+          if [ "$overall_success" = true ]; then
+            echo "All required jobs passed"
+            exit 0
+          else
+            echo "One or more required jobs failed"
+            exit 1
+          fi
