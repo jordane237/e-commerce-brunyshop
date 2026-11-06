@@ -3,8 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, type Prisma } from '../../generated/prisma/client';
 
-// Extends the generated client so model accessors (prisma.user, ...) are
-// available directly on the injected service.
+// Wrapper around the generated Prisma client: the @prisma/adapter-pg
+// driver adapter is injected through the constructor, and PrismaClient's
+// lifecycle hooks (`$connect`/`$disconnect`) are exposed on the service
+// for NestJS to call at startup and shutdown.
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(config: ConfigService) {
