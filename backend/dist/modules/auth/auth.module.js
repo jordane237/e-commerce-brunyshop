@@ -19,7 +19,7 @@ let AuthModule = class AuthModule {
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule, cache_module_1.CacheModule, mail_module_1.MailModule, audit_service_1.AuditLogService],
+        imports: [database_module_1.DatabaseModule, cache_module_1.CacheModule, mail_module_1.MailModule],
         controllers: [auth_controller_1.AuthController, auth_controller_1.MeController],
         providers: [auth_service_1.AuthService, audit_service_1.AuditLogService],
         exports: [auth_service_1.AuthService],

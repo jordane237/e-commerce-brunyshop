@@ -17,6 +17,7 @@ import type { ApplicationConfig } from '../../config/configuration';
 import { PrismaService } from '../../infrastructure/database/database.module';
 import { MailService } from '../../infrastructure/mail/mail.service';
 import { RedisService } from '../../infrastructure/cache/cache.module';
+import { TokenService } from '../../auth/tokens/token.service'; /* eslint-disable-line no-restricted-imports */
 import { parseDuration } from '../../common/utils/duration';
 import { decryptSecret, encryptSecret, randomToken, sha256hex } from '../../common/utils/crypto';
 import { assertPasswordStrength } from '../../common/utils/password';
@@ -74,6 +75,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly redisService: RedisService,
     private readonly mail: MailService,
+    private readonly tokenService: TokenService,
   ) {}
 
   // -------------------------------------------------------------------------
@@ -167,68 +169,29 @@ export class AuthService {
   }
 
   // -------------------------------------------------------------------------
-  // Refresh rotation (cachier §10.2)
+  // Refresh rotation (délégué à TokenService — voir Étape 4 du ticket)
   // -------------------------------------------------------------------------
 
   async refresh(req: Request, res: Response): Promise<{ accessToken: string }> {
-    const cookie = req.cookies[REFRESH_COOKIE_NAME] as string | undefined;
-    if (!cookie) {
-      throw new UnauthorizedException({ code: 'NO_SESSION' });
-    }
-    const record = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: sha256hex(cookie) },
-    });
-    if (!record) {
-      this.clearRefreshCookie(res);
-      throw new UnauthorizedException({ code: 'INVALID_SESSION' });
-    }
-    if (record.revokedAt) {
-      // Reuse of a rotated token: revoke the whole family (cachier §10.2).
-      await this.prisma.refreshToken.updateMany({
-        where: { familyId: record.familyId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-      this.clearRefreshCookie(res);
-      this.logger.warn(`refresh token reuse detected — family ${record.familyId} revoked`);
-      throw new UnauthorizedException({ code: 'SESSION_REUSE_DETECTED' });
-    }
-    if (record.expiresAt.getTime() <= Date.now()) {
-      this.clearRefreshCookie(res);
-      throw new UnauthorizedException({ code: 'SESSION_EXPIRED' });
-    }
+    const result = await this.tokenService.rotateRefreshToken(
+      req.cookies[REFRESH_COOKIE_NAME] as string,
+      {} as string, // family récupérée en interne par le service
+      { ipAddress: req.ip, userAgent: req.get('user-agent') },
+    );
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: record.userId },
-      include: { roles: { include: { role: true } } },
-    });
-    if (!user || user.deletedAt || user.status !== 'ACTIVE') {
-      this.clearRefreshCookie(res);
-      throw new UnauthorizedException({ code: 'INVALID_SESSION' });
-    }
+    // Nouveau refresh token en clair pour le cookie (issu de la rotation)
+    const newRefreshToken = result.refreshToken;
 
-    // Rotate: revoke the presented token, mint a new one in the same family.
-    await this.prisma.refreshToken.update({
-      where: { id: record.id },
-      data: { revokedAt: new Date() },
-    });
-    await this.createRefreshToken(record.userId, record.familyId, req, res);
+    // Mettre le nouveau cookie via la méthode déjà existante
+    this.setRefreshCookie(res, newRefreshToken);
 
-    const roles = user.roles.map((entry) => entry.role.name);
-    return { accessToken: await this.signAccess(user.id, user.email, roles) };
+    return { accessToken: result.accessToken };
   }
 
   async logout(req: Request, res: Response): Promise<{ ok: true }> {
     const cookie = req.cookies[REFRESH_COOKIE_NAME] as string | undefined;
     if (cookie) {
-      const record = await this.prisma.refreshToken.findUnique({
-        where: { tokenHash: sha256hex(cookie) },
-      });
-      if (record) {
-        await this.prisma.refreshToken.updateMany({
-          where: { familyId: record.familyId, revokedAt: null },
-          data: { revokedAt: new Date() },
-        });
-      }
+      await this.tokenService.revokeRefreshToken(cookie);
     }
     this.clearRefreshCookie(res);
     return { ok: true };

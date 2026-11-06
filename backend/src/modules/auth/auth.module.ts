@@ -8,7 +8,7 @@ import { AuthController, MeController } from './auth.controller';
 import { AuthService } from './auth.service';
 
 @Module({
-  imports: [DatabaseModule, CacheModule, MailModule, AuditLogService],
+  imports: [DatabaseModule, CacheModule, MailModule],
   controllers: [AuthController, MeController],
   providers: [AuthService, AuditLogService],
   exports: [AuthService],
