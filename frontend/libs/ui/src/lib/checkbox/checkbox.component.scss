@@ -1,0 +1,102 @@
+:host {
+  display: block;
+}
+
+.bs-choice {
+  display: grid;
+  gap: var(--bs-space-1);
+  font-family: var(--bs-font-family-base);
+}
+
+.bs-choice__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bs-space-3);
+  min-height: var(--bs-touch-target);
+  padding-block: var(--bs-space-1);
+  cursor: pointer;
+}
+
+.bs-choice__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  margin: 0;
+}
+
+.bs-choice__box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  border: var(--bs-border-width-strong) solid var(--bs-color-border-strong);
+  border-radius: var(--bs-radius-xs);
+  background: var(--bs-color-surface);
+  color: var(--bs-color-text-inverse);
+  transition:
+    background-color var(--bs-duration-fast) var(--bs-easing-standard),
+    border-color var(--bs-duration-fast) var(--bs-easing-standard);
+}
+
+.bs-choice__input:checked + .bs-choice__box,
+.bs-choice__input:indeterminate + .bs-choice__box {
+  background: var(--bs-color-primary);
+  border-color: var(--bs-color-primary);
+}
+
+.bs-choice__input:focus-visible + .bs-choice__box {
+  outline: none;
+  box-shadow: var(--bs-shadow-focus);
+}
+
+.bs-choice__input:disabled + .bs-choice__box {
+  background: var(--bs-color-neutral-100);
+  border-color: var(--bs-color-neutral-300);
+}
+
+.bs-choice__dash {
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.bs-choice__label {
+  color: var(--bs-color-text);
+  font-size: var(--bs-font-size-sm);
+  line-height: var(--bs-line-height-normal);
+}
+
+.bs-choice__message {
+  margin: 0;
+  padding-left: calc(20px + var(--bs-space-3));
+  color: var(--bs-color-text-muted);
+  font-size: var(--bs-font-size-xs);
+}
+
+.bs-choice__message--error {
+  color: var(--bs-color-danger-strong);
+  font-weight: var(--bs-font-weight-semibold);
+}
+
+.bs-choice--error .bs-choice__box {
+  border-color: var(--bs-color-danger);
+}
+
+.bs-choice--disabled .bs-choice__row {
+  cursor: not-allowed;
+}
+
+.bs-choice--disabled .bs-choice__label {
+  color: var(--bs-color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-choice__box {
+    transition: none;
+  }
+}

@@ -16,5 +16,12 @@ export const appRoutes: Route[] = [
     path: 'panier',
     loadComponent: () => import('./features/cart/cart-page').then((module) => module.CartPage),
   },
+  {
+    path: 'design-system',
+    loadComponent: () =>
+      import('./features/design-system/design-system-page').then(
+        (module) => module.DesignSystemPage,
+      ),
+  },
   { path: '**', redirectTo: 'boutique' },
 ];
