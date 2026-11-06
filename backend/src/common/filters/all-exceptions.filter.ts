@@ -20,6 +20,7 @@ export interface NormalizedErrorBody {
   errors: Array<{ field: string; message: string }>;
   requestId: string;
   timestamp: string;
+  retryAfterSeconds?: number;
 }
 
 @Catch()
@@ -34,13 +35,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request & { id?: string }>();
     const isProduction = this.config.get('NODE_ENV') === 'production';
 
-    const { status, code, message, errors } = this.normalize(exception, isProduction);
+    const { status, code, message, errors, retryAfterSeconds } = this.normalize(
+      exception,
+      isProduction,
+    );
+
+    // Set Retry-After header for rate limit and account lockout cases
+    if (retryAfterSeconds && typeof retryAfterSeconds === 'number') {
+      response.setHeader('Retry-After', String(retryAfterSeconds));
+    }
 
     const body: NormalizedErrorBody = {
       statusCode: status,
       code,
       message,
-      errors,
+      errors,        retryAfterSeconds,
       requestId: request.id ?? String(request.headers['x-request-id'] ?? 'unknown'),
       timestamp: new Date().toISOString(),
     };
@@ -57,6 +66,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     code: string;
     message: string;
     errors: NormalizedErrorBody['errors'];
+    retryAfterSeconds?: number;
   } {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();

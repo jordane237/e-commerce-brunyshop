@@ -11,7 +11,7 @@ import type { Request } from 'express';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { AuthenticatedUser } from '../decorators/current-user.decorator';
 
-interface RequestWithUser extends Request {
+export interface RequestWithUser extends Request {
   user?: AuthenticatedUser;
 }
 

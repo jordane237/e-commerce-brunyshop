@@ -2,14 +2,17 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { RequestWithUser } from '../../common/guards/roles.guard';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { hash, verify as verifyHash } from '@node-rs/argon2';
-import { randomInt, randomUUID } from 'node:crypto';
+import { createHmac, randomInt, randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
 import type { AuditLogService } from '../audit/audit.service'; /* eslint-disable-line no-restricted-imports */
 
@@ -189,15 +192,15 @@ export class AuthService {
     return { accessToken: result.accessToken };
   }
 
-  async logout(req: Request, res: Response, all?: boolean): Promise<{ ok: true }> {
+  async logout(req: RequestWithUser, res: Response, all?: boolean): Promise<{ ok: true }> {
     const cookie = req.cookies[REFRESH_COOKIE_NAME] as string | undefined;
     if (!cookie) {
       // Cookie absent → pas de throw, pas de modification DB, mais tout de même audit
       await this.auditService.record({
         event: 'USER_LOGOUT_NO_TOKEN',
-        userId: req.user?.sub,
+        userId: req.user?.id,
         entity: 'auth',
-        entityId: req.user?.sub,
+        entityId: req.user?.id,
         changes: { cookiePresent: false },
         ip: req.ip,
         userAgent: req.get('User-Agent'),
@@ -216,9 +219,9 @@ export class AuthService {
       // Token introuvable → pas de throw, mais audit
       await this.auditService.record({
         event: 'USER_LOGOUT_INVALID_TOKEN',
-        userId: req.user?.sub,
+        userId: req.user?.id,
         entity: 'auth',
-        entityId: req.user?.sub,
+        entityId: req.user?.id,
         changes: { cookiePresent: true, tokenFound: false },
         ip: req.ip,
         userAgent: req.get('User-Agent'),
@@ -237,9 +240,9 @@ export class AuthService {
     }
     await this.auditService.record({
       event: 'USER_LOGGED_OUT',
-      userId: req.user?.sub,
+      userId: req.user?.id,
       entity: 'auth',
-      entityId: req.user?.sub,
+      entityId: req.user?.id,
       changes: { cookiePresent: true, tokenRevoked: true, all },
       ip: req.ip,
       userAgent: req.get('User-Agent'),
