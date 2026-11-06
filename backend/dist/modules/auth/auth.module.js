@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const cache_module_1 = require("../../infrastructure/cache/cache.module");
 const database_module_1 = require("../../infrastructure/database/database.module");
 const mail_module_1 = require("../../infrastructure/mail/mail.module");
+const audit_service_1 = require("../audit/audit.service"); /* eslint-disable-line no-restricted-imports */
 const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
 let AuthModule = class AuthModule {
@@ -20,7 +21,7 @@ exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule, cache_module_1.CacheModule, mail_module_1.MailModule],
         controllers: [auth_controller_1.AuthController, auth_controller_1.MeController],
-        providers: [auth_service_1.AuthService],
+        providers: [auth_service_1.AuthService, audit_service_1.AuditLogService],
         exports: [auth_service_1.AuthService],
     })
 ], AuthModule);
