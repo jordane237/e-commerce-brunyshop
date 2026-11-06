@@ -4,7 +4,7 @@
   "license": "UNLICENSED",
   "private": true,
   "engines": {
-    "node": ">=24.11.0 <25"
+    "node": ">=24.15.0 <25"
   },
   "scripts": {
     "lint": "pnpm -C backend lint && pnpm -C frontend lint",
@@ -24,14 +24,22 @@
     "db:migrate:dev": "pnpm -C backend db:migrate:dev",
     "db:reset": "pnpm -C backend db:reset",
     "db:seed": "pnpm -C backend db:seed",
+    "openapi:export": "pnpm -C backend openapi:export",
+    "openapi:check": "pnpm -C backend openapi:export && git diff --exit-code backend/openapi.json",
+    "prisma:generate": "pnpm -C backend prisma generate",
+    "prisma:migrate": "pnpm -C backend prisma migrate deploy",
     "prepare": "husky"
   },
   "lint-staged": {
+    "backend/**/*.{js,mjs,cjs,ts}": [
+      "pnpm -C backend exec eslint --fix",
+      "prettier --write"
+    ],
     "frontend/**/*.{js,mjs,cjs,ts,tsx}": [
       "pnpm -C frontend exec eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md,scss,css,html,yml,yaml}": [
+    "*.{json,scss,css,html,yml,yaml}": [
       "prettier --write"
     ]
   },

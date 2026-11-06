@@ -1,0 +1,21 @@
+@if (variant === 'text' && lines > 1) {
+  <span class="bs-skeleton bs-skeleton--text" aria-hidden="true">
+    @for (line of lineIndexes; track line) {
+      <span
+        class="bs-skeleton__bar"
+        [class.bs-skeleton__bar--short]="line === lines - 1"
+        [style.width]="line === lines - 1 ? '70%' : width"
+        [style.height]="height"
+      ></span>
+    }
+  </span>
+} @else {
+  <span
+    class="bs-skeleton"
+    [class.bs-skeleton--circle]="variant === 'circle'"
+    [class.bs-skeleton--text]="variant === 'text'"
+    [style.width]="variant === 'circle' ? height : width"
+    [style.height]="height"
+    aria-hidden="true"
+  ></span>
+}

@@ -27,7 +27,7 @@ export class EnvVariables {
   public PORT!: number;
 
   @IsString()
-  @Matches(/^postgres(?:ql)?:\/\//)
+  @Matches(/postgres/i)
   public DATABASE_URL!: string;
 
   @IsString()
@@ -71,14 +71,34 @@ export class EnvVariables {
   @IsString()
   public COOKIE_DOMAIN?: string;
 
+  // --- Seed (TEC-07) ---------------------------------------------------
+  // Email and password of the development super admin (never hard-coded).
   @IsOptional()
   @IsString()
-  public SEED_ADMIN_EMAIL?: string;
+  public SEED_SUPER_ADMIN_EMAIL?: string;
 
   @IsOptional()
   @IsString()
-  public SEED_ADMIN_PASSWORD?: string;
+  @MinLength(12)
+  public SEED_SUPER_ADMIN_PASSWORD?: string;
 
+  // When 'true', the super admin password is reset on every seed run.
+  @IsOptional()
+  @IsString()
+  public SEED_FORCE_PASSWORD_RESET?: string;
+
+  // Demo customer password (>= 12 chars).
+  @IsOptional()
+  @IsString()
+  @MinLength(12)
+  public SEED_CUSTOMER_PASSWORD?: string;
+
+  // Allow the seed to run in production (dangerous).
+  @IsOptional()
+  @IsString()
+  public ALLOW_SEED_IN_PRODUCTION?: string;
+
+  // Storage (MinIO / S3)
   @IsOptional()
   @IsString()
   public STORAGE_DRIVER?: string;
@@ -103,10 +123,7 @@ export class EnvVariables {
   @IsString()
   public S3_SECRET_ACCESS_KEY?: string;
 
-  @IsOptional()
-  @IsString()
-  public CLOUDINARY_URL?: string;
-
+  // Mail
   @IsOptional()
   @IsString()
   public MAIL_DRIVER?: string;
@@ -131,6 +148,7 @@ export class EnvVariables {
   @IsString()
   public SMTP_PASSWORD?: string;
 
+  // SMS
   @IsOptional()
   @IsString()
   public SMS_DRIVER?: string;
@@ -143,6 +161,7 @@ export class EnvVariables {
   @IsString()
   public SMS_API_KEY?: string;
 
+  // WhatsApp
   @IsOptional()
   @IsString()
   public WHATSAPP_DRIVER?: string;
@@ -151,6 +170,7 @@ export class EnvVariables {
   @IsString()
   public WHATSAPP_TOKEN?: string;
 
+  // Payments
   @IsOptional()
   @IsString()
   public PAYMENT_PROVIDER?: string;
@@ -159,6 +179,7 @@ export class EnvVariables {
   @IsString()
   public PAYMENT_WEBHOOK_SECRET?: string;
 
+  // Monitoring
   @IsOptional()
   @IsString()
   public SENTRY_DSN?: string;

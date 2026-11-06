@@ -1,0 +1,29 @@
+<div class="bs-sizes" role="group" [attr.aria-label]="label">
+  <p class="bs-sizes__label">{{ label }}</p>
+  <div class="bs-sizes__list">
+    @for (size of sizes; track size) {
+      <button
+        class="bs-sizes__button"
+        type="button"
+        [class.bs-sizes__button--selected]="selected === size"
+        [class.bs-sizes__button--low]="isLowStock(size)"
+        [class.bs-sizes__button--unavailable]="isUnavailable(size)"
+        [attr.aria-pressed]="selected === size"
+        [attr.aria-label]="
+          isUnavailable(size)
+            ? 'Pointure ' + size + ' épuisée'
+            : isLowStock(size)
+              ? 'Pointure ' + size + ', stock faible'
+              : 'Pointure ' + size
+        "
+        [disabled]="disabled || isUnavailable(size)"
+        (click)="select(size)"
+      >
+        {{ size }}
+        @if (isLowStock(size) && !isUnavailable(size)) {
+          <span class="bs-sizes__dot" aria-hidden="true"></span>
+        }
+      </button>
+    }
+  </div>
+</div>

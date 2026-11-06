@@ -23,6 +23,7 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
   DISABLED
+  PENDING_VERIFICATION
 }
 
 model User {
@@ -33,7 +34,10 @@ model User {
   passwordHash    String
   firstName       String
   lastName        String
-  status          UserStatus @default(ACTIVE)
+  status          UserStatus @default(PENDING_VERIFICATION)
+  // Terms and consent (AUT-01: version des CGV + timestamp de consentement).
+  termsVersion    String?    @default("1.0")
+  termsAcceptedAt DateTime?
   // Encrypted at application level before storage.
   twoFactorSecret String?
   lastLoginAt     DateTime?

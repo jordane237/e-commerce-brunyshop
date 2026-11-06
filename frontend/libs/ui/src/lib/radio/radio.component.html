@@ -1,0 +1,24 @@
+<div class="bs-choice" [class.bs-choice--error]="!!error" [class.bs-choice--disabled]="disabled">
+  <label class="bs-choice__row" [attr.for]="fieldId">
+    <input
+      class="bs-choice__input"
+      type="radio"
+      [id]="fieldId"
+      [name]="name"
+      [value]="value"
+      [checked]="checked"
+      [disabled]="disabled"
+      [attr.aria-invalid]="error ? 'true' : null"
+      [attr.aria-describedby]="describedBy"
+      (change)="onChange()"
+    />
+    <span class="bs-choice__circle" aria-hidden="true"></span>
+    <span class="bs-choice__label">{{ label }}</span>
+  </label>
+
+  @if (error) {
+    <p class="bs-choice__message bs-choice__message--error" role="alert">{{ error }}</p>
+  } @else if (hint) {
+    <p class="bs-choice__message">{{ hint }}</p>
+  }
+</div>

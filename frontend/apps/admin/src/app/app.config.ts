@@ -2,7 +2,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { appRoutes } from './app.routes';
-import { errorInterceptor, requestInterceptor } from './core/http';
+import { errorInterceptor, loadingInterceptor, requestInterceptor } from './core/http';
 import { API_BASE_URL } from '@bruny/data-access';
 
 export const appConfig: ApplicationConfig = {

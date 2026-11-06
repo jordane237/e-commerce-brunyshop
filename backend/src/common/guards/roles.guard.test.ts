@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 import type { ExecutionContext } from '@nestjs/common';
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it } from 'vitest';
 
@@ -13,10 +14,14 @@ function contextFor(
   handler: (...args: unknown[]) => unknown,
   user?: AuthenticatedUser,
 ): ExecutionContext {
+  const request: Request & { user?: AuthenticatedUser } = Object.create(
+    Request.prototype,
+  ) as unknown as Request & { user?: AuthenticatedUser };
+  request.user = user;
   return {
     getHandler: () => handler,
     getClass: () => class TestController {},
-    switchToHttp: () => ({ getRequest: () => ({ user }) }),
+    switchToHttp: () => ({ getRequest: () => request }),
   } as unknown as ExecutionContext;
 }
 
@@ -52,6 +57,12 @@ describe('RolesGuard', () => {
     );
   });
 
+  it('accepte un rôle avec un handler partagé', () => {
+    const handler = (): void => undefined;
+    Roles('ADMIN')(handler, undefined as never);
+    expect(guard.canActivate(contextFor(handler, userWithRoles('ADMIN')))).toBe(true);
+  });
+
   it('SUPER_ADMIN ouvre toutes les portes (cachier §2)', () => {
     const handler = (): void => undefined;
     Roles('STOCK_MANAGER')(handler, undefined as never);
@@ -62,6 +73,12 @@ describe('RolesGuard', () => {
     const handler = (): void => undefined;
     Roles('ADMIN')(handler, undefined as never);
     expect(() => guard.canActivate(contextFor(handler, undefined))).toThrow(UnauthorizedException);
+  });
+
+  it('accepte un rôle avec un handler partagé', () => {
+    const handler = (): void => undefined;
+    Roles('ADMIN')(handler, undefined as never);
+    expect(guard.canActivate(contextFor(handler, userWithRoles('ADMIN')))).toBe(true);
   });
 
   it('garde la métadonnée lisible par le Reflector', () => {

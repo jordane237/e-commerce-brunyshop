@@ -1,0 +1,149 @@
+/*
+ * BRUNY SHOPPING — design tokens (CSS custom properties).
+ * Mirror of _tokens.scss for consumers that do not use Sass.
+ * Source of truth for values: design1/bruny shopping/bruny shopping.png
+ * and docs/design-system/ASSUMPTIONS.md.
+ */
+:root {
+  /* Brand */
+  --bs-color-primary: #131b2e;
+  --bs-color-primary-hover: #232f47;
+  --bs-color-primary-active: #0e1524;
+  --bs-color-primary-soft: #e6eaf1;
+  --bs-color-accent: #c89b3c;
+  --bs-color-accent-text: #8a6a1f;
+  --bs-color-accent-hover: #b0852e;
+  --bs-color-accent-soft: #fbf7ed;
+  --bs-color-canvas: #fafaf7;
+  --bs-color-surface: #ffffff;
+  --bs-color-surface-muted: #f4f3ef;
+  --bs-color-surface-skeleton: #f1f0ed;
+  --bs-color-whatsapp: #25d366;
+  --bs-color-whatsapp-strong: #0f7a40;
+  --bs-color-whatsapp-soft: #e7faee;
+  --bs-color-success: #1e8e5a;
+  --bs-color-success-strong: #0f7a40;
+  --bs-color-success-soft: #eaf6ef;
+  --bs-color-danger: #d62839;
+  --bs-color-danger-strong: #a31727;
+  --bs-color-danger-soft: #fde7e9;
+  --bs-color-warning: #b98500;
+  --bs-color-warning-strong: #7a5b12;
+  --bs-color-warning-soft: #fff3d6;
+  --bs-color-info: #2f5d8a;
+  --bs-color-info-strong: #244a6e;
+  --bs-color-info-soft: #e8edf9;
+
+  /* Neutrals */
+  --bs-color-white: #ffffff;
+  --bs-color-neutral-50: #fafaf7;
+  --bs-color-neutral-100: #f4f3ef;
+  --bs-color-neutral-150: #f1f0ed;
+  --bs-color-neutral-200: #ece9e2;
+  --bs-color-neutral-300: #dce0e7;
+  --bs-color-neutral-400: #c3c7d0;
+  --bs-color-neutral-500: #8990a0;
+  --bs-color-neutral-600: #6b7280;
+  --bs-color-neutral-700: #687087;
+  --bs-color-neutral-800: #3b4353;
+  --bs-color-neutral-900: #1c2333;
+  --bs-color-neutral-950: #0e1524;
+  --bs-color-black: #000000;
+
+  /* Semantic */
+  --bs-color-text: #131b2e;
+  --bs-color-text-muted: #687087;
+  --bs-color-text-subtle: #6b7280;
+  --bs-color-text-inverse: #ffffff;
+  --bs-color-border: #ece9e2;
+  --bs-color-border-strong: #dce0e7;
+  --bs-color-border-focus: #131b2e;
+  --bs-color-overlay: rgb(19 27 46 / 60%);
+
+  /* Typography */
+  --bs-font-family-base:
+    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI',
+    sans-serif;
+  --bs-font-family-display:
+    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI',
+    sans-serif;
+  --bs-font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --bs-font-size-2xs: 0.6875rem;
+  --bs-font-size-xs: 0.75rem;
+  --bs-font-size-sm: 0.875rem;
+  --bs-font-size-md: 1rem;
+  --bs-font-size-lg: 1.125rem;
+  --bs-font-size-xl: 1.25rem;
+  --bs-font-size-2xl: 1.5rem;
+  --bs-font-size-3xl: 1.875rem;
+  --bs-font-size-4xl: 2.375rem;
+  --bs-font-size-5xl: 3rem;
+  --bs-font-weight-regular: 400;
+  --bs-font-weight-medium: 500;
+  --bs-font-weight-semibold: 600;
+  --bs-font-weight-bold: 700;
+  --bs-font-weight-extrabold: 800;
+  --bs-line-height-tight: 1.1;
+  --bs-line-height-snug: 1.25;
+  --bs-line-height-normal: 1.5;
+  --bs-line-height-relaxed: 1.65;
+  --bs-letter-spacing-tight: -0.03em;
+  --bs-letter-spacing-heading: -0.02em;
+  --bs-letter-spacing-normal: 0;
+  --bs-letter-spacing-wide: 0.08em;
+
+  /* Spacing */
+  --bs-space-0: 0;
+  --bs-space-1: 0.25rem;
+  --bs-space-2: 0.5rem;
+  --bs-space-3: 0.75rem;
+  --bs-space-4: 1rem;
+  --bs-space-5: 1.25rem;
+  --bs-space-6: 1.5rem;
+  --bs-space-8: 2rem;
+  --bs-space-10: 2.5rem;
+  --bs-space-12: 3rem;
+  --bs-space-16: 4rem;
+  --bs-space-xs: var(--bs-space-1);
+  --bs-space-sm: var(--bs-space-2);
+  --bs-space-md: var(--bs-space-4);
+  --bs-space-lg: var(--bs-space-6);
+  --bs-space-xl: var(--bs-space-8);
+  --bs-space-2xl: var(--bs-space-12);
+
+  /* Shapes */
+  --bs-radius-xs: 4px;
+  --bs-radius-sm: 6px;
+  --bs-radius-md: 8px;
+  --bs-radius-lg: 12px;
+  --bs-radius-xl: 20px;
+  --bs-radius-full: 999px;
+  --bs-border-width: 1px;
+  --bs-border-width-strong: 2px;
+  --bs-shadow-sm: 0 1px 2px rgb(19 27 46 / 6%);
+  --bs-shadow-md: 0 8px 24px rgb(19 27 46 / 8%);
+  --bs-shadow-lg: 0 16px 40px rgb(19 27 46 / 14%);
+  --bs-shadow-focus: 0 0 0 2px var(--bs-color-canvas), 0 0 0 4px var(--bs-color-primary);
+
+  /* Layout */
+  --bs-container-max: 1200px;
+  --bs-touch-target: 44px;
+  --bs-control-height-sm: 36px;
+  --bs-control-height-md: 44px;
+  --bs-control-height-lg: 52px;
+
+  /* Z-index */
+  --bs-z-sticky: 100;
+  --bs-z-dropdown: 1000;
+  --bs-z-overlay: 1040;
+  --bs-z-modal: 1050;
+  --bs-z-toast: 1100;
+
+  /* Motion */
+  --bs-duration-fast: 120ms;
+  --bs-duration-base: 180ms;
+  --bs-duration-slow: 240ms;
+  --bs-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --bs-easing-in: cubic-bezier(0.4, 0, 1, 1);
+  --bs-easing-out: cubic-bezier(0, 0, 0.2, 1);
+}
