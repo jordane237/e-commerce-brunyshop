@@ -149,6 +149,8 @@ exports.UserScalarFieldEnum = {
     firstName: 'firstName',
     lastName: 'lastName',
     status: 'status',
+    termsVersion: 'termsVersion',
+    termsAcceptedAt: 'termsAcceptedAt',
     twoFactorSecret: 'twoFactorSecret',
     lastLoginAt: 'lastLoginAt',
     deletedAt: 'deletedAt',

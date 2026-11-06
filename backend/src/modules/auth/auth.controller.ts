@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -72,11 +73,15 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('logout')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Révocation de la session (famille de jetons)' })
-  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    return this.authService.logout(req, res);
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @Query('all') all?: boolean,
+  ) {
+    return this.authService.logout(req, res, all);
   }
 
   @Public()

@@ -23,6 +23,7 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
   DISABLED
+  PENDING_VERIFICATION
 }
 
 model User {
@@ -33,7 +34,10 @@ model User {
   passwordHash    String
   firstName       String
   lastName        String
-  status          UserStatus @default(ACTIVE)
+  status          UserStatus @default(PENDING_VERIFICATION)
+  // Terms and consent (AUT-01: version des CGV + timestamp de consentement).
+  termsVersion    String?    @default("1.0")
+  termsAcceptedAt DateTime?
   // Encrypted at application level before storage.
   twoFactorSecret String?
   lastLoginAt     DateTime?
@@ -110,6 +114,7 @@ model RefreshToken {
   tokenHash String    @unique
   expiresAt DateTime
   revokedAt DateTime?
+  revokedReason RevokeReason? // Motif de révocation
   userAgent String?
   ip        String?
   createdAt DateTime  @default(now())
@@ -582,6 +587,15 @@ model Setting {
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum RevokeReason {
+  ROTATION
+  REUSE_DETECTED
+  EXPIRED
+  LOGOUT
+  PASSWORD_CHANGE
+  SUSPENDED
 }
 
 model BackupCode {

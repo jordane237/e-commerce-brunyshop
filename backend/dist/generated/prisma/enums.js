@@ -13,7 +13,8 @@ exports.StockMovementReason = exports.ReviewStatus = exports.CouponType = export
 exports.UserStatus = {
     ACTIVE: 'ACTIVE',
     SUSPENDED: 'SUSPENDED',
-    DISABLED: 'DISABLED'
+    DISABLED: 'DISABLED',
+    PENDING_VERIFICATION: 'PENDING_VERIFICATION'
 };
 exports.ProductStatus = {
     DRAFT: 'DRAFT',
