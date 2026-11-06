@@ -114,6 +114,7 @@ model RefreshToken {
   tokenHash String    @unique
   expiresAt DateTime
   revokedAt DateTime?
+  revokedReason RevokeReason? // Motif de révocation
   userAgent String?
   ip        String?
   createdAt DateTime  @default(now())
@@ -586,6 +587,15 @@ model Setting {
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum RevokeReason {
+  ROTATION
+  REUSE_DETECTED
+  EXPIRED
+  LOGOUT
+  PASSWORD_CHANGE
+  SUSPENDED
 }
 
 model BackupCode {

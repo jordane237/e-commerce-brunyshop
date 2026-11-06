@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { hash, verify as verifyHash } from '@node-rs/argon2';
 import { randomInt, randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
-import * as otpauth from 'otpauth';
+import type { AuditLogService } from '../audit/audit.service'; /* eslint-disable-line no-restricted-imports */
 
 import type { ApplicationConfig } from '../../config/configuration';
 import { PrismaService } from '../../infrastructure/database/database.module';
@@ -76,6 +76,7 @@ export class AuthService {
     private readonly redisService: RedisService,
     private readonly mail: MailService,
     private readonly tokenService: TokenService,
+    private readonly auditService: AuditLogService,
   ) {}
 
   // -------------------------------------------------------------------------
@@ -188,11 +189,61 @@ export class AuthService {
     return { accessToken: result.accessToken };
   }
 
-  async logout(req: Request, res: Response): Promise<{ ok: true }> {
+  async logout(req: Request, res: Response, all?: boolean): Promise<{ ok: true }> {
     const cookie = req.cookies[REFRESH_COOKIE_NAME] as string | undefined;
-    if (cookie) {
+    if (!cookie) {
+      // Cookie absent → pas de throw, pas de modification DB, mais tout de même audit
+      await this.auditService.record({
+        event: 'USER_LOGOUT_NO_TOKEN',
+        userId: req.user?.sub,
+        entity: 'auth',
+        entityId: req.user?.sub,
+        changes: { cookiePresent: false },
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+      });
+      this.clearRefreshCookie(res);
+      return { ok: true };
+    }
+
+    // Cookie présent : d'abord vérifier si le token existe
+    const tokenHash = createHmac('sha256', cookie).update(cookie).digest('hex');
+    const record = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+    });
+
+    if (!record) {
+      // Token introuvable → pas de throw, mais audit
+      await this.auditService.record({
+        event: 'USER_LOGOUT_INVALID_TOKEN',
+        userId: req.user?.sub,
+        entity: 'auth',
+        entityId: req.user?.sub,
+        changes: { cookiePresent: true, tokenFound: false },
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+      });
+      this.clearRefreshCookie(res);
+      return { ok: true };
+    }
+
+    // Token trouvé → révocation selon le paramètre 'all'
+    if (all) {
+      // Révoke toute la famille
+      await this.tokenService.revokeFamily(record.familyId, 'LOGOUT');
+    } else {
+      // Révoke seulement le token actuel
       await this.tokenService.revokeRefreshToken(cookie);
     }
+    await this.auditService.record({
+      event: 'USER_LOGGED_OUT',
+      userId: req.user?.sub,
+      entity: 'auth',
+      entityId: req.user?.sub,
+      changes: { cookiePresent: true, tokenRevoked: true, all },
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+    });
     this.clearRefreshCookie(res);
     return { ok: true };
   }

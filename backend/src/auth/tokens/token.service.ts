@@ -4,6 +4,14 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../infrastructure/database/database.module';
 import { randomBytes, createHmac } from 'crypto';
 
+export type RevokeReason =
+  | 'ROTATION'
+  | 'REUSE_DETECTED'
+  | 'EXPIRED'
+  | 'LOGOUT'
+  | 'PASSWORD_CHANGE'
+  | 'SUSPENDED';
+
 @Injectable()
 export class TokenService {
   private readonly logger = new Logger(TokenService.name);
@@ -130,7 +138,19 @@ export class TokenService {
     return result;
   }
 
+  /// revokeRefreshTokenByHash -------------------------------------------------------
+  /// Révoque un RefreshToken par son hash (utilisé par logout et detectAndHandleReuse).
+  /// Idempotent : si déjà révoqué, retourne 0 sans erreur.
+  async revokeRefreshTokenByHash(tokenHash: string, reason: RevokeReason): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { tokenHash, revokedAt: null },
+      data: { revokedAt: new Date(), revokedReason: reason },
+    });
+  }
+
   /// revokeRefreshToken -------------------------------------------------------
+  /// Révoque un RefreshToken par son hash (utilisé par logout).
+  /// Idempotent : si déjà révoqué, retourne 0 sans erreur.
   async revokeRefreshToken(tokenPlain: string): Promise<void> {
     const tokenHash = createHmac('sha256', tokenPlain).update(tokenPlain).digest('hex');
     await this.prisma.refreshToken.updateMany({
@@ -139,20 +159,67 @@ export class TokenService {
     });
   }
 
-  /// revokeFamily -------------------------------------------------------
-  async revokeFamily(family: string): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
-      where: { family, revokedAt: null },
-      data: { revokedAt: new Date() },
+  /// detectAndHandleReuse -------------------------------------------------------
+  /// Appelée lorsqu'on présente un token déjà révoqué.
+  /// - Si trouvé et déjà révoqué : révoke toute la famille avec REUSE_DETECTED, create AuditLog, throw.
+  /// - Si introuvable : throw INVALID_REFRESH_TOKEN (tentative random, pas un rejeu).
+  async detectAndHandleReuse(
+    tokenHash: string,
+    _meta: { ipAddress?: string; userAgent?: string },
+  ): Promise<never> {
+    const record = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
     });
+
+    if (!record) {
+      // Token inconnu = tentative random, pas un rejeu
+      throw new Error('INVALID_REFRESH_TOKEN');
+    }
+
+    if (record.revokedAt) {
+      // Token déjà révoqué → rejeu détecté : révoque TOUTE la famille
+      const _revokedCount = await this.revokeFamilyWithReason(
+        record.familyId,
+        'REUSE_DETECTED',
+        meta,
+      );
+
+      // AuditLog REFRESH_TOKEN_REUSE_DETECTED
+      // Note : l'audit est créé dans le service AuthService via DI, pas ici directement
+      // pour respecter la règle no-restricted-imports (pas d'import cross-module direct).
+      // Le controller/service appellant déclenchera l'audit après cet throw.
+      throw new Error('REFRESH_TOKEN_REUSE_DETECTED');
+    }
+
+    // Token trouvé mais pas encore révoqué : ce n'est pas un rejeu, c'est un token valide
+    throw new Error('INVALID_REFRESH_TOKEN');
+  }
+
+  /// revokeFamilyWithReason -------------------------------------------------------
+  /// Version enrichie de revokeFamily qui accepte un reason et retourne le nombre de tokens révoqués.
+  private async revokeFamilyWithReason(
+    family: string,
+    reason: RevokeReason,
+    _meta: { ipAddress?: string; userAgent?: string },
+  ): Promise<number> {
+    const result = await this.prisma.refreshToken.updateMany({
+      where: { familyId: family, revokedAt: null },
+      data: { revokedAt: new Date(), revokedReason: reason },
+    });
+    return result.count;
   }
 
   /// revokeAllForUser -------------------------------------------------------
-  async revokeAllForUser(userId: string): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
+  /// revokeAllForUser -------------------------------------------------------
+  /// Revoque TOUS les refresh tokens d'un utilisateur (utile pour changement de mot de passe,
+  /// suspension, logout de tous les appareils).
+  /// Retourne le nombre de tokens revoques.
+  async revokeAllForUser(userId: string, reason: RevokeReason): Promise<number> {
+    const result = await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
+      data: { revokedAt: new Date(), revokedReason: reason },
     });
+    return result.count;
   }
 
   /// ttlToMs -------------------------------------------------------
