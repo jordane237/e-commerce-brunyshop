@@ -1,122 +1,136 @@
-# [CNT-01] Brief Photographe - Séance Photo Produits
+# CNT-01 — Brief Photographe : Séance Photo Produits BrunyShop
 
 ## Contexte & Objectif
 
-BrunyShop est une boutique e-commerce camerounaise spécialisée dans la vente de chaussures (et éventuellement vêtements). Dans le cadre du lancement MVP, nous avons besoin de 30 à 50 produits photographiés avec des images de qualité professionnelle permettant aux clients de choisir en confiance.
+Boutique e-commerce **BrunyShop** — Cameroun, spécialisée dans la vente de **chaussures** (et éventuellement vêtements). Nous préparons le lancement **MVP** avec **30 à 50 produits réels** photographiés avant la fin de la phase de construction.
 
-**Besoins :**
-- 5 à 6 angles par modèle (face, profil, dessus, semelle, détail, porté)
-- Fond neutre et lumière identiques pour tous les produits
-- Ratio d'image constant (recommandé : 4:5 portrait)
-- 30 à 50 produits prêts avant la fin de la phase de construction
-- Fichiers nommés selon une convention stricte (modele-couleur-angle)
-## Matériel Requise (à acheter ou louer)
+**Objectif** : produire de belles photos nettes sous plusieurs angles pour permettre au client de choisir en confiance sur la fiche produit (P04) et le catalogue (P02).
 
-| Catégorie | Outil | Budget estimé (XAF) | Notes |
-|-----------|-------|---------------------|-------|
-| **Appareil photo** | Smartphone récent ≥ 48 MP (mode Pro) ou Reflex/Hybride ≥ 24 MP | 50.000 – 300.000 | **Low-cost :** smartphone récent (iPhone 15 Pro, Samsung S24, etc.). **Pro :** Reflex/Hybride avec capteur full-frame. |
-| **Objectif** | 50mm f/1.8 ou 85mm | 25.000 – 100.000 | Permet flou d'arrière-plan limité et netteté sur toute la chaussure. |
-| **Trépied** | Trépied stable avec tête à boule | 30.000 – 80.000 | Indispensable pour cadrage constant et tethering. |
-| **Éclairage** | 2 softbox LED + diffuseurs OU 2 parapluies + flash cobra | 80.000 – 250.000 | **Low-cost :** 2 parapluies + lampe cobra. **Pro :** 2 softbox professionnelles. |
-| **Fond neutre** | Papier seamless blanc 2,7m ou tissu coton gris clair | 40.000 – 120.000 | 2 rouleaux minimum. Tendu sans plis. |
-| **Accessoires** | Réflecteur 5-en-1, gaffer, pinces, ciseaux, chiffon microfibre, gants coton | 20.000 – 60.000 | Pour manipuler les chaussures sans traces. |
-| **Ordinateur** | Déjà existant pour tri et retouche | – | Pour contrôle en direct (tethering) si possible. |
+**Spécifications** :
+- **5 à 6 angles** par modèle : face, profil, dessus, semelle, détail, porté
+- **Fond neutre** et **lumière identiques** pour tous les produits
+- **Ratio constant** : 1:1 (carré, aligné avec composant `bruny-product-card` existant et Design System DSG-02). Alternate : 4:5 portrait si décision différente.
+- **Résolution** : minimum 2000px sur le grand côté, idéal 3000px
+- **Formats** : JPEG qualité 90% (source) + WebP qualité 85% (optimisé web), couleur sRGB
+- **30 à 50 produits** les plus vendus doivent être prêts avant fin de phase de construction
 
-**Budget total estimé :** ~150.000 XAF (option low-cost smartphone + softbox) à ~500.000 XAF (option professionnelle reflex + softbox).
+---
+
+## Matériel Requêt (Tableau de Budget Estimé en XAF)
+
+| Équipement | Option Low-Cost (~50.000 F CFA) | Option Pro (~150.000 F CFA) |
+|------------|----------------------------------|------------------------------|
+| Appareil photo | Smartphone récent ≥ 48 MP, mode Pro | Hybride ≥ 24 MP |
+| Objectif | 50mm f/1.8 ou 85mm | Zoombreau 24-70mm f/2.8 |
+| Éclairage | 2 parapluies réfléchissants | 2 softbox LED professionnel |
+| Fond neutre | Papier seamless blanc | Papier seamless professionnel |
+| Trépied | Moyenne gamme | Stabilisateur professionnel |
+| Total estimé | **~50.000 F CFA** | **~150.000 F CFA** |
+
+**Recommandation** : commencer avec l'option **low-cost** pour le MVP.
+
+---
+
 ## Installation Studio
 
-- Espace minimum : 3x2 m avec fond seamless en courbe (pas d'angle visible)
-- Température de couleur fixe : 5500 K (lumière du jour) — ne jamais changer entre produits
-- Balance des blancs manuelle sur charte grise avant chaque série
-- Position appareil : hauteur chaussure, distance 1,2-1,5m, objectif 50mm, ouverture f/8-f/11, ISO 100, vitesse ≥ 1/125s
-- Écran de contrôle : tethering pour valider en direct
-## Protocole de Prise de Vue - 6 Angles par Produit
+**Espace minimum** : 3×2m avec fond seamless en courbe.
 
-Chaque produit doit être photographié selon l'ordre suivant. 3 prises minimum par angle, la meilleure est retenue.
+**Réglages lumière** :
+- **Key light** à **45°** devant la chaussure
+- **Fill light** à **30-45%** d'intensité à l'opposé
+- **Balance des blancs** : manuelle sur **charte grise** avant chaque série
+- **Température de couleur** : **fixe 5500K** — **jamais changer**
+---
 
-### 1. Face
+## Protocole de Prise de Vue — 6 Angles par Produit
+
+### 1. **face**
 - Vue de face, chaussure orientée vers l'objectif
-- Les deux pieds côte à côte (ou une seule pour les modèles unisexes)
-- Cadrage : toute la chaussure visible, marges égales de chaque côté
-- Aspect : chaussure en position de marche
+- Deux pieds côte à côte, parallèle
+- Fond et lumière identiques aux autres produits
 
-### 2. Profil
-- Vue de côté (côté extérieur), chaussure de profil complet
-- Du talon à la pointe, sans rien cacher
-- Appareil parallèle au côté de la chaussure
+### 2. **profil**
+- Vue de côté (côté extérieur) du chaussure de profil complet
+- La chaussure de profil, du talon à la pointe
+- Aucun débordement du fond
 
-### 3. Dessus
-- Vue du dessus (plongée à 90°), laçage and empeigne visibles
-- Chaussée à plat, pas de plis dans les matériaux
-- Angle vertical strict à 90° par rapport au sol
+### 3. **dessus**
+- Vue du dessus (plongée à 90°)
+- Laçage and empeigne visibles
+- Appareil au-dessus de la chaussure, vertical
 
-### 4. Semelle
-- Vue du dessous, chaussure retournée
-- Crampons, rainures, marque visible
-- Appareil retourné également ou angle inversé
+### 4. **semelle**
+- Vue du dessous
+- Chaussure retournée, crampons/rainures visibles
+- Poser la chaussure sur une surface propre
 
-### 5. Détail
-- Gros plan sur un élément distinctif (logo, couture, matière, fermeture)
-- Distance 30-40 cm, ouverture f/4-f/5.6 pour arrière-plan légèrement flou
-- Exemples : logo brodé, signature de la marque, type de cuir, système de laçage
+### 5. **detail**
+- Gros plan sur élément distinctif (logo, couture, matière, fermeture)
+- Distance **30-40cm**, ouverture **f/4-f/5.6** pour shallow depth of field
+- Identifier l'élément clé à mettre en avant par avance
 
-### 6. Porté
+### 6. **porte**
 - Chaussure portée par un mannequin (pied + cheville + bas de jambe)
-- Angle 3/4 dynamique, fond identique aux autres produits
-- Montre le produit dans un contexte d'usage
-## Contraintes Strictes (à respecter à la lettre)
+- Angle **3/4 dynamique**
+- Fond identique à tous les autres produits (ne pas changer)
 
-| Contrainte | Spécification | Pourquoi |
-|------------|---------------|----------|
-| **Fond** | Identique pour tous les produits : #F5F5F5 (blanc cassé) | S'aligne sur le Design System |
-| **Lumière** | Identique pour tous les produits : même installation, mêmes réglages, même balance des blancs | Évite les variations de couleur |
-| **Ratio** | 4:5 (portrait) - recommandé pour e-commerce | Meilleur rendu pour les chaussures, respecte maquettes P02/P04 |
-| **Résolution** | Minimale : 2000 px sur le plus grand côté | Idéal : 3000 px pour qualité d'impression |
-| **Format de sortie** | JPEG qualité 90% (source) + WebP qualité 85% (optimisé web) | Deux formats pour le frontend |
-| **Espace colorimétrique** | sRGB | Standard web, compatible tous navigateurs |
-| **Retouche** | Légère uniquement : correction exposition, balance des blancs, suppression poussières | AUCUNE modification de la forme ou couleur du produit |
-| **Style** | Épuré, moderne, fidèle au produit | Pas de surexposition, pas de saturation excessive |
+---
+
+## Contraintes (TOUTES OBLIGATOIRES)
+
+| Contrainte | Spécification |
+|------------|---------------|
+| Fond | Identique pour tous les produits : **#F5F5F5** (blanc cassé) — décidé et documenté |
+| Lumière | Identique installation, mêmes réglages, même balance 5500K |
+| Ratio | **1:1** (carré), aligné avec `bruny-product-card` DSG-02. Alternate 4:5 documentée. |
+| Résolution | Min 2000px grand côté, idéal 3000px |
+| Format sortie | JPEG qualité 90% (source) + WebP qualité 85% (optimisé web), sRGB |
+| Retouche | Légère : exposition, balance des blancs, poussières uniquement — **AUCUNE** modification de la forme ou couleur du produit |
+| Cohérence couleurs | Aligner avec tokens Design System DSG-02 : `--color-surface: #ffffff`, `--color-muted: #f4f3ef`, accent or `#c9a227` |
+| Nombre de prises | **3 minimum par angle**, garder la meilleure |
+| Conservation RAW/JPEG | Conserver originaux 30j avant événementiel nettoyage |
+
+---
+
 ## Direction Artistique
 
-- Style : épuré, moderne, fidèle au produit
-- Couleurs : respecter la palette Design System - --color-ink: #1f2a44 (texte), --color-accent: #c9a227 (accent), --color-surface: #ffffff (fond), --color-muted: #f4f3ef (arrière-plan)
-- Retouche : légère, locale uniquement
-- Non autorisé : détourage artificiel, changement de couleur, modification de la forme de la chaussure
-## Planning Type (5 jours ouvrables pour 30-50 produits)
+- **Style** : épuré, moderne, fidèle au produit
+- **Pas de surexposition**, pas de saturation à outrance
+- **Retouche légère** uniquement (exposition/balance/poussières)
+- **Cohérence avec les couleurs BrunyShop** extraites des tokens DSG-02
+- **Images principales** : vue `face` uniquement en isPrimary sur la fiche produit
+- **Images supplémentaires** : les 5 autres angles en galerie cliquable
 
-| Jour | Activités |
-|------|-----------|
-| J1 | Installation studio (2h), tests lumière et balance des blancs (1h), shooting 8-10 produits x 6 angles (4h) |
-| J2 | Shooting 10-12 produits x 6 angles (5h) + tri en fin de journée (1h) |
-| J3 | Shooting 10-12 produits x 6 angles (5h) + tri en fin de journée (1h) |
-| J4 | Shooting 10-12 produits x 6 angles (5h) + tri en fin de journée (1h) |
-| J5 | Tri final, retouche légère (exposition/balance/poussières), export WebP, renommage, upload MinIO, intégration DB, validation finale |
-## Checklists
+---
+
+## Checklist de Séance
 
 ### Avant la séance
-- [ ] Matériel livré et testé (appareil, objectif, flash, softbox, fond, réflecteur)
-- [ ] Espace studio nettoyé, fond seamless installé en courbe
+- [ ] Matériel livré et testé (appareil, objectif, éclairage, fond, réflecteur)
+- [ ] Espace studio nettoyé, fond seamless en courbe installé
 - [ ] Charte de balance des blancs disponible
-- [ ] Produits déballés, nettoyés, vérifiés (pas de rayures, laçage correct, semelle propre)
-- [ ] Mannequin (pied/cheville) disponible pour les vues porté
-- [ ] Disque dur externe formaté pour les backups
-- [ ] Fichier CSV mapping.csv prêt à remplir (modele, couleur, angle par fichier)
-- [ ] Validation des ratios et du fond avec le PO (photo test validée avant la séance complète)
+- [ ] Produits déballés, nettoyés, vérifiés (pas de défaut, laçage correct, semelle propre)
+- [ ] Mannequin (pied/cheville) disponible pour les vues "porte"
+- [ ] Disque dur externe formaté pour backups
+- [ ] Fichier **mapping.csv** prêt (colonne : modele, couleur, angle par fichier)
+- [ ] Validation du ratio et du fond avec le PO (photo test validée AVANT la séance complète)
 
 ### Pendant la séance (par produit)
 - [ ] Balance des blancs refaite si changement de lumière
-- [ ] 3 prises minimum par angle, la meilleure est retenue
+- [ ] **3 prises minimum par angle**, meilleure retenue
 - [ ] Vérification en direct sur écran (tethering) : netteté, cadrage, propreté
-- [ ] Étiquetage immédiat dans mapping.csv (pas de "je renommerai après")
+- [ ] Étiquetage **immédiat** dans mapping.csv (pas de "je renommerai après")
+- [ ] Nommer les photos selon convention `modele-couleur-angle.jpg` immédiatement après chaque angle
 
 ### Après la séance
-- [ ] Backup des originaux sur disque externe + cloud (2 copies minimum)
-- [ ] Tri : garder 1 photo par angle par produit (soit 6 photos par produit)
-- [ ] Retouche légère (exposition, balance, poussières - PAS de modification produit)
-- [ ] Export 2 formats : JPEG qualité 90% (source) + WebP qualité 85% (optimisé web)
-- [ ] Renommage via script (validation regex)
-- [ ] Upload MinIO (dossier products/{modele}/{couleur}/)
-- [ ] Génération CSV ou SQL de seed ProductImage (url, alt, position, isPrimary)
-- [ ] Insertion en DB (Prisma seed ou script migration données)
-- [ ] Validation visuelle sur la fiche produit (P04) en local : les 6 angles s'affichent, l'image principale est la bonne, les alt sont corrects
+- [ ] Backup originaux sur disque externe + cloud (2 copies minimum)
+- [ ] Tri : **1 photo par angle par produit** (6 photos/produit)
+- [ ] Retouche légère (exposition, balance, poussières — PAS modification produit)
+- [ ] Export 2 formats : JPEG q90 + WebP q85
+- [ ] Renommage via script (validation regex stricte)
+- [ ] Upload MinIO (products/{modele}/{couleur}/)
+- [ ] Génération CSV product-images.csv (productSlug, couleur, angle, url, alt, position, isPrimary)
+- [ ] Insertion en DB (Prisma upsert via script)
+- [ ] Validation visuelle sur fiche produit P04 en local : 6 angles s'affichent, image principale correcte, alt corrects
 - [ ] Livraison aux développeurs : lien MinIO + credentials + CSV de seed + rapport de livraison
+- **Position appareil** : hauteur chaussure, distance **1,2-1,5m**, objectif **50mm**, ouverture **f/8-f/11**, **ISO 100**, vitesse **≥ 1/125s**

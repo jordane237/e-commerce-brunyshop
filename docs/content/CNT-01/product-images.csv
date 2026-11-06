@@ -1,19 +1,12 @@
-fichier_original,modele,couleur,angle
-IMG_001.jpg,air-max-90,noir,face
-IMG_002.jpg,air-max-90,noir,profil
-IMG_003.jpg,air-max-90,noir,dessus
-IMG_004.jpg,air-max-90,noir,semelle
-IMG_005.jpg,air-max-90,noir,detail
-IMG_006.jpg,air-max-90,noir,porte
-IMG_007.jpg,stan-smith,blanc,face
-IMG_008.jpg,stan-smith,blanc,profil
-IMG_009.jpg,stan-smith,blanc,dessus
-IMG_010.jpg,stan-smith,blanc,semelle
-IMG_011.jpg,stan-smith,blanc,detail
-IMG_012.jpg,stan-smith,blanc,porte
-IMG_013.jpg,chuck-taylor,noir,face
-IMG_014.jpg,chuck-taylor,noir,profil
-IMG_015.jpg,chuck-taylor,noir,dessus
-IMG_016.jpg,chuck-taylor,noir,semelle
-IMG_017.jpg,chuck-taylor,noir,detail
-IMG_018.jpg,chuck-taylor,noir,porte
+productSlug,couleur,angle,url,alt,position,isPrimary
+air-max-90,noir,face,https://media.brunyshop.com/products/air-max-90/noir/face.webp,"Air Max 90 noire — vue de face",0,true
+air-max-90,noir,profil,https://media.brunyshop.com/products/air-max-90/noir/profil.webp,"Air Max 90 noire — vue de profil",1,false
+air-max-90,noir,dessus,https://media.brunyshop.com/products/air-max-90/noir/dessus.webp,"Air Max 90 noire — vue du dessus",2,false
+air-max-90,noir,semelle,https://media.brunyshop.com/products/air-max-90/noir/semelle.webp,"Air Max 90 noire — vue de semelle",3,false
+air-max-90,noir,detail,https://media.brunyshop.com/products/air-max-90/noir/detail.webp,"Air Max 90 noire — détail",4,false
+air-max-90,noir,porte,https://media.brunyshop.com/products/air-max-90/noir/porte.webp,"Air Max 90 portée — vue lifestyle",5,false
+stan-smith,blanc,face,https://media.brunyshop.com/products/stan-smith/blanc/face.webp,"Stan Smith blanche — vue de face",0,true
+stan-smith,blanc,profil,https://media.brunyshop.com/products/stan-smith/blanc/profil.webp,"Stan Smith blonde — vue de profil",1,false
+stan-smith,noir,face,https://media.brunyshop.com/products/stan-smith/noir/face.webp,"Stan Smith noire — vue de face",0,true
+chuck-taylor,rouge,face,https://media.brunyshop.com/products/chuck-taylor/rouge/face.webp,"Chuck Taylor rouge — vue de face",0,true
+chuck-taylor,rouge,dessus,https://media.brunyshop.com/products/chuck-taylor/rouge/dessus.webp,"Chuck Taylor rouge — vue du dessus",2,false
