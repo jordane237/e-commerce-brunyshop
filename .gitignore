@@ -65,3 +65,7 @@ backend/src/generated
 frontend/.angular/
 frontend/test-results/
 frontend/playwright-report/
+media/raw/
+*.jpg
+*.webp
+!.env.example

@@ -1,0 +1,12 @@
+productSlug,couleur,angle,url,alt,position,isPrimary
+air-max-90,noir,face,https://media.brunyshop.com/products/air-max-90/noir/face.webp,"Air Max 90 noire — vue de face",0,true
+air-max-90,noir,profil,https://media.brunyshop.com/products/air-max-90/noir/profil.webp,"Air Max 90 noire — vue de profil",1,false
+air-max-90,noir,dessus,https://media.brunyshop.com/products/air-max-90/noir/dessus.webp,"Air Max 90 noire — vue du dessus",2,false
+air-max-90,noir,semelle,https://media.brunyshop.com/products/air-max-90/noir/semelle.webp,"Air Max 90 noire — vue de semelle",3,false
+air-max-90,noir,detail,https://media.brunyshop.com/products/air-max-90/noir/detail.webp,"Air Max 90 noire — détail",4,false
+air-max-90,noir,porte,https://media.brunyshop.com/products/air-max-90/noir/porte.webp,"Air Max 90 portée — vue lifestyle",5,false
+stan-smith,blanc,face,https://media.brunyshop.com/products/stan-smith/blanc/face.webp,"Stan Smith blanche — vue de face",0,true
+stan-smith,blanc,profil,https://media.brunyshop.com/products/stan-smith/blanc/profil.webp,"Stan Smith blonde — vue de profil",1,false
+stan-smith,noir,face,https://media.brunyshop.com/products/stan-smith/noir/face.webp,"Stan Smith noire — vue de face",0,true
+chuck-taylor,rouge,face,https://media.brunyshop.com/products/chuck-taylor/rouge/face.webp,"Chuck Taylor rouge — vue de face",0,true
+chuck-taylor,rouge,dessus,https://media.brunyshop.com/products/chuck-taylor/rouge/dessus.webp,"Chuck Taylor rouge — vue du dessus",2,false
