@@ -1,6 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
+import type { paths } from '../generated/api-types';
+
+// Enum de tri repris du contrat généré : renommer une valeur côté backend casse
+// la compilation ici après `pnpm api:generate` (TEC-09 CA2).
+type ProductListQuery = NonNullable<paths['/api/v1/products']['get']['parameters']['query']>;
+export type ProductSort = NonNullable<ProductListQuery['sort']>;
 
 export interface CatalogVariant {
   id: string;
@@ -34,7 +40,7 @@ export interface ProductFilters {
   color?: string;
   minPrice?: number;
   maxPrice?: number;
-  sort?: 'newest' | 'price_asc' | 'price_desc' | 'name';
+  sort?: ProductSort;
   q?: string;
 }
 

@@ -17,7 +17,7 @@
     "db:reset": "prisma migrate reset --force",
     "prisma:generate": "prisma generate",
     "db:reset:seed": "prisma migrate reset --force && pnpm db:seed",
-    "openapi:export": "pnpm build && node dist/scripts/export-openapi.js"
+    "openapi:export": "pnpm build && node dist/scripts/export-openapi.js && prettier --write openapi.json"
   },
   "dependencies": {
     "@nest-lab/throttler-storage-redis": "^1.2.0",

@@ -8,6 +8,7 @@
 #   e2e            : test E2E avec services PostgreSQL + Redis (needs: build)
 #   security       : gitleaks + audit des dépendances (parallèle à quality)
 #   openapi-check  : vérifie que openapi.json est à jour (needs: quality)
+#   api-client     : vérifie que le client Angular généré est à jour (needs: quality)
 #   ci-success     : agrégateur (required status check pour la protection de branch)
 #
 # Règles :
@@ -251,18 +252,46 @@ jobs:
         run: git diff --exit-code backend/openapi.json
 
   # ─────────────────────────────────────────────────────────────
-  # Job 6 — ci-success (agrégateur)
+  # Job 6 — api-client (vérifie que le client Angular généré est à jour)
+  # ─────────────────────────────────────────────────────────────
+  api-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: quality
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate the API client and fail on drift
+        run: pnpm api:check
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 7 — ci-success (agrégateur)
   # ─────────────────────────────────────────────────────────────
   ci-success:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [quality, build, e2e, security, openapi-check]
+    needs: [quality, build, e2e, security, openapi-check, api-client]
     if: always()
     steps:
       - name: Aggregate job results
         run: |
           overall_success=true
-          for job in quality build e2e security openapi-check; do
+          for job in quality build e2e security openapi-check api-client; do
             result="${{ needs.$job.result }}"
             echo "Job '$job' result: $result"
             if [ "$result" != "success" ]; then
