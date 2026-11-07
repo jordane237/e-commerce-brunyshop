@@ -54,25 +54,56 @@ describe('API end-to-end', () => {
     await request(app.getHttpServer()).get(`${baseUrl}/me`).expect(401);
   });
 
-  it('registers a client, issues a refresh cookie and refuses its admin access', async () => {
+  it('registers a client neutrally, then logs it in and refuses its admin access', async () => {
     const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const email = `e2e-${suffix}@example.cm`;
+    const payload = {
+      email,
+      firstName: 'Test',
+      lastName: 'Client',
+      password: 'E2e!SecurePassword99',
+      termsAccepted: true,
+      termsVersion: '1.0',
+    };
+
     const registration = await request(app.getHttpServer())
       .post(`${baseUrl}/auth/register`)
-      .send({
-        email: `e2e-${suffix}@example.cm`,
-        firstName: 'Test',
-        lastName: 'Client',
-        password: 'E2e!SecurePassword99',
-      })
+      .send(payload)
       .expect(201);
-    expect(registration.body.accessToken).toEqual(expect.any(String));
-    expect(registration.headers['set-cookie']).toEqual(
+    expect(registration.body).toMatchObject({
+      id: expect.any(String),
+      emailMasked: expect.stringContaining('***@example.cm'),
+      status: 'PENDING_VERIFICATION',
+      message: expect.stringContaining('Compte créé'),
+    });
+    // AUT-01 : aucun jeton à l'inscription, la connexion est une étape distincte.
+    expect(registration.body.accessToken).toBeUndefined();
+    expect(registration.headers['set-cookie']).toBeUndefined();
+
+    // Doublon : même statut, même structure, aucune fuite d'existence.
+    const duplicate = await request(app.getHttpServer())
+      .post(`${baseUrl}/auth/register`)
+      .send(payload)
+      .expect(201);
+    expect(duplicate.body).toMatchObject({
+      emailMasked: registration.body.emailMasked,
+      status: registration.body.status,
+      message: registration.body.message,
+    });
+    expect(duplicate.body.id).not.toBe(registration.body.id);
+
+    const login = await request(app.getHttpServer())
+      .post(`${baseUrl}/auth/login`)
+      .send({ identifier: email, password: payload.password })
+      .expect(200);
+    expect(login.body.accessToken).toEqual(expect.any(String));
+    expect(login.headers['set-cookie']).toEqual(
       expect.arrayContaining([expect.stringContaining('bruny_refresh=')]),
     );
 
     await request(app.getHttpServer())
       .post(`${baseUrl}/admin/products`)
-      .set('Authorization', `Bearer ${registration.body.accessToken}`)
+      .set('Authorization', `Bearer ${login.body.accessToken}`)
       .send({})
       .expect(403);
   });

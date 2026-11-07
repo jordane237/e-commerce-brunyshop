@@ -758,23 +758,36 @@
           },
           "phone": {
             "type": "string",
-            "example": "+2376XXXXXXXX"
-          },
-          "firstName": {
-            "type": "string",
-            "minLength": 3
-          },
-          "lastName": {
-            "type": "string",
-            "minLength": 3
+            "example": "+237612345678",
+            "description": "Format strict +237 suivi de 9 chiffres"
           },
           "password": {
             "type": "string",
             "minLength": 10,
-            "description": "Minimum 10 chars, server-checked"
+            "maxLength": 128
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Jean",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Dupont",
+            "maxLength": 100
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "example": true,
+            "description": "Consentement aux CGV (obligatoire)"
+          },
+          "termsVersion": {
+            "type": "string",
+            "example": "1.0",
+            "description": "Version des CGV acceptée"
           }
         },
-        "required": ["firstName", "lastName", "password"]
+        "required": ["password", "termsAccepted", "termsVersion"]
       },
       "LoginDto": {
         "type": "object",
