@@ -16,6 +16,62 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
+// Notifications (NTF-01)
+// ---------------------------------------------------------------------------
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  DEAD_LETTER
+}
+
+model Notification {
+  id              String             @id @default(uuid())
+  userId          String?            @db.Uuid
+  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  channel         NotificationChannel
+  templateKey     String             @db.VarChar(64)
+  templateVersion String             @db.VarChar(16)
+  recipient       String             @db.VarChar(255)
+  status          NotificationStatus @default(PENDING)
+  attempts        Int                @default(0)
+  lastError       String?
+  metadata        Json?
+  sentAt          DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([templateKey, templateVersion])
+  @@map("notifications")
+}
+
+model DeadLetterJob {
+  id          String   @id @default(uuid()) @db.Uuid
+  queueName   String   @db.VarChar(64)
+  jobId       String   @db.VarChar(64)
+  jobName     String   @db.VarChar(64)
+  payload     Json
+  error       String   @db.Text
+  attempts    Int
+  failedAt    DateTime @default(now())
+
+  @@index([queueName])
+  @@index([failedAt])
+  @@map("dead_letter_jobs")
+}
+
+// ---------------------------------------------------------------------------
 // Identity & access
 // ---------------------------------------------------------------------------
 
