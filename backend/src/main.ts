@@ -11,6 +11,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { validationExceptionFactory } from './common/pipes/validation-exception.factory';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
 
@@ -75,6 +76,8 @@ async function bootstrap(): Promise<void> {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
+      // Stable business code for every DTO violation (400 VALIDATION_ERROR).
+      exceptionFactory: validationExceptionFactory,
     }),
   );
 

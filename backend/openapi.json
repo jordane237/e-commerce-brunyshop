@@ -737,6 +737,137 @@
         "summary": "Création d’un produit en brouillon avec variantes",
         "tags": ["catalog"]
       }
+    },
+    "/api/v1/cart/validate": {
+      "post": {
+        "description": "⚠️ Aucun prix fourni par le client n'est utilisé. Tous les prix sont recalculés côté serveur depuis la base (prix de la variante, promotion produit active, sinon prix de base). Le body ne transporte que variantId et quantity ; tout champ de prix non déclaré est rejeté en 400 VALIDATION_ERROR.",
+        "operationId": "CartController_validate_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateCartDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Panier validé avec la liste des écarts (aucun prix client accepté)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartValidationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body invalide (champ non autorisé, quantité hors bornes, doublon de prix…)"
+          },
+          "429": {
+            "description": "Trop de requêtes (30/min/IP)"
+          }
+        },
+        "summary": "Valider le panier : recalcul des prix, promotions, stock et écarts",
+        "tags": ["cart"]
+      }
+    },
+    "/api/v1/admin/notifications/dead-letters": {
+      "get": {
+        "operationId": "NotificationsController_listDeadLetters_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "queueName",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobName",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste paginée des jobs en échec"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Liste paginée des tâches en dead-letter",
+        "tags": ["notifications"]
+      }
+    },
+    "/api/v1/admin/notifications/{id}": {
+      "get": {
+        "operationId": "NotificationsController_getNotification_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail de la notification"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Detail dune notification",
+        "tags": ["notifications"]
+      }
     }
   },
   "info": {
@@ -900,6 +1031,230 @@
           }
         },
         "required": ["name", "slug", "description", "categoryId", "brandId", "basePrice"]
+      },
+      "CartItemInputDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifiant de la variante"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Quantité souhaitée (1 à 100 par ligne)"
+          },
+          "previousUnitPrice": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Prix unitaire mémorisé côté client. Information seule : jamais utilisé dans un calcul, uniquement pour signaler un écart de prix."
+          }
+        },
+        "required": ["variantId", "quantity"]
+      },
+      "ValidateCartDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Lignes du panier (1 à 50)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartItemInputDto"
+            }
+          },
+          "couponCode": {
+            "type": "string",
+            "description": "Code promo à appliquer (optionnel)",
+            "maxLength": 64
+          }
+        },
+        "required": ["items"]
+      },
+      "CartIssueDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "PRICE_CHANGED",
+              "PROMO_APPLIED",
+              "PROMO_EXPIRED",
+              "INSUFFICIENT_STOCK",
+              "OUT_OF_STOCK",
+              "PRODUCT_ARCHIVED",
+              "PRODUCT_NOT_FOUND",
+              "VARIANT_NOT_FOUND",
+              "QUANTITY_EXCEEDED",
+              "COUPON_INVALID",
+              "COUPON_MIN_AMOUNT_NOT_REACHED"
+            ],
+            "description": "Code de l'écart"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message en français prêt à afficher"
+          },
+          "variantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Variante concernée"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Produit concerné"
+          },
+          "couponCode": {
+            "type": "string",
+            "description": "Code promo concerné"
+          },
+          "requestedQuantity": {
+            "type": "number",
+            "description": "Quantité demandée par le client"
+          },
+          "availableQuantity": {
+            "type": "number",
+            "description": "Stock disponible réellement"
+          },
+          "maxQuantity": {
+            "type": "number",
+            "description": "Quantité maximale autorisée par ligne"
+          },
+          "previousPrice": {
+            "type": "number",
+            "description": "Prix unitaire mémorisé côté client"
+          },
+          "currentPrice": {
+            "type": "number",
+            "description": "Prix unitaire recalculé côté serveur"
+          },
+          "minAmount": {
+            "type": "number",
+            "description": "Montant minimum requis par le coupon"
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Sous-total utilisé pour évaluer le coupon"
+          }
+        },
+        "required": ["code", "message"]
+      },
+      "CartItemValidationDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "variantSku": {
+            "type": "string"
+          },
+          "size": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantité retenue (limitée au stock disponible)"
+          },
+          "availableStock": {
+            "type": "number",
+            "description": "Stock disponible = stock - stock réservé"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Prix unitaire recalculé côté serveur (XAF)"
+          },
+          "lineTotal": {
+            "type": "number",
+            "description": "unitPrice × quantity (XAF)"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartIssueDto"
+            }
+          }
+        },
+        "required": [
+          "variantId",
+          "productId",
+          "productName",
+          "variantSku",
+          "size",
+          "color",
+          "quantity",
+          "availableStock",
+          "unitPrice",
+          "lineTotal",
+          "issues"
+        ]
+      },
+      "CartValidationMetaDto": {
+        "type": "object",
+        "properties": {
+          "validatedAt": {
+            "type": "string",
+            "example": "2025-01-15T10:30:00.000Z"
+          },
+          "itemCount": {
+            "type": "number",
+            "description": "Nombre de lignes retournées"
+          },
+          "totalQuantity": {
+            "type": "number",
+            "description": "Somme des quantités retenues"
+          }
+        },
+        "required": ["validatedAt", "itemCount", "totalQuantity"]
+      },
+      "CartValidationResponseDto": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "false dès qu’au moins une issue bloquante est présente"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartItemValidationDto"
+            }
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Sous-total recalculé (XAF)"
+          },
+          "discount": {
+            "type": "number",
+            "description": "Remise coupon (XAF)"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total à payer hors livraison (XAF), jamais négatif"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartIssueDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/CartValidationMetaDto"
+          }
+        },
+        "required": ["valid", "items", "subtotal", "discount", "total", "issues", "meta"]
       }
     }
   }

@@ -19,6 +19,9 @@ describe('API end-to-end', () => {
     }
     const { AppModule } = await import('../src/app.module');
     const { AllExceptionsFilter } = await import('../src/common/filters/all-exceptions.filter');
+    const { validationExceptionFactory } = await import(
+      '../src/common/pipes/validation-exception.factory'
+    );
     const instance = await NestFactory.create(AppModule, { logger: false });
     instance.setGlobalPrefix('api');
     instance.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
@@ -29,6 +32,7 @@ describe('API end-to-end', () => {
         forbidNonWhitelisted: true,
         transform: true,
         transformOptions: { enableImplicitConversion: true },
+        exceptionFactory: validationExceptionFactory,
       }),
     );
     instance.useGlobalFilters(new AllExceptionsFilter(instance.get(ConfigService)));
