@@ -192,7 +192,9 @@ export class ProductsPage implements OnInit {
   }
 
   stock(product: CatalogProduct): number {
-    return product.variants.reduce((total, variant) => total + variant.stock, 0);
+    // Seul le stock disponible est exposé par l'API (stock brut interne jamais
+    // transmis) : on additionne donc les quantités disponibles des variantes.
+    return product.variants.reduce((total, variant) => total + variant.availableStock, 0);
   }
 
   changePage(nextPage: number): void {

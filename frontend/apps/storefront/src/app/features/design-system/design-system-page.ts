@@ -30,9 +30,12 @@ const DEMO_PRODUCT: CatalogProduct = {
   slug: 'mocassin-prestige-cuir-noir',
   description: 'Mocassin en cuir pleine fleur, doublure souple et semelle cousue.',
   basePrice: 27500,
+  effectivePrice: 21900,
   promoPrice: 21900,
   promoStart: '2026-01-01T00:00:00.000Z',
   promoEnd: '2027-01-01T00:00:00.000Z',
+  isPromoActive: true,
+  inStock: true,
   category: { id: 'cat-1', name: 'Mocassins & Richelieu', slug: 'mocassins-richelieu' },
   brand: { id: 'brand-1', name: 'BRUNY', slug: 'bruny', logo: null },
   images: [
@@ -44,10 +47,17 @@ const DEMO_PRODUCT: CatalogProduct = {
     },
   ],
   variants: [
-    { id: 'v-40', sku: 'DEMO-40', color: 'Noir', size: '40', price: null, stock: 6 },
-    { id: 'v-41', sku: 'DEMO-41', color: 'Noir', size: '41', price: null, stock: 3 },
-    { id: 'v-42', sku: 'DEMO-42', color: 'Noir', size: '42', price: null, stock: 2 },
-    { id: 'v-43', sku: 'DEMO-43', color: 'Noir', size: '43', price: null, stock: 0 },
+    { id: 'v-40', sku: 'DEMO-40', color: 'Noir', size: '40', availableStock: 6, isAvailable: true },
+    { id: 'v-41', sku: 'DEMO-41', color: 'Noir', size: '41', availableStock: 3, isAvailable: true },
+    { id: 'v-42', sku: 'DEMO-42', color: 'Noir', size: '42', availableStock: 2, isAvailable: true },
+    {
+      id: 'v-43',
+      sku: 'DEMO-43',
+      color: 'Noir',
+      size: '43',
+      availableStock: 0,
+      isAvailable: false,
+    },
   ],
 };
 
