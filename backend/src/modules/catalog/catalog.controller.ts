@@ -14,6 +14,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ListProductsDto } from './dto/list-products.dto';
 import { ProductDetailDto } from './dto/product-detail.dto';
+import { ProductListResponseDto } from './dto/product-list.dto';
 import { ProductSlugParamDto } from './dto/product-slug-param.dto';
 import { CatalogService } from './catalog.service';
 import { ProductDetailService } from './products/product-detail.service';
@@ -33,8 +34,16 @@ export class CatalogController {
 
   @Public()
   @Get('products')
-  @ApiOperation({ summary: 'Liste paginée du catalogue public' })
-  listProducts(@Query() query: ListProductsDto) {
+  @ApiOperation({
+    summary:
+      'Liste paginée du catalogue public avec filtres (catégorie, marque, pointure, couleur, prix, disponibilité, promo) et facettes',
+  })
+  @ApiOkResponse({
+    type: ProductListResponseDto,
+    description:
+      'availableStock = stock - reservedStock. Le stock brut interne n’est jamais exposé.',
+  })
+  listProducts(@Query() query: ListProductsDto): Promise<ProductListResponseDto> {
     return this.catalog.listProducts(query);
   }
 

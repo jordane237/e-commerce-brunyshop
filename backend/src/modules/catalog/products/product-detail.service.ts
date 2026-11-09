@@ -11,6 +11,7 @@ import type { ProductImageDto } from '../dto/product-image.dto';
 import type { ProductSummaryDto } from '../dto/product-summary.dto';
 import type { ProductVariantDto } from '../dto/product-variant.dto';
 import type { SizeVariantDto } from '../dto/size-variant.dto';
+import { availableStock, toProductImage, toProductSummary } from './product-summary.mapper';
 
 // Everything the product page needs, in one round trip: relations are selected
 // with the product, so there is no N+1.
@@ -67,38 +68,11 @@ const summarySelection = {
 } satisfies Prisma.ProductSelect;
 
 type DetailProduct = Prisma.ProductGetPayload<{ select: typeof detailSelection }>;
-type SummaryProduct = Prisma.ProductGetPayload<{ select: typeof summarySelection }>;
 type ImageRow = DetailProduct['images'][number];
 type VariantRow = DetailProduct['variants'][number];
 
-// Shared shape of the detail row and the summary row: everything a product card
-// needs, without the fields only the detail query loads.
-type SummarySource = Pick<
-  SummaryProduct,
-  | 'id'
-  | 'name'
-  | 'slug'
-  | 'basePrice'
-  | 'promoPrice'
-  | 'promoStart'
-  | 'promoEnd'
-  | 'category'
-  | 'brand'
-  | 'images'
-  | 'variants'
->;
-
 const PRICE_WINDOW_LOW = 0.5;
 const PRICE_WINDOW_HIGH = 1.5;
-
-function availableStock(variant: { stock: number; reservedStock: number }): number {
-  // CA #2: what can still be sold, never the raw physical stock.
-  return Math.max(0, variant.stock - variant.reservedStock);
-}
-
-function toIso(value: Date | null): string | null {
-  return value === null ? null : value.toISOString();
-}
 
 // "NOIR" -> "noir", "Chaussures de ville" -> "chaussures-de-ville".
 function toSlug(value: string): string {
@@ -118,16 +92,6 @@ function compareSizes(left: string, right: string): number {
     return left.localeCompare(right);
   }
   return leftNumber - rightNumber;
-}
-
-function toImage(image: ImageRow): ProductImageDto {
-  return {
-    id: image.id,
-    url: image.url,
-    alt: image.alt,
-    position: image.position,
-    variantColor: image.variantColor,
-  };
 }
 
 @Injectable()
@@ -213,7 +177,7 @@ export class ProductDetailService {
           right.row.createdAt.getTime() - left.row.createdAt.getTime(),
       )
       .slice(0, limit)
-      .map(({ row }) => this.toSummary(row, now));
+      .map(({ row }) => toProductSummary(row, now));
   }
 
   private toDetail(
@@ -234,7 +198,7 @@ export class ProductDetailService {
       };
     });
 
-    const summary = this.toSummary(product, now);
+    const summary = toProductSummary(product, now);
 
     return {
       ...summary,
@@ -246,35 +210,6 @@ export class ProductDetailService {
       sizes: this.groupSizes(product.variants),
       variants,
       similarProducts,
-    };
-  }
-
-  private toSummary(product: SummarySource, now: Date): ProductSummaryDto {
-    const quote = resolvePrice(product, { price: null }, now);
-    return {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      basePrice: product.basePrice,
-      effectivePrice: quote.unitPrice,
-      // Only an active promotion is advertised, never a scheduled or expired one.
-      promoPrice: quote.appliedPromo ? product.promoPrice : null,
-      promoStart: toIso(product.promoStart),
-      promoEnd: toIso(product.promoEnd),
-      isPromoActive: quote.appliedPromo,
-      inStock: product.variants.some((variant) => availableStock(variant) > 0),
-      category: {
-        id: product.category.id,
-        name: product.category.name,
-        slug: product.category.slug,
-      },
-      brand: {
-        id: product.brand.id,
-        name: product.brand.name,
-        slug: product.brand.slug,
-        logo: product.brand.logo,
-      },
-      images: product.images.map(toImage),
     };
   }
 
@@ -290,7 +225,7 @@ export class ProductDetailService {
           (left.variantColor ?? '').localeCompare(right.variantColor ?? '') ||
           left.position - right.position,
       );
-    return [...common, ...specific].map(toImage);
+    return [...common, ...specific].map(toProductImage);
   }
 
   // CA #1: each colour carries its own images (specific + shared) and the sizes

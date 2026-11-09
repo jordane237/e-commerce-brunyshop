@@ -8,13 +8,14 @@ import type { paths } from '../generated/api-types';
 type ProductListQuery = NonNullable<paths['/api/v1/products']['get']['parameters']['query']>;
 export type ProductSort = NonNullable<ProductListQuery['sort']>;
 
+// Liste produit (CAT-02) : stock disponible uniquement, jamais le stock brut.
 export interface CatalogVariant {
   id: string;
   sku: string;
   color: string;
   size: string;
-  price: number | null;
-  stock: number;
+  availableStock: number;
+  isAvailable: boolean;
 }
 
 export interface CatalogProduct {
@@ -23,13 +24,31 @@ export interface CatalogProduct {
   slug: string;
   description: string;
   basePrice: number;
+  effectivePrice: number;
   promoPrice: number | null;
   promoStart: string | null;
   promoEnd: string | null;
+  isPromoActive: boolean;
+  inStock: boolean;
   category: { id: string; name: string; slug: string };
   brand: { id: string; name: string; slug: string; logo: string | null };
   images: Array<{ id: string; url: string; alt: string | null; position: number }>;
   variants: CatalogVariant[];
+}
+
+export interface CatalogValueFacet {
+  value: string;
+  count: number;
+}
+
+export interface CatalogFacets {
+  categories: Array<{ id: string; name: string; slug: string; count: number }>;
+  brands: Array<{ id: string; name: string; slug: string; count: number }>;
+  sizes: CatalogValueFacet[];
+  colors: CatalogValueFacet[];
+  availability: { inStock: number; outOfStock: number };
+  promotion: { active: number; inactive: number };
+  price: { min: number; max: number };
 }
 
 // Fiche produit (CAT-03) : le stock brut n'existe pas côté API, seul
@@ -110,17 +129,21 @@ export interface ProductFilters {
   page?: number;
   limit?: number;
   category?: string;
+  brand?: string;
   size?: string;
   color?: string;
   minPrice?: number;
   maxPrice?: number;
   sort?: ProductSort;
   q?: string;
+  inStock?: boolean;
+  promo?: boolean;
 }
 
 export interface ProductPage {
   items: CatalogProduct[];
   pagination: { page: number; limit: number; total: number; pages: number };
+  facets: CatalogFacets;
 }
 
 export interface CatalogCategory {

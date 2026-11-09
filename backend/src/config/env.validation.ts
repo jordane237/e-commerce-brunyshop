@@ -80,6 +80,12 @@ export class EnvVariables {
   @Min(1)
   public CACHE_PRODUCT_DETAIL_TTL_SECONDS?: number;
 
+  // Catalogue list and facets cache TTL in seconds (default 60).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  public CACHE_PRODUCTS_LIST_TTL_SECONDS?: number;
+
   // Number of similar products returned on a product page (default 6).
   @IsOptional()
   @IsInt()

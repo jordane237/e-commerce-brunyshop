@@ -18,7 +18,11 @@ export interface ApplicationConfig {
   publicAdminUrl: string;
   corsOrigins: string[];
   throttle: { ttlSeconds: number; limit: number };
-  catalog: { productDetailTtlSeconds: number; similarProductsLimit: number };
+  catalog: {
+    productDetailTtlSeconds: number;
+    productsListTtlSeconds: number;
+    similarProductsLimit: number;
+  };
   auth: AuthConfig;
   isProduction: boolean;
 }
@@ -44,6 +48,7 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
     },
     catalog: {
       productDetailTtlSeconds: Number(env['CACHE_PRODUCT_DETAIL_TTL_SECONDS'] ?? 300),
+      productsListTtlSeconds: Number(env['CACHE_PRODUCTS_LIST_TTL_SECONDS'] ?? 60),
       similarProductsLimit: Number(env['SIMILAR_PRODUCTS_LIMIT'] ?? 6),
     },
     auth: {

@@ -13,7 +13,9 @@ function makeService() {
     del: vi.fn(),
   };
   const logger = { setContext: vi.fn(), warn: vi.fn() };
-  const config = { get: vi.fn(() => 300) };
+  const config = {
+    get: vi.fn((key: string) => (key === 'app.catalog.productsListTtlSeconds' ? 60 : 300)),
+  };
   const service = new CatalogCacheService(
     { redis } as unknown as RedisService,
     config as unknown as ConfigService,
@@ -77,6 +79,40 @@ describe('CatalogCacheService', () => {
       service.setProductDetail('sneakers-urbanstep-air', { slug: 'x' } as never),
     ).resolves.toBeUndefined();
     expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('dérive une clé de liste stable et distincte par requête', () => {
+    const first = CatalogCacheService.listKey({ page: 1, limit: 12, sort: 'newest' });
+    const same = CatalogCacheService.listKey({ page: 1, limit: 12, sort: 'newest' });
+    const other = CatalogCacheService.listKey({ page: 2, limit: 12, sort: 'newest' });
+
+    expect(first).toMatch(/^catalog:products:list:[0-9a-f]{20}:v1$/);
+    expect(first).toBe(same);
+    expect(first).not.toBe(other);
+    expect(CatalogCacheService.facetsKey()).toBe('catalog:products:facets:v1');
+  });
+
+  it('cache la liste avec le TTL configuré', async () => {
+    const { service, redis } = makeService();
+    const list = { items: [], pagination: {}, facets: {} };
+
+    await service.setProductsList({ page: 1 }, list as never);
+
+    expect(redis.set).toHaveBeenCalledWith(
+      CatalogCacheService.listKey({ page: 1 }),
+      JSON.stringify(list),
+      'EX',
+      60,
+    );
+  });
+
+  it('lit la liste et les facettes en cache', async () => {
+    const { service, redis } = makeService();
+    redis.get.mockResolvedValue(JSON.stringify({ items: [], facets: {} }));
+
+    await expect(service.getProductsList({ page: 1 })).resolves.toEqual({ items: [], facets: {} });
+    await expect(service.getProductsFacets()).resolves.toEqual({ items: [], facets: {} });
+    expect(redis.get).toHaveBeenCalledWith(CatalogCacheService.facetsKey());
   });
 
   it('invalide toutes les clés catalogue via SCAN, pas KEYS', async () => {

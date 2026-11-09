@@ -1,15 +1,20 @@
+import { createHash } from 'node:crypto';
+
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PinoLogger } from 'nestjs-pino';
 
 import { RedisService } from '../../../infrastructure/cache/cache.module';
 import type { ProductDetailDto } from '../dto/product-detail.dto';
+import type { ProductFacetsDto, ProductListResponseDto } from '../dto/product-list.dto';
 
-// Product detail cache (CAT-03).
+// Catalogue cache (CAT-02 / CAT-03).
 //
-// Key: catalog:products:detail:{slug}:v1 — deliberately distinct from the
-// future catalogue list keys (catalog:products:list:*, catalog:products:facets:*),
-// so invalidateProducts() can sweep them all without touching anything else.
+// Keys:
+//   catalog:products:detail:{slug}:v1   — product detail (CAT-03)
+//   catalog:products:list:{hash}:v1     — one entry per normalized list query
+//   catalog:products:facets:v1          — global facets
+// invalidateProducts() sweeps them all with SCAN.
 //
 // Fail-open by design: Redis is not on the read path for correctness. Any Redis
 // error is logged and treated as a cache miss, so the catalogue stays available
@@ -36,37 +41,91 @@ export class CatalogCacheService {
     return Number(this.config.get<number>('app.catalog.productDetailTtlSeconds') ?? 300);
   }
 
+  private get listTtlSeconds(): number {
+    return Number(this.config.get<number>('app.catalog.productsListTtlSeconds') ?? 60);
+  }
+
   static detailKey(slug: string): string {
     return `catalog:products:detail:${slug}:v1`;
   }
 
-  async getProductDetail(slug: string): Promise<ProductDetailDto | null> {
+  // The query object is built with a fixed key order by the caller; hashing it
+  // keeps keys short and avoids leaking free-text searches into Redis keys.
+  static listKey(query: Record<string, unknown>): string {
+    const hash = createHash('sha1').update(JSON.stringify(query)).digest('hex').slice(0, 20);
+    return `catalog:products:list:${hash}:v1`;
+  }
+
+  static facetsKey(): string {
+    return 'catalog:products:facets:v1';
+  }
+
+  private async readJson<T>(key: string, label: string): Promise<T | null> {
     try {
-      const raw = await this.redis.get(CatalogCacheService.detailKey(slug));
+      const raw = await this.redis.get(key);
       if (raw === null) return null;
-      return JSON.parse(raw) as ProductDetailDto;
+      return JSON.parse(raw) as T;
     } catch (error) {
-      this.logger.warn({ err: error, slug }, 'catalog detail cache read failed, serving from DB');
+      this.logger.warn({ err: error, key }, `${label} cache read failed, serving from DB`);
       return null;
     }
   }
 
-  async setProductDetail(slug: string, detail: ProductDetailDto): Promise<void> {
+  private async writeJson(key: string, value: unknown, ttlSeconds: number, label: string) {
     try {
-      await this.redis.set(
-        CatalogCacheService.detailKey(slug),
-        JSON.stringify(detail),
-        'EX',
-        this.detailTtlSeconds,
-      );
+      await this.redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
     } catch (error) {
-      this.logger.warn({ err: error, slug }, 'catalog detail cache write failed');
+      this.logger.warn({ err: error, key }, `${label} cache write failed`);
     }
   }
 
-  // Invalidates every catalogue product cache entry (detail today, list and
-  // facets once CAT-02 lands). SCAN is used instead of KEYS to keep Redis
-  // responsive on large keyspaces.
+  getProductDetail(slug: string): Promise<ProductDetailDto | null> {
+    return this.readJson<ProductDetailDto>(CatalogCacheService.detailKey(slug), 'catalog detail');
+  }
+
+  async setProductDetail(slug: string, detail: ProductDetailDto): Promise<void> {
+    await this.writeJson(
+      CatalogCacheService.detailKey(slug),
+      detail,
+      this.detailTtlSeconds,
+      'catalog detail',
+    );
+  }
+
+  getProductsList(query: Record<string, unknown>): Promise<ProductListResponseDto | null> {
+    return this.readJson<ProductListResponseDto>(
+      CatalogCacheService.listKey(query),
+      'catalog list',
+    );
+  }
+
+  async setProductsList(
+    query: Record<string, unknown>,
+    list: ProductListResponseDto,
+  ): Promise<void> {
+    await this.writeJson(
+      CatalogCacheService.listKey(query),
+      list,
+      this.listTtlSeconds,
+      'catalog list',
+    );
+  }
+
+  getProductsFacets(): Promise<ProductFacetsDto | null> {
+    return this.readJson<ProductFacetsDto>(CatalogCacheService.facetsKey(), 'catalog facets');
+  }
+
+  async setProductsFacets(facets: ProductFacetsDto): Promise<void> {
+    await this.writeJson(
+      CatalogCacheService.facetsKey(),
+      facets,
+      this.listTtlSeconds,
+      'catalog facets',
+    );
+  }
+
+  // Invalidates every catalogue product cache entry (detail, list, facets).
+  // SCAN is used instead of KEYS to keep Redis responsive on large keyspaces.
   async invalidateProducts(): Promise<void> {
     try {
       let cursor = '0';

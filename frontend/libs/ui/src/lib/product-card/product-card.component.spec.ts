@@ -6,30 +6,34 @@ import type { CatalogProduct } from '@bruny/data-access';
 
 const PRODUCT: CatalogProduct = {
   id: 'prod-1',
-  type: 'product',
   name: 'Mocassin Cuir Glacé Noir Prestige',
   slug: 'mocassin-cuir-glace-noir-prestige',
-  basePrice: 32000,
-  status: 'available',
-  featured: true,
   description: "Le mocassin Prestige Imperial incarne l'excellence du vestiaire masculin formel.",
-  highlights: ['Tige : 100 % cuir de veau pleine fleur patiné'],
-  metas: { material: 'Cuir', origin: 'Italie' },
-  images: [{ url: 'https://example.com/mocassin.jpg', alt: 'Mocassin Cuir Glacé Noir' }],
-  categories: [{ id: 'cat-1', name: 'Chaussures Homme', slug: 'chaussures-homme' }],
+  basePrice: 32000,
+  effectivePrice: 24500,
+  promoPrice: 24500,
+  promoStart: '2026-10-01T00:00:00.000Z',
+  promoEnd: '2026-12-31T23:59:59.000Z',
+  isPromoActive: true,
+  inStock: true,
   category: { id: 'cat-1', name: 'Chaussures Homme', slug: 'chaussures-homme' },
-  tags: ['cuir', 'prestige', 'noir'],
+  brand: { id: 'brand-1', name: 'Bruny', slug: 'bruny', logo: null },
+  images: [
+    {
+      id: 'img-1',
+      url: 'https://example.com/mocassin.jpg',
+      alt: 'Mocassin Cuir Glacé Noir',
+      position: 0,
+    },
+  ],
   variants: [
     {
       id: 'var-1',
-      productId: 'prod-1',
       sku: 'SKU-001',
-      name: 'Noir Ébène / 41',
       size: '41',
       color: 'Noir Ébène',
-      price: 24500,
-      compareAt: null,
-      stock: 5,
+      availableStock: 5,
+      isAvailable: true,
     },
   ],
 };
@@ -111,12 +115,8 @@ describe('ProductCardComponent', () => {
       product: {
         ...PRODUCT,
         basePrice: 32000,
-        variants: [
-          {
-            ...PRODUCT.variants[0],
-            price: 24500,
-          },
-        ],
+        effectivePrice: 24500,
+        promoPrice: 24500,
       } as CatalogProduct,
     });
     const badge = nativeElement.querySelector('.bs-badge--promo');
@@ -130,7 +130,9 @@ describe('ProductCardComponent', () => {
       product: {
         ...PRODUCT,
         basePrice: 24500,
-        variants: [PRODUCT.variants[0]],
+        effectivePrice: 24500,
+        promoPrice: null,
+        isPromoActive: false,
       } as CatalogProduct,
     });
 
@@ -215,7 +217,8 @@ describe('ProductCardComponent', () => {
           ...PRODUCT.variants[0],
           id: `var-${index}`,
           size: String(35 + index),
-          stock: index < 7 ? 3 : 0,
+          availableStock: index < 7 ? 3 : 0,
+          isAvailable: index < 7,
         })),
       } as CatalogProduct,
     });
@@ -235,7 +238,7 @@ describe('ProductCardComponent', () => {
     const { nativeElement } = await create({
       product: {
         ...PRODUCT,
-        images: [{ url: 'https://example.com/mocassin.jpg' }],
+        images: [{ id: 'img-1', url: 'https://example.com/mocassin.jpg', alt: null, position: 0 }],
       } as CatalogProduct,
     });
     const image = nativeElement.querySelector('img') as HTMLImageElement;
