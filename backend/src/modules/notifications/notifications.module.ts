@@ -4,6 +4,7 @@
 
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { QueueService } from './queue.service';
@@ -21,6 +22,7 @@ import {
 
 @Module({
   imports: [
+    DatabaseModule,
     BullModule.registerQueue(
       { name: NOTIFICATIONS_EMAIL_QUEUE },
       { name: NOTIFICATIONS_SMS_QUEUE },

@@ -17,9 +17,10 @@ export class WhatsAppAdapter implements WhatsAppProvider {
     templateData: Record<string, string>;
     messageId: string;
   }[] = [];
-  private readonly driver = this.config.get<string>('WHATSAPP_DRIVER');
+  private readonly driver: string | undefined;
 
   constructor(private readonly config: ConfigService) {
+    this.driver = this.config.get<string>('WHATSAPP_DRIVER');
     this.logger.log(`WhatsAppAdapter driver=${this.driver ?? 'console'}`);
   }
 

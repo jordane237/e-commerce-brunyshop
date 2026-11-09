@@ -12,9 +12,10 @@ import { sanitizePhone } from '../sanitizers/notification-sanitizer';
 export class SmsAdapter implements SmsProvider {
   private readonly logger = new Logger(SmsAdapter.name);
   private readonly sent: { to: string; message: string; messageId: string }[] = [];
-  private readonly driver = this.config.get<string>('SMS_DRIVER');
+  private readonly driver: string | undefined;
 
   constructor(private readonly config: ConfigService) {
+    this.driver = this.config.get<string>('SMS_DRIVER');
     this.logger.log(`SmsAdapter driver=${this.driver ?? 'console'}`);
   }
 

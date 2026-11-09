@@ -5,12 +5,12 @@
 import {
   Controller,
   Get,
+  NotFoundException,
   Param,
   Query,
   HttpStatus,
   ParseUUIDPipe,
   ParseIntPipe,
-  Max,
   DefaultValuePipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -33,7 +33,7 @@ export class NotificationsController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Liste paginée des jobs en échec' })
   async listDeadLetters(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(20), new Max(100), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('queueName') queueName?: string,
     @Query('jobName') jobName?: string,
     @Query('from') from?: string,
@@ -63,7 +63,7 @@ export class NotificationsController {
   async getNotification(@Param('id', ParseUUIDPipe) id: string): Promise<Notification> {
     const notification = await this.notifications.findOne(id);
     if (notification === null) {
-      throw new Error('Notification not found: ' + id);
+      throw new NotFoundException({ code: 'NOTIFICATION_NOT_FOUND' });
     }
     return notification;
   }

@@ -6,11 +6,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../infrastructure/database/database.module';
 import { QueueService } from './queue.service';
-import { AuditService } from '../../modules/audit/audit.service';
-import { sanitizeNotificationPayload } from './sanitizers/notification-sanitizer';
+import { sanitizeEmail, sanitizePhone } from './sanitizers/notification-sanitizer';
 import { renderTemplate } from './templates/template.registry';
 import type { EmailPayload, SmsPayload } from './adapters/notification-provider.interface';
-import type { Prisma } from '../../generated/prisma';
+import type { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class NotificationsService {
@@ -20,7 +19,6 @@ export class NotificationsService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly queue: QueueService,
-    private readonly audit: AuditService,
   ) {}
 
   async enqueueEmail(
@@ -51,11 +49,11 @@ export class NotificationsService {
         templateVersion,
         recipient,
         status: 'PENDING',
-        metadata: this.metadataWithTemplateData(options?.metadata, templateKey, templateVersion),
+        metadata: this.metadataWithTemplateData(templateKey, templateVersion, options?.metadata),
       },
     });
 
-    await this.queue.enqueue('notifications-email', {
+    await this.queue.enqueueEmail({
       notificationId: notification.id,
       recipient: recipient,
       templateKey,
@@ -104,11 +102,11 @@ export class NotificationsService {
         templateVersion,
         recipient,
         status: 'PENDING',
-        metadata: this.metadataWithTemplateData(options?.metadata, templateKey, templateVersion),
+        metadata: this.metadataWithTemplateData(templateKey, templateVersion, options?.metadata),
       },
     });
 
-    await this.queue.enqueue('notifications-sms', {
+    await this.queue.enqueueSms({
       notificationId: notification.id,
       recipient: recipient,
       templateKey,
@@ -152,11 +150,11 @@ export class NotificationsService {
         templateVersion,
         recipient,
         status: 'PENDING',
-        metadata: this.metadataWithTemplateData(options?.metadata, templateKey, templateVersion),
+        metadata: this.metadataWithTemplateData(templateKey, templateVersion, options?.metadata),
       },
     });
 
-    await this.queue.enqueue('notifications-whatsapp', {
+    await this.queue.enqueueWhatsapp({
       notificationId: notification.id,
       recipient: recipient,
       templateKey,
@@ -232,26 +230,14 @@ export class NotificationsService {
           queueName,
           jobId,
           jobName,
-          payload: sanitizeNotificationPayload({}) as object,
+          // The failed payload is intentionally not persisted: it may contain
+          // the real recipient. Only the job coordinates are kept.
+          payload: {},
           error: message,
           attempts,
         },
       }),
     ]);
-
-    await this.audit.log({
-      userId: null,
-      action: 'NOTIFICATION_MOVED_TO_DEAD_LETTER',
-      entity: 'Notification',
-      entityId: notificationId,
-      before: null,
-      after: sanitizeNotificationPayload({
-        notificationId,
-        queueName,
-        jobName,
-        attempts,
-      }) as object,
-    });
 
     this.logger.error(
       {
@@ -320,21 +306,19 @@ export class NotificationsService {
   }
 
   private metadataWithTemplateData(
-    metadata?: Record<string, unknown>,
     templateKey: string,
     templateVersion: string,
-  ): Record<string, unknown> {
+    metadata?: Record<string, unknown>,
+  ): Prisma.InputJsonValue {
     const base: Record<string, unknown> = { templateKey, templateVersion };
     if (metadata) {
       base.metadata = metadata;
     }
-    return base;
+    return base as unknown as Prisma.InputJsonValue;
   }
 
   private sanitizeRecipient(recipient: string): string {
-    return recipient.includes('@')
-      ? sanitizeNotificationPayload(recipient)
-      : sanitizeNotificationPayload(recipient);
+    return recipient.includes('@') ? sanitizeEmail(recipient) : sanitizePhone(recipient);
   }
 
   private errorMessage(error: unknown): string {

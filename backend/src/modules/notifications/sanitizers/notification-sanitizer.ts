@@ -36,7 +36,9 @@ type SanitizableValue =
   | undefined
   | SanitizableValue[]
   | { [key: string]: SanitizableValue };
-type SanitizedValue = Exclude<SanitizableValue, SanitizablePrimitive>;
+// Sanitizing replaces values in place: strings stay strings, so the sanitized
+// shape is the same as the sanitizable one (JSON-compatible).
+type SanitizedValue = SanitizableValue;
 
 const PII_FIELDS = new Set([
   'email',

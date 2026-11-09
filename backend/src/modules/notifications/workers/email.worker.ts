@@ -4,8 +4,9 @@
 // Dead-letter : après le nombre max de tentatives, le job est persisté en DB
 // (DeadLetterJob) et la Notification associée passe en DEAD_LETTER.
 
-import { Processor, WorkerHost, OnWorkerEvent, type Job } from '@nestjs/bullmq';
+import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
+import type { Job } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
 import { EmailAdapter } from '../adapters/email.adapter';
 import { NotificationsService } from '../notifications.service';
@@ -33,7 +34,7 @@ export class EmailWorker extends WorkerHost {
     const start = Date.now();
     const { notificationId, recipient, templateKey } = job.data;
 
-    this.logger.info(
+    this.logger.log(
       {
         jobId: job.id,
         notificationId,
@@ -57,7 +58,7 @@ export class EmailWorker extends WorkerHost {
       }
 
       await this.notifications.markAsSent(notificationId, job.id);
-      this.logger.info(
+      this.logger.log(
         {
           jobId: job.id,
           notificationId,

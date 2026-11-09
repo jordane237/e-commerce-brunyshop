@@ -113,6 +113,7 @@ model User {
   auditLogs       AuditLog[]
   driverShipments Shipment[]
   backupCodes     BackupCode[]
+  notifications   Notification[]
 }
 
 model Role {
