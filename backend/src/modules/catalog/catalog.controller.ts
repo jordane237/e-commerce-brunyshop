@@ -1,7 +1,6 @@
-import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
-  ApiBearerAuth,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -10,19 +9,12 @@ import {
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { CreateProductDto } from './dto/create-product.dto';
 import { ListProductsDto } from './dto/list-products.dto';
 import { ProductDetailDto } from './dto/product-detail.dto';
 import { ProductListResponseDto } from './dto/product-list.dto';
 import { ProductSlugParamDto } from './dto/product-slug-param.dto';
 import { CatalogService } from './catalog.service';
 import { ProductDetailService } from './products/product-detail.service';
-import {
-  CurrentUser,
-  type AuthenticatedUser,
-} from '../../common/decorators/current-user.decorator';
-import type { Request } from 'express';
 
 @ApiTags('catalog')
 @Controller()
@@ -79,17 +71,5 @@ export class CatalogController {
   @ApiOperation({ summary: 'Catégories ayant des produits publiés' })
   listCategories() {
     return this.catalog.listCategories();
-  }
-
-  @Post('admin/products')
-  @Roles('ADMIN', 'STOCK_MANAGER')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Création d’un produit en brouillon avec variantes' })
-  createProduct(
-    @Body() dto: CreateProductDto,
-    @CurrentUser() user: AuthenticatedUser,
-    @Req() request: Request,
-  ) {
-    return this.catalog.createProduct(dto, user.id, request.ip);
   }
 }

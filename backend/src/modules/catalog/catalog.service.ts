@@ -2,9 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { isPromoActive } from '../../common/pricing/product-pricing';
 import { PrismaService } from '../../infrastructure/database/database.module';
-import { AuditLogService } from '../audit/audit.service';
 import { CatalogCacheService } from './cache/catalog-cache.service';
-import type { CreateProductDto } from './dto/create-product.dto';
 import type {
   BrandFacetDto,
   ProductFacetsDto,
@@ -14,24 +12,6 @@ import type {
 import type { ListProductsDto } from './dto/list-products.dto';
 import { toProductListItem } from './products/product-list.mapper';
 import { availableStock } from './products/product-summary.mapper';
-
-const productSelection = {
-  id: true,
-  name: true,
-  slug: true,
-  description: true,
-  basePrice: true,
-  promoPrice: true,
-  promoStart: true,
-  promoEnd: true,
-  category: { select: { id: true, name: true, slug: true } },
-  brand: { select: { id: true, name: true, slug: true, logo: true } },
-  images: { orderBy: { position: 'asc' as const } },
-  variants: {
-    select: { id: true, sku: true, color: true, size: true, price: true, stock: true },
-    orderBy: [{ color: 'asc' as const }, { size: 'asc' as const }],
-  },
-};
 
 // Public list projection: carries reservedStock so the response can expose the
 // available quantity (CA #2) instead of the raw physical stock.
@@ -65,7 +45,6 @@ function compareSizes(left: string, right: string): number {
 export class CatalogService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly auditLog: AuditLogService,
     private readonly cache: CatalogCacheService,
   ) {}
 
@@ -314,76 +293,5 @@ export class CatalogService {
         },
       },
     });
-  }
-
-  async createProduct(dto: CreateProductDto, userId: string, ip?: string) {
-    return this.prisma.$transaction(async (transaction) => {
-      const product = await transaction.product.create({
-        data: {
-          name: dto.name.trim(),
-          slug: dto.slug,
-          description: dto.description.trim(),
-          categoryId: dto.categoryId,
-          brandId: dto.brandId,
-          basePrice: dto.basePrice,
-          status: 'DRAFT',
-          variants: {
-            create: dto.variants.map((variant) => ({
-              sku: variant.sku.trim(),
-              color: variant.color.trim(),
-              size: variant.size.trim(),
-              price: variant.price,
-            })),
-          },
-        },
-      });
-      await this.auditLog.record(transaction, {
-        userId,
-        action: 'PRODUCT_CREATED',
-        entity: 'Product',
-        entityId: product.id,
-        ip,
-      });
-      return product;
-    });
-  }
-
-  async updateProduct(dto: CreateProductDto, slug: string, userId: string, ip?: string) {
-    const result = await this.prisma.$transaction(async (transaction) => {
-      const product = await transaction.product.update({
-        where: { slug },
-        data: {
-          name: dto.name.trim(),
-          slug: dto.slug,
-          description: dto.description.trim(),
-          categoryId: dto.categoryId,
-          brandId: dto.brandId,
-          basePrice: dto.basePrice,
-          status: 'DRAFT',
-          variants: {
-            deleteMany: {},
-            create: dto.variants.map((variant) => ({
-              sku: variant.sku.trim(),
-              color: variant.color.trim(),
-              size: variant.size.trim(),
-              price: variant.price,
-            })),
-          },
-        },
-        select: productSelection,
-      });
-      await this.auditLog.record(transaction, {
-        userId,
-        action: 'PRODUCT_UPDATED',
-        entity: 'Product',
-        entityId: product.id,
-        ip,
-      });
-      return product;
-    });
-    // The update sets the product back to DRAFT and rewrites its variants: the
-    // cached detail must not survive it.
-    await this.cache.invalidateProducts();
-    return result;
   }
 }

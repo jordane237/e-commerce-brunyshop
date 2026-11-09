@@ -298,6 +298,8 @@ model ProductVariant {
   cartItems      CartItem[]
 
   @@index([productId])
+  // Une seule variante par couple couleur/pointure dans un produit (CAT-04).
+  @@unique([productId, color, size])
 }
 
 model ProductImage {
@@ -628,6 +630,8 @@ model AuditLog {
   before   Json?
   after    Json?
   ip       String?
+  // Contexte HTTP de l'acteur (CAT-04), nullable pour les entrées antérieures.
+  userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

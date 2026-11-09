@@ -664,14 +664,50 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "brand",
+            "required": false,
+            "in": "query",
+            "description": "Slug de marque",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "inStock",
+            "required": false,
+            "in": "query",
+            "description": "true = au moins une variante disponible, false = aucune",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          },
+          {
+            "name": "promo",
+            "required": false,
+            "in": "query",
+            "description": "true = promotion produit active à cet instant",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "availableStock = stock - reservedStock. Le stock brut interne n’est jamais exposé.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponseDto"
+                }
+              }
+            }
           }
         },
-        "summary": "Liste paginée du catalogue public",
+        "summary": "Liste paginée du catalogue public avec filtres (catégorie, marque, pointure, couleur, prix, disponibilité, promo) et facettes",
         "tags": ["catalog"]
       }
     },
@@ -727,7 +763,8 @@
     },
     "/api/v1/admin/products": {
       "post": {
-        "operationId": "CatalogController_createProduct_v1",
+        "description": "Crée un produit en brouillon avec ses variantes. Accepte un tableau explicite `variants[]` ou la génération automatique `colors[]+sizes[]` (produit cartésien, stock initial à 0, SKU générés automatiquement). Chaque création est auditée et invalide le cache public immédiatement.",
+        "operationId": "AdminProductsController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -740,17 +777,179 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "401": {
+            "description": "Token invalide ou absent (UNAUTHENTICATED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "409": {
+            "description": "Slug ou SKU déjà utilisé (SLUG_ALREADY_EXISTS, SKU_ALREADY_EXISTS, DUPLICATE_VARIANT)."
+          },
+          "429": {
+            "description": "Plus de 60 requêtes en 60 secondes (RATE_LIMIT_EXCEEDED)."
           }
         },
         "security": [
           {
-            "bearer": []
+            "access-token": []
           }
         ],
-        "summary": "Création d’un produit en brouillon avec variantes",
-        "tags": ["catalog"]
+        "summary": "Créer un produit avec variantes",
+        "tags": ["admin-products"]
+      }
+    },
+    "/api/v1/admin/products/{id}": {
+      "patch": {
+        "description": "Met à jour les champs métadonnées, prix, promotion et statut d’un produit. Les variantes ne sont PAS modifiées via cette route (réservé à PUT /:id/variants). Chaque modification de prix est auditée.",
+        "operationId": "AdminProductsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Function"
+              }
+            }
+          }
+        },
+        "responses": {
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          },
+          "409": {
+            "description": "Slug déjà utilisé (SLUG_ALREADY_EXISTS)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Mettre à jour un produit",
+        "tags": ["admin-products"]
+      },
+      "delete": {
+        "description": "Archive un produit (status = ARCHIVED). Pas de suppression physique : le produit reste en base, il est simplement retiré du catalogue public et des réponses d’administration. Archivé = 204, introuvable = 404.",
+        "operationId": "AdminProductsController_archive_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Archiver un produit",
+        "tags": ["admin-products"]
+      }
+    },
+    "/api/v1/admin/products/{id}/variants": {
+      "put": {
+        "description": "Remplace l'ensemble des variantes d'un produit (upsert différentiel). Une variante existante identifiée par `id` est mise à jour ; une variante sans `id` est créée avec un SKU généré automatiquement. Les variantes existantes non présentes dans le payload sont supprimées, sauf si elles sont liées à une commande (409 VARIANT_HAS_ORDERS). Chaque changement de stock ou de prix est audité.",
+        "operationId": "AdminProductsController_updateVariants_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID du produit.",
+            "schema": {
+              "example": "a1b2c3d4-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Function"
+              }
+            }
+          }
+        },
+        "responses": {
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          },
+          "409": {
+            "description": "Variante liée à une commande (VARIANT_HAS_ORDERS) ou doublon de couleur/pointure (DUPLICATE_VARIANT)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Remplacer les variantes d'un produit",
+        "tags": ["admin-products"]
+      }
+    },
+    "/api/v1/admin/products/{id}/duplicate": {
+      "post": {
+        "description": "Crée une copie en brouillon (DRAFT) du produit source : mêmes catégorie, marque, description, prix, promotions et variantes, avec de nouveaux slugs et SKU générés automatiquement. Les images sont réutilisées (mêmes URLs, pas de duplication physique). Le statut fourni est ignoré et la copie est toujours en DRAFT.",
+        "operationId": "AdminProductsController_duplicate_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID du produit source.",
+            "schema": {
+              "example": "a1b2c3d4-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Function"
+              }
+            }
+          }
+        },
+        "responses": {
+          "404": {
+            "description": "Produit source introuvable (PRODUCT_NOT_FOUND)."
+          },
+          "409": {
+            "description": "Slug déjà utilisé (SLUG_ALREADY_EXISTS)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dupliquer un produit",
+        "tags": ["admin-products"]
       }
     },
     "/api/v1/cart/validate": {
@@ -1060,6 +1259,309 @@
         },
         "required": ["id", "url", "alt", "position", "variantColor"]
       },
+      "ProductVariantSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "BARF-SNEAKERSUR-42-NOIR"
+          },
+          "size": {
+            "type": "string",
+            "example": "42"
+          },
+          "color": {
+            "type": "string",
+            "example": "NOIR"
+          },
+          "availableStock": {
+            "type": "number",
+            "description": "Stock disponible (stock - reservedStock)"
+          },
+          "isAvailable": {
+            "type": "boolean",
+            "description": "true si availableStock > 0"
+          }
+        },
+        "required": ["id", "sku", "size", "color", "availableStock", "isAvailable"]
+      },
+      "ProductListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "basePrice": {
+            "type": "number",
+            "description": "Prix de base en XAF (entier)"
+          },
+          "effectivePrice": {
+            "type": "number",
+            "description": "Prix effectif en XAF : promo active, sinon prix de base"
+          },
+          "promoPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Prix promo en XAF si la promotion est active, sinon null"
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Début de la fenêtre promo (ISO 8601)"
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fin de la fenêtre promo (ISO 8601)"
+          },
+          "isPromoActive": {
+            "type": "boolean",
+            "description": "true si promoPrice est appliqué à cet instant"
+          },
+          "inStock": {
+            "type": "boolean",
+            "description": "true si au moins une variante a du stock disponible"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ProductCategoryDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/ProductBrandDto"
+          },
+          "images": {
+            "description": "Images du produit (la principale au minimum ; toutes sur la fiche détail)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductImageDto"
+            }
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductVariantSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "basePrice",
+          "effectivePrice",
+          "promoPrice",
+          "promoStart",
+          "promoEnd",
+          "isPromoActive",
+          "inStock",
+          "category",
+          "brand",
+          "images",
+          "variants"
+        ]
+      },
+      "PaginationDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 12
+          },
+          "total": {
+            "type": "number",
+            "example": 20
+          },
+          "pages": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": ["page", "limit", "total", "pages"]
+      },
+      "CategoryFacetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Sneakers"
+          },
+          "slug": {
+            "type": "string",
+            "example": "sneakers"
+          },
+          "count": {
+            "type": "number",
+            "description": "Nombre de produits publiés dans cette catégorie"
+          }
+        },
+        "required": ["id", "name", "slug", "count"]
+      },
+      "BrandFacetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Barrage Foot"
+          },
+          "slug": {
+            "type": "string",
+            "example": "barrage-foot"
+          },
+          "count": {
+            "type": "number",
+            "description": "Nombre de produits publiés de cette marque"
+          }
+        },
+        "required": ["id", "name", "slug", "count"]
+      },
+      "ValueFacetDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "example": "42",
+            "description": "Pointure ou couleur"
+          },
+          "count": {
+            "type": "number",
+            "description": "Nombre de produits ayant au moins une variante disponible"
+          }
+        },
+        "required": ["value", "count"]
+      },
+      "AvailabilityFacetDto": {
+        "type": "object",
+        "properties": {
+          "inStock": {
+            "type": "number",
+            "description": "Produits avec au moins une variante disponible"
+          },
+          "outOfStock": {
+            "type": "number",
+            "description": "Produits sans aucune variante disponible"
+          }
+        },
+        "required": ["inStock", "outOfStock"]
+      },
+      "PromotionFacetDto": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "number",
+            "description": "Produits avec une promotion active à cet instant"
+          },
+          "inactive": {
+            "type": "number",
+            "description": "Produits sans promotion active"
+          }
+        },
+        "required": ["active", "inactive"]
+      },
+      "PriceFacetDto": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number",
+            "description": "Prix de base minimal des produits publiés (XAF)"
+          },
+          "max": {
+            "type": "number",
+            "description": "Prix de base maximal des produits publiés (XAF)"
+          }
+        },
+        "required": ["min", "max"]
+      },
+      "ProductFacetsDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryFacetDto"
+            }
+          },
+          "brands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BrandFacetDto"
+            }
+          },
+          "sizes": {
+            "description": "Pointures disponibles, triées",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValueFacetDto"
+            }
+          },
+          "colors": {
+            "description": "Couleurs disponibles",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValueFacetDto"
+            }
+          },
+          "availability": {
+            "$ref": "#/components/schemas/AvailabilityFacetDto"
+          },
+          "promotion": {
+            "$ref": "#/components/schemas/PromotionFacetDto"
+          },
+          "price": {
+            "$ref": "#/components/schemas/PriceFacetDto"
+          }
+        },
+        "required": [
+          "categories",
+          "brands",
+          "sizes",
+          "colors",
+          "availability",
+          "promotion",
+          "price"
+        ]
+      },
+      "ProductListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductListItemDto"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "facets": {
+            "$ref": "#/components/schemas/ProductFacetsDto"
+          }
+        },
+        "required": ["items", "pagination", "facets"]
+      },
       "ColorVariantDto": {
         "type": "object",
         "properties": {
@@ -1361,61 +1863,148 @@
           "similarProducts"
         ]
       },
+      "CreateProductImageDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://cdn.brunyshop.cm/products/air-max-noir.jpg"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "variantColor": {
+            "type": "string",
+            "description": "Couleur concernée (null = image commune)"
+          }
+        },
+        "required": ["url"]
+      },
       "CreateProductVariantDto": {
         "type": "object",
         "properties": {
-          "sku": {
-            "type": "string"
-          },
           "color": {
-            "type": "string"
+            "type": "string",
+            "example": "NOIR",
+            "description": "Couleur (normalisée en majuscules)"
           },
           "size": {
-            "type": "string"
+            "type": "string",
+            "example": "42",
+            "description": "Pointure ou taille (normalisée en majuscules)"
           },
           "price": {
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Prix spécifique XAF (sinon prix produit)"
           },
           "stock": {
-            "type": "object",
+            "type": "number",
             "minimum": 0,
-            "default": 0
+            "example": 10,
+            "description": "Stock physique initial"
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "default": 5
           }
         },
-        "required": ["sku", "color", "size"]
+        "required": ["color", "size", "stock"]
       },
       "CreateProductDto": {
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "example": "Air Max 90 Noir"
           },
           "slug": {
-            "type": "string"
+            "type": "string",
+            "example": "air-max-90-noir",
+            "description": "Généré depuis le nom s’il est absent (unicité garantie : -2, -3…)"
           },
           "description": {
             "type": "string"
           },
           "categoryId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "brandId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"],
+            "default": "DRAFT"
           },
           "basePrice": {
             "type": "number",
             "minimum": 0,
-            "description": "Montant entier en FCFA"
+            "example": 45000,
+            "description": "Prix de base XAF (entier)"
+          },
+          "promoPrice": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Doit être strictement inférieur à basePrice"
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seoTitle": {
+            "type": "string"
+          },
+          "seoDescription": {
+            "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateProductImageDto"
+            }
           },
           "variants": {
+            "description": "Format explicite (contrôle fin du stock et du prix par variante)",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CreateProductVariantDto"
             }
+          },
+          "colors": {
+            "example": ["noir", "blanc"],
+            "description": "Couleurs pour la génération automatique du produit cartésien",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sizes": {
+            "example": ["40", "41", "42"],
+            "description": "Pointures pour la génération automatique du produit cartésien",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "required": ["name", "slug", "description", "categoryId", "brandId", "basePrice"]
+        "required": ["name", "description", "categoryId", "brandId", "basePrice"]
+      },
+      "Function": {
+        "type": "object",
+        "properties": {}
       },
       "CartItemInputDto": {
         "type": "object",
