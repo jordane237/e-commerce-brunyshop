@@ -32,6 +32,80 @@ export interface CatalogProduct {
   variants: CatalogVariant[];
 }
 
+// Fiche produit (CAT-03) : le stock brut n'existe pas côté API, seul
+// `availableStock` (= stock - reservedStock) est exposé.
+export interface CatalogImage {
+  id: string;
+  url: string;
+  alt: string | null;
+  position: number;
+  variantColor: string | null;
+}
+
+export interface CatalogDetailVariant {
+  id: string;
+  sku: string;
+  size: string;
+  color: string;
+  effectivePrice: number;
+  availableStock: number;
+  isAvailable: boolean;
+}
+
+export interface CatalogColor {
+  color: string;
+  slug: string;
+  images: CatalogImage[];
+  availableSizes: string[];
+  hasStock: boolean;
+}
+
+export interface CatalogSize {
+  size: string;
+  availableStock: number;
+  isAvailable: boolean;
+  isLowStock: boolean;
+}
+
+export interface CatalogProductSummary {
+  id: string;
+  name: string;
+  slug: string;
+  basePrice: number;
+  effectivePrice: number;
+  promoPrice: number | null;
+  promoStart: string | null;
+  promoEnd: string | null;
+  isPromoActive: boolean;
+  inStock: boolean;
+  category: { id: string; name: string; slug: string };
+  brand: { id: string; name: string; slug: string; logo: string | null };
+  images: CatalogImage[];
+}
+
+export interface CatalogProductDetail {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  basePrice: number;
+  effectivePrice: number;
+  promoPrice: number | null;
+  promoStart: string | null;
+  promoEnd: string | null;
+  isPromoActive: boolean;
+  inStock: boolean;
+  category: { id: string; name: string; slug: string };
+  brand: { id: string; name: string; slug: string; logo: string | null };
+  images: CatalogImage[];
+  colors: CatalogColor[];
+  sizes: CatalogSize[];
+  variants: CatalogDetailVariant[];
+  similarProducts: CatalogProductSummary[];
+}
+
 export interface ProductFilters {
   page?: number;
   limit?: number;
@@ -76,8 +150,10 @@ export class CatalogApi {
     return this.http.get<ProductPage>(`${this.baseUrl}/products`, { params });
   }
 
-  get(slug: string): Observable<CatalogProduct> {
-    return this.http.get<CatalogProduct>(`${this.baseUrl}/products/${encodeURIComponent(slug)}`);
+  get(slug: string): Observable<CatalogProductDetail> {
+    return this.http.get<CatalogProductDetail>(
+      `${this.baseUrl}/products/${encodeURIComponent(slug)}`,
+    );
   }
 
   categories(): Observable<CatalogCategory[]> {

@@ -1,28 +1,20 @@
 import { Injectable } from '@nestjs/common';
 
+import {
+  isPromoActive,
+  resolvePrice,
+  type PriceableProduct,
+  type PriceableVariant,
+  type PriceQuote,
+} from '../../common/pricing/product-pricing';
 import { formatXaf } from './cart.utils';
 import { CartIssueCode, type CartIssueDto } from './dto/cart-validation-response.dto';
 
 // Minimal shapes needed to reprice a line server-side (CRT-01). Keeping them
 // structural lets unit tests run without a generated Prisma payload.
-export interface PriceableProduct {
-  basePrice: number;
-  promoPrice: number | null;
-  promoStart: Date | null;
-  promoEnd: Date | null;
-}
-
-export interface PriceableVariant {
-  price: number | null;
-}
-
-export interface PriceQuote {
-  // Price actually charged for the line.
-  unitPrice: number;
-  // Catalogue price before any promotion (variant override or product base).
-  listPrice: number;
-  appliedPromo: boolean;
-}
+// The rules themselves live in src/common/pricing so the catalogue detail page
+// and the cart cannot drift apart.
+export type { PriceableProduct, PriceableVariant, PriceQuote };
 
 export interface CouponDefinition {
   code: string;
@@ -53,23 +45,11 @@ export class CartPricingService {
     variant: PriceableVariant,
     at: Date = new Date(),
   ): PriceQuote {
-    const listPrice = variant.price ?? product.basePrice;
-    if (variant.price !== null) {
-      return { unitPrice: variant.price, listPrice, appliedPromo: false };
-    }
-    if (this.isPromoActive(product, at)) {
-      return { unitPrice: product.promoPrice as number, listPrice, appliedPromo: true };
-    }
-    return { unitPrice: listPrice, listPrice, appliedPromo: false };
+    return resolvePrice(product, variant, at);
   }
 
   isPromoActive(product: PriceableProduct, at: Date = new Date()): boolean {
-    if (product.promoPrice === null || product.promoStart === null || product.promoEnd === null) {
-      return false;
-    }
-    return (
-      product.promoStart.getTime() <= at.getTime() && at.getTime() <= product.promoEnd.getTime()
-    );
+    return isPromoActive(product, at);
   }
 
   // Coupons never make a total negative: FIXED_AMOUNT is capped at the

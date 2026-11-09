@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   Matches,
+  Max,
   Min,
   MinLength,
   validateSync,
@@ -71,6 +72,20 @@ export class EnvVariables {
   @IsOptional()
   @IsString()
   public COOKIE_DOMAIN?: string;
+
+  // --- Catalogue (CAT-03) ----------------------------------------------
+  // Product detail cache TTL in seconds (default 300 = 5 min).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  public CACHE_PRODUCT_DETAIL_TTL_SECONDS?: number;
+
+  // Number of similar products returned on a product page (default 6).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  public SIMILAR_PRODUCTS_LIMIT?: number;
 
   // --- Seed (TEC-07) ---------------------------------------------------
   // Email and password of the development super admin (never hard-coded).

@@ -1,9 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { CatalogApi, CatalogProduct } from '@bruny/data-access';
+import { CatalogApi, CatalogProductDetail } from '@bruny/data-access';
 import { CartStore } from '@bruny/data-access';
 import { PriceTagComponent, SizeSelectorComponent } from '@bruny/ui';
-import { effectiveProductPrice } from '@bruny/util';
 import { NgOptimizedImage } from '@angular/common';
 import { SeoService } from '../../core/seo.service';
 
@@ -177,14 +176,13 @@ export class ProductPage implements OnInit {
   private readonly cart = inject(CartStore);
   private readonly seo = inject(SeoService);
   readonly state = signal<'loading' | 'ready' | 'error'>('loading');
-  readonly product = signal<CatalogProduct | null>(null);
+  readonly product = signal<CatalogProductDetail | null>(null);
   readonly selectedSize = signal<string | null>(null);
   readonly availableSizes = signal<string[]>([]);
   readonly added = signal(false);
 
   effectivePrice(): number {
-    const product = this.product();
-    return product ? effectiveProductPrice(product) : 0;
+    return this.product()?.effectivePrice ?? 0;
   }
 
   ngOnInit(): void {
@@ -199,12 +197,10 @@ export class ProductPage implements OnInit {
         next: (item) => {
           this.product.set(item);
           this.seo.set(item.name, item.description, `/produit/${item.slug}`);
+          // Groupements calculés côté serveur : le stock exposé est le stock
+          // disponible (stock - réservé), jamais le stock physique brut.
           this.availableSizes.set(
-            [
-              ...new Set(
-                item.variants.filter((variant) => variant.stock > 0).map((variant) => variant.size),
-              ),
-            ].sort(),
+            item.sizes.filter((size) => size.isAvailable).map((size) => size.size),
           );
           this.state.set('ready');
         },
@@ -216,9 +212,15 @@ export class ProductPage implements OnInit {
   addToCart(): void {
     const product = this.product();
     const size = this.selectedSize();
-    const variant = product?.variants.find((item) => item.size === size && item.stock > 0);
+    const variant = product?.variants.find((item) => item.size === size && item.isAvailable);
     if (!product || !variant) return;
-    this.cart.add(product, variant);
+    this.cart.add(product, {
+      id: variant.id,
+      size: variant.size,
+      color: variant.color,
+      unitPrice: variant.effectivePrice,
+      availableStock: variant.availableStock,
+    });
     this.added.set(true);
   }
 }

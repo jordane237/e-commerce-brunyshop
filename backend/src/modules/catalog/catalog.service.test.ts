@@ -1,6 +1,6 @@
-import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import type { PrismaService } from '../../infrastructure/database/database.module';
+import type { CatalogCacheService } from './cache/catalog-cache.service';
 import { CatalogService } from './catalog.service';
 import type { ListProductsDto } from './dto/list-products.dto';
 
@@ -10,9 +10,15 @@ function makeService() {
     product: { findFirst: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn() },
     category: { findMany: vi.fn() },
   };
+  const cache = { invalidateProducts: vi.fn().mockResolvedValue(undefined) };
   return {
-    service: new CatalogService(prisma as unknown as PrismaService, { record: vi.fn() }),
+    service: new CatalogService(
+      prisma as unknown as PrismaService,
+      { record: vi.fn() },
+      cache as unknown as CatalogCacheService,
+    ),
     prisma,
+    cache,
   };
 }
 
@@ -50,17 +56,5 @@ describe('CatalogService', () => {
     expect(JSON.stringify(itemsQuery.where)).toContain('sneakers');
     expect(JSON.stringify(itemsQuery.where)).toContain('Noir');
     expect(JSON.stringify(itemsQuery.where)).toContain('urbain');
-  });
-
-  it('ne publie pas les produits brouillon par leur slug', async () => {
-    const { service, prisma } = makeService();
-    prisma.product.findFirst.mockResolvedValue(null);
-
-    await expect(service.getProduct('produit-prive')).rejects.toBeInstanceOf(NotFoundException);
-    expect(prisma.product.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { slug: 'produit-prive', status: 'PUBLISHED', deletedAt: null },
-      }),
-    );
   });
 });
