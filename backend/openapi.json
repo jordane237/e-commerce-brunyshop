@@ -772,11 +772,61 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateProductDto"
+              },
+              "examples": {
+                "variantsExplicites": {
+                  "summary": "Variantes explicites (contrôle fin du stock/prix)",
+                  "value": {
+                    "name": "Air Max 90 Noir",
+                    "description": "Sneakers iconiques en cuir et mesh.",
+                    "categoryId": "a1b2c3d4-0000-4000-8000-000000000001",
+                    "brandId": "a1b2c3d4-0000-4000-8000-000000000002",
+                    "basePrice": 45000,
+                    "variants": [
+                      {
+                        "color": "NOIR",
+                        "size": "42",
+                        "stock": 10,
+                        "lowStockThreshold": 3
+                      },
+                      {
+                        "color": "BLANC",
+                        "size": "42",
+                        "stock": 5
+                      }
+                    ]
+                  }
+                },
+                "cartesien": {
+                  "summary": "Génération automatique couleurs × pointures",
+                  "value": {
+                    "name": "Air Max 90",
+                    "description": "Sneakers iconiques en cuir et mesh.",
+                    "categoryId": "a1b2c3d4-0000-4000-8000-000000000001",
+                    "brandId": "a1b2c3d4-0000-4000-8000-000000000002",
+                    "basePrice": 45000,
+                    "colors": ["NOIR", "BLANC"],
+                    "sizes": ["40", "41", "42"]
+                  }
+                }
               }
             }
           }
         },
         "responses": {
+          "201": {
+            "description": "Produit créé avec ses variantes et SKU générés.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, DUPLICATE_VARIANT, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND)."
+          },
           "401": {
             "description": "Token invalide ou absent (UNAUTHENTICATED)."
           },
@@ -784,7 +834,7 @@
             "description": "Rôle insuffisant (FORBIDDEN)."
           },
           "409": {
-            "description": "Slug ou SKU déjà utilisé (SLUG_ALREADY_EXISTS, SKU_ALREADY_EXISTS, DUPLICATE_VARIANT)."
+            "description": "Slug ou SKU déjà utilisé (SLUG_ALREADY_EXISTS, SKU_ALREADY_EXISTS)."
           },
           "429": {
             "description": "Plus de 60 requêtes en 60 secondes (RATE_LIMIT_EXCEEDED)."
@@ -818,12 +868,25 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Function"
+                "$ref": "#/components/schemas/UpdateProductDto"
               }
             }
           }
         },
         "responses": {
+          "200": {
+            "description": "Produit mis à jour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND)."
+          },
           "404": {
             "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
           },
@@ -853,6 +916,9 @@
           }
         ],
         "responses": {
+          "204": {
+            "description": "Produit archivé (status ARCHIVED)."
+          },
           "404": {
             "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
           }
@@ -887,12 +953,25 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Function"
+                "$ref": "#/components/schemas/UpdateVariantsDto"
               }
             }
           }
         },
         "responses": {
+          "200": {
+            "description": "Variantes remplacées.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée (VALIDATION_ERROR, DUPLICATE_VARIANT, VARIANT_NOT_OWNED, RESERVED_STOCK_FORBIDDEN)."
+          },
           "404": {
             "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
           },
@@ -930,12 +1009,25 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Function"
+                "$ref": "#/components/schemas/DuplicateProductDto"
               }
             }
           }
         },
         "responses": {
+          "201": {
+            "description": "Produit dupliqué en DRAFT avec de nouveaux slug et SKU.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée ou statut différent de DRAFT (DUPLICATE_STATUS_FORBIDDEN)."
+          },
           "404": {
             "description": "Produit source introuvable (PRODUCT_NOT_FOUND)."
           },
@@ -2002,9 +2094,360 @@
         },
         "required": ["name", "description", "categoryId", "brandId", "basePrice"]
       },
-      "Function": {
+      "AdminProductCategoryDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "slug"]
+      },
+      "AdminProductBrandDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "slug", "logo"]
+      },
+      "AdminProductVariantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "BARRAGEF-AIRMAX90-42-NOIR"
+          },
+          "color": {
+            "type": "string",
+            "example": "NOIR"
+          },
+          "size": {
+            "type": "string",
+            "example": "42"
+          },
+          "price": {
+            "type": "number",
+            "nullable": true,
+            "description": "Prix spécifique XAF (null sinon)"
+          },
+          "stock": {
+            "type": "number",
+            "description": "Stock physique"
+          },
+          "reservedStock": {
+            "type": "number",
+            "description": "Stock réservé par des commandes en cours"
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "description": "Seuil d’alerte de stock bas"
+          },
+          "version": {
+            "type": "number",
+            "description": "Version d’optimistic locking"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "color",
+          "size",
+          "price",
+          "stock",
+          "reservedStock",
+          "lowStockThreshold",
+          "version"
+        ]
+      },
+      "AdminProductImageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "number"
+          },
+          "variantColor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Couleur concernée (null = commune)"
+          }
+        },
+        "required": ["id", "url", "alt", "position", "variantColor"]
+      },
+      "AdminProductDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+          },
+          "basePrice": {
+            "type": "number",
+            "description": "Prix de base XAF (entier)"
+          },
+          "promoPrice": {
+            "type": "number",
+            "nullable": true
+          },
+          "promoStart": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "promoEnd": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "effectivePrice": {
+            "type": "number",
+            "description": "Prix appliqué aujourd’hui (promo active ou prix de base)"
+          },
+          "seoTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "seoDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "$ref": "#/components/schemas/AdminProductCategoryDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/AdminProductBrandDto"
+          },
+          "deletedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Suppression logique (null si actif)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminProductVariantDto"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminProductImageDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "status",
+          "basePrice",
+          "promoPrice",
+          "promoStart",
+          "promoEnd",
+          "effectivePrice",
+          "categoryId",
+          "brandId",
+          "category",
+          "brand",
+          "deletedAt",
+          "createdAt",
+          "updatedAt",
+          "variants",
+          "images"
+        ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+          },
+          "basePrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "promoPrice": {
+            "type": "number",
+            "minimum": 1,
+            "nullable": true
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "seoTitle": {
+            "type": "string"
+          },
+          "seoDescription": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateProductVariantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Variante existante à mettre à jour"
+          },
+          "color": {
+            "type": "string",
+            "example": "NOIR"
+          },
+          "size": {
+            "type": "string",
+            "example": "42"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Prix spécifique XAF (null = prix produit)"
+          },
+          "stock": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Stock physique (seule quantité modifiable)"
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": ["color", "size", "stock"]
+      },
+      "UpdateVariantsDto": {
+        "type": "object",
+        "properties": {
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateProductVariantDto"
+            }
+          }
+        },
+        "required": ["variants"]
+      },
+      "DuplicateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Air Max 90 (copie)"
+          },
+          "slug": {
+            "type": "string",
+            "example": "air-max-90-copie",
+            "description": "Généré depuis le nom s’il est absent (unicité garantie)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"],
+            "default": "DRAFT",
+            "description": "Seul DRAFT est accepté : une copie ne peut pas être publiée directement"
+          },
+          "copyImages": {
+            "type": "boolean",
+            "default": true
+          },
+          "copyVariants": {
+            "type": "boolean",
+            "default": true
+          },
+          "resetStock": {
+            "type": "boolean",
+            "default": false,
+            "description": "Remet le stock des variantes copiées à zéro"
+          }
+        }
       },
       "CartItemInputDto": {
         "type": "object",

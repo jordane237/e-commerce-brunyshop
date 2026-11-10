@@ -21,7 +21,6 @@ function makeService() {
   return {
     service: new CatalogService(
       prisma as unknown as PrismaService,
-      { record: vi.fn() },
       cache as unknown as CatalogCacheService,
     ),
     prisma,

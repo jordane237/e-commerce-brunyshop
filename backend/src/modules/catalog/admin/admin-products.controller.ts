@@ -26,10 +26,15 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
   ApiConflictResponse,
+  ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
@@ -42,9 +47,10 @@ import {
 } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
-import type { DuplicateProductDto } from './dto/duplicate-product.dto';
-import type { UpdateProductDto } from './dto/update-product.dto';
-import type { UpdateVariantsDto } from './dto/update-variants.dto';
+import { AdminProductDetailDto } from './dto/admin-product-detail.dto';
+import { DuplicateProductDto } from './dto/duplicate-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { UpdateVariantsDto } from './dto/update-variants.dto';
 import { AdminProductsService } from './admin-products.service';
 import type { CatalogActor } from './admin-products.service';
 
@@ -63,14 +69,52 @@ export class AdminProductsController {
     description:
       'Crée un produit en brouillon avec ses variantes. Accepte un tableau explicite `variants[]` ou la génération automatique `colors[]+sizes[]` (produit cartésien, stock initial à 0, SKU générés automatiquement). Chaque création est auditée et invalide le cache public immédiatement.',
   })
-  @ApiConflictResponse({
+  @ApiCreatedResponse({
+    description: 'Produit créé avec ses variantes et SKU générés.',
+    type: AdminProductDetailDto,
+  })
+  @ApiBadRequestResponse({
     description:
-      'Slug ou SKU déjà utilisé (SLUG_ALREADY_EXISTS, SKU_ALREADY_EXISTS, DUPLICATE_VARIANT).',
+      'Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, DUPLICATE_VARIANT, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND).',
+  })
+  @ApiConflictResponse({
+    description: 'Slug ou SKU déjà utilisé (SLUG_ALREADY_EXISTS, SKU_ALREADY_EXISTS).',
   })
   @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
   @ApiUnauthorizedResponse({ description: 'Token invalide ou absent (UNAUTHENTICATED).' })
   @ApiTooManyRequestsResponse({
     description: 'Plus de 60 requêtes en 60 secondes (RATE_LIMIT_EXCEEDED).',
+  })
+  @ApiBody({
+    type: CreateProductDto,
+    examples: {
+      variantsExplicites: {
+        summary: 'Variantes explicites (contrôle fin du stock/prix)',
+        value: {
+          name: 'Air Max 90 Noir',
+          description: 'Sneakers iconiques en cuir et mesh.',
+          categoryId: 'a1b2c3d4-0000-4000-8000-000000000001',
+          brandId: 'a1b2c3d4-0000-4000-8000-000000000002',
+          basePrice: 45000,
+          variants: [
+            { color: 'NOIR', size: '42', stock: 10, lowStockThreshold: 3 },
+            { color: 'BLANC', size: '42', stock: 5 },
+          ],
+        },
+      },
+      cartesien: {
+        summary: 'Génération automatique couleurs × pointures',
+        value: {
+          name: 'Air Max 90',
+          description: 'Sneakers iconiques en cuir et mesh.',
+          categoryId: 'a1b2c3d4-0000-4000-8000-000000000001',
+          brandId: 'a1b2c3d4-0000-4000-8000-000000000002',
+          basePrice: 45000,
+          colors: ['NOIR', 'BLANC'],
+          sizes: ['40', '41', '42'],
+        },
+      },
+    },
   })
   async create(
     @Body() dto: CreateProductDto,
@@ -87,8 +131,14 @@ export class AdminProductsController {
     description:
       'Met à jour les champs métadonnées, prix, promotion et statut d’un produit. Les variantes ne sont PAS modifiées via cette route (réservé à PUT /:id/variants). Chaque modification de prix est auditée.',
   })
+  @ApiOkResponse({ description: 'Produit mis à jour.', type: AdminProductDetailDto })
+  @ApiBadRequestResponse({
+    description:
+      'Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND).',
+  })
   @ApiNotFoundResponse({ description: 'Produit introuvable (PRODUCT_NOT_FOUND).' })
   @ApiConflictResponse({ description: 'Slug déjà utilisé (SLUG_ALREADY_EXISTS).' })
+  @ApiBody({ type: UpdateProductDto })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProductDto,
@@ -106,6 +156,7 @@ export class AdminProductsController {
     description:
       'Archive un produit (status = ARCHIVED). Pas de suppression physique : le produit reste en base, il est simplement retiré du catalogue public et des réponses d’administration. Archivé = 204, introuvable = 404.',
   })
+  @ApiNoContentResponse({ description: 'Produit archivé (status ARCHIVED).' })
   @ApiNotFoundResponse({ description: 'Produit introuvable (PRODUCT_NOT_FOUND).' })
   async archive(
     @Param('id', ParseUUIDPipe) id: string,
@@ -127,11 +178,17 @@ export class AdminProductsController {
     description: 'Identifiant UUID du produit.',
     example: 'a1b2c3d4-0000-4000-8000-000000000001',
   })
+  @ApiOkResponse({ description: 'Variantes remplacées.', type: AdminProductDetailDto })
+  @ApiBadRequestResponse({
+    description:
+      'Validation échouée (VALIDATION_ERROR, DUPLICATE_VARIANT, VARIANT_NOT_OWNED, RESERVED_STOCK_FORBIDDEN).',
+  })
   @ApiNotFoundResponse({ description: 'Produit introuvable (PRODUCT_NOT_FOUND).' })
   @ApiConflictResponse({
     description:
       'Variante liée à une commande (VARIANT_HAS_ORDERS) ou doublon de couleur/pointure (DUPLICATE_VARIANT).',
   })
+  @ApiBody({ type: UpdateVariantsDto })
   async updateVariants(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateVariantsDto,
@@ -154,10 +211,18 @@ export class AdminProductsController {
     description: 'Identifiant UUID du produit source.',
     example: 'a1b2c3d4-0000-4000-8000-000000000001',
   })
+  @ApiCreatedResponse({
+    description: 'Produit dupliqué en DRAFT avec de nouveaux slug et SKU.',
+    type: AdminProductDetailDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation échouée ou statut différent de DRAFT (DUPLICATE_STATUS_FORBIDDEN).',
+  })
   @ApiNotFoundResponse({ description: 'Produit source introuvable (PRODUCT_NOT_FOUND).' })
   @ApiConflictResponse({
     description: 'Slug déjà utilisé (SLUG_ALREADY_EXISTS).',
   })
+  @ApiBody({ type: DuplicateProductDto })
   async duplicate(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: DuplicateProductDto,

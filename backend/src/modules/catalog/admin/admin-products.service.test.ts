@@ -1,17 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // admin-products.service.test.ts
 // Tests unitaires de la couche métier admin catalogue (CAT-04).
-// NOTE: dette lint locale conservée (contrainte utilisateur : ne pas modifier les mocks/logique).
 
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Prisma } from '../../../generated/prisma/client';
 import type { PrismaService } from '../../../infrastructure/database/database.module';
 import { AdminProductsService, CatalogActor } from './admin-products.service';
-import { ACTIONS } from './catalog-audit.actions';
+import { CATALOG_AUDIT_ACTIONS as ACTIONS } from './catalog-audit.actions';
 
 const ACTOR: CatalogActor = { userId: 'actor-1', ip: '127.0.0.1', userAgent: 'admin-ci/1.0' };
+
+// Mock $transaction partagé : makeService l'initialise pour chaque test.
+let transactionMock: ReturnType<typeof vi.fn>;
 
 // ------------------------------------------------------------------ helpers
 
@@ -32,6 +33,9 @@ function makeProductRow(
     brandId?: string;
     category?: { id: string; name: string; slug: string };
     brand?: { id: string; name: string; slug: string; logo: unknown };
+    createdAt?: Date;
+    updatedAt?: Date;
+    deletedAt?: Date | null;
     variants?: Array<{
       id: string;
       sku: string;
@@ -67,6 +71,9 @@ function makeProductRow(
   brandId: string;
   category: { id: string; name: string; slug: string };
   brand: { id: string; name: string; slug: string; logo: unknown };
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
   variants: Array<{
     id: string;
     sku: string;
@@ -102,6 +109,9 @@ function makeProductRow(
     brandId: overrides.brandId ?? 'brand-1',
     category: overrides.category ?? { id: 'cat-1', name: 'Sneakers', slug: 'sneakers' },
     brand: overrides.brand ?? { id: 'brand-1', name: 'Nike', slug: 'nike', logo: null },
+    createdAt: overrides.createdAt ?? new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: overrides.updatedAt ?? new Date('2026-01-02T00:00:00.000Z'),
+    deletedAt: overrides.deletedAt ?? null,
     variants: overrides.variants ?? [
       {
         id: 'v-1',
@@ -124,7 +134,7 @@ function makeProductRow(
         variantColor: null,
       },
     ],
-  } as any;
+  } as never;
 }
 
 function makeVariantRow(
@@ -160,7 +170,7 @@ function makeVariantRow(
     reservedStock: overrides.reservedStock ?? 0,
     lowStockThreshold: overrides.lowStockThreshold ?? 5,
     version: overrides.version ?? 1,
-  } as any;
+  } as never;
 }
 
 type TxMock = {
@@ -194,7 +204,7 @@ function makeTxMock(
       findUnique: vi.fn().mockResolvedValue(existingProduct),
       update: vi.fn().mockImplementation(async (args) => {
         if (args.where.id === 'product-1') {
-          return { ...existingProduct, ...args.data, id: args.where.id } as any;
+          return { ...existingProduct, ...args.data, id: args.where.id } as never;
         }
         throw new Prisma.PrismaClientKnownRequestError('P2025', 'not found', {});
       }),
@@ -205,7 +215,7 @@ function makeTxMock(
       update: vi.fn().mockImplementation(async (args) => {
         const before = existingProduct.variants.find((v) => v.id === args.where.id);
         if (!before) throw new BadRequestException({ code: 'VARIANT_NOT_OWNED', message: '' });
-        return { ...before, ...args.data, id: args.where.id, version: before.version + 1 } as any;
+        return { ...before, ...args.data, id: args.where.id, version: before.version + 1 } as never;
       }),
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
       findUnique: vi.fn().mockImplementation(async (args) => {
@@ -250,23 +260,31 @@ function makeService({
 } = {}) {
   // Mocks partagés pour que le service les récupère via `this.prisma.productVariant.findUnique` etc.
   const productFindUnique = vi.fn();
+  const productFindUniqueOrThrow = vi.fn();
   const categoryFindUnique = vi.fn();
   const brandFindUnique = vi.fn();
   const productVariantFindUnique = variantFindUnique;
   const productVariantFindMany = variantFindMany;
-  const orderItemFindManyMock = orderItemFindMany;
+  const cacheMock = { invalidateProducts: vi.fn().mockResolvedValue(undefined) };
+  const auditRecord = vi.fn().mockResolvedValue(undefined);
 
   // Le service résout les relations avant la transaction.
-  productFindUnique.mockResolvedValue(
-    existingSlug ? { id: 'product-existing', slug: existingSlug } : null,
-  );
+  productFindUnique.mockImplementation(async (args: { where?: { id?: string; slug?: string } }) => {
+    if (args?.where?.slug !== undefined) {
+      return existingSlug ? { id: 'product-existing', slug: existingSlug } : null;
+    }
+    if (args?.where?.id !== undefined) return existingProduct;
+    return null;
+  });
+  productFindUniqueOrThrow.mockResolvedValue(existingProduct);
   categoryFindUnique.mockResolvedValue({ id: categoryId, name: 'Cat', slug: categorySlug });
   brandFindUnique.mockResolvedValue({ id: 'brand-1', name: brandName, slug: brandSlug });
 
-  const transactionMock = vi.fn<(fn: (tx: TxMock) => unknown) => unknown>();
+  transactionMock = vi.fn<(fn: (tx: TxMock) => unknown) => unknown>();
   const prismaMock: Partial<PrismaService> & { $transaction: typeof transactionMock } = {
     product: {
       findUnique: productFindUnique,
+      findUniqueOrThrow: productFindUniqueOrThrow,
       create: productCreate,
       update: vi.fn(),
       deleteMany: vi.fn(),
@@ -285,17 +303,17 @@ function makeService({
     stockMovement: { create: vi.fn() },
     auditLog: { create: vi.fn() },
     $transaction: transactionMock,
-  } as any;
+  } as never;
 
   const slugGen = { generateUniqueSlug: slugGenerator };
   const skuGen = { generateSkusForProduct: skuGenerator };
 
   const service = new AdminProductsService(
     prismaMock as PrismaService,
-    { record: vi.fn() } as any,
-    { invalidateProducts: vi.fn().mockResolvedValue(undefined) } as any,
-    slugGen as any,
-    skuGen as any,
+    { record: auditRecord } as never,
+    cacheMock as never,
+    slugGen as never,
+    skuGen as never,
   );
 
   return {
@@ -304,17 +322,18 @@ function makeService({
     txMock: (pc: TxMock['product']['create']) => makeTxMock(pc, existingProduct),
     productCreate,
     productFindUnique,
+    productFindUniqueOrThrow,
     categoryFindUnique,
     brandFindUnique,
     productVariantFindUnique,
     productVariantFindMany,
     orderItemFindMany,
     transactionMock,
-    productFindUniqueResolved: (prismaMock as any).product?.findUnique ?? productFindUnique,
+    productFindUniqueResolved: prismaMock.product?.findUnique ?? productFindUnique,
     skuGenerator: skuGen.generateSkusForProduct as ReturnType<typeof vi.fn>,
     slugGenerator: slugGen.generateUniqueSlug as ReturnType<typeof vi.fn>,
-    invalidateProducts: (prismaMock as any).invalidateProducts,
-    auditCreate: (prismaMock as any).auditLog?.create || vi.fn(),
+    invalidateProducts: cacheMock.invalidateProducts,
+    auditCreate: auditRecord,
   };
 }
 
@@ -355,7 +374,7 @@ describe('AdminProductsService.create', () => {
       variants: variants.map((v) => ({ ...v, price: undefined })),
     };
 
-    const result = await service.create(dto as any, ACTOR);
+    const result = await service.create(dto as never, ACTOR);
 
     expect(result.id).toBe('p-new');
     expect(result.variants).toHaveLength(2);
@@ -364,19 +383,22 @@ describe('AdminProductsService.create', () => {
         data: expect.objectContaining({
           name: 'Air Max 90 Noir',
           basePrice: 45000,
-          variants: expect.arrayContaining([
-            expect.objectContaining({ sku: 'SKU-1', color: 'NOIR', size: '42', stock: 10 }),
-            expect.objectContaining({ sku: 'SKU-2', color: 'BLANC', size: '42', stock: 5 }),
-          ]),
+          variants: {
+            create: expect.arrayContaining([
+              expect.objectContaining({ sku: 'SKU-1', color: 'NOIR', size: '42', stock: 10 }),
+              expect.objectContaining({ sku: 'SKU-2', color: 'BLANC', size: '42', stock: 5 }),
+            ]),
+          },
         }),
       }),
     );
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_CREATED, entity: 'Product' }),
     );
     expect(invalidateProducts).toHaveBeenCalledTimes(1);
 
-    transactionMock.mockRestore();
+    transactionMock.mockReset();
   });
 
   it('génère un produit cartésien quand colors+sizes sont fournis', async () => {
@@ -414,22 +436,25 @@ describe('AdminProductsService.create', () => {
       sizes: ['40', '41'],
     };
 
-    const result = await service.create(dto as any, ACTOR);
+    const result = await service.create(dto as never, ACTOR);
 
     expect(result.variants).toHaveLength(4);
     expect(tx.product.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          variants: expect.arrayContaining([
-            expect.objectContaining({ color: 'NOIR', size: '40', stock: 0, sku: 'SKU-1' }),
-            expect.objectContaining({ color: 'NOIR', size: '41', stock: 0, sku: 'SKU-2' }),
-            expect.objectContaining({ color: 'BLANC', size: '40', stock: 0, sku: 'SKU-3' }),
-            expect.objectContaining({ color: 'BLANC', size: '41', stock: 0, sku: 'SKU-4' }),
-          ]),
+          variants: {
+            create: expect.arrayContaining([
+              expect.objectContaining({ color: 'NOIR', size: '40', stock: 0, sku: 'SKU-1' }),
+              expect.objectContaining({ color: 'NOIR', size: '41', stock: 0, sku: 'SKU-2' }),
+              expect.objectContaining({ color: 'BLANC', size: '40', stock: 0, sku: 'SKU-3' }),
+              expect.objectContaining({ color: 'BLANC', size: '41', stock: 0, sku: 'SKU-4' }),
+            ]),
+          },
         }),
       }),
     );
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_CREATED }),
     );
   });
@@ -445,7 +470,7 @@ describe('AdminProductsService.create', () => {
       promoPrice: 45000,
       variants: [{ color: 'NOIR', size: '42', stock: 10 }],
     };
-    await expect(service.create(dto as any, ACTOR)).rejects.toMatchObject({
+    await expect(service.create(dto as never, ACTOR)).rejects.toMatchObject({
       response: { code: 'PROMO_PRICE_INVALID' },
     });
   });
@@ -461,7 +486,7 @@ describe('AdminProductsService.create', () => {
       status: 'PUBLISHED',
       variants: [{ color: 'NOIR', size: '42', stock: 0 }],
     };
-    await expect(service.create(dto as any, ACTOR)).rejects.toMatchObject({
+    await expect(service.create(dto as never, ACTOR)).rejects.toMatchObject({
       response: { code: 'PUBLISHED_REQUIRES_STOCK' },
     });
   });
@@ -477,7 +502,7 @@ describe('AdminProductsService.create', () => {
       basePrice: 45000,
       variants: [{ color: 'NOIR', size: '42', stock: 10 }],
     };
-    await expect(service.create(dto as any, ACTOR)).rejects.toMatchObject({
+    await expect(service.create(dto as never, ACTOR)).rejects.toMatchObject({
       response: { code: 'CATEGORY_NOT_FOUND' },
     });
   });
@@ -494,7 +519,7 @@ describe('AdminProductsService.create', () => {
       slug: 'air-max-90-noir',
       variants: [{ color: 'NOIR', size: '42', stock: 10 }],
     };
-    await expect(service.create(dto as any, ACTOR)).rejects.toMatchObject({
+    await expect(service.create(dto as never, ACTOR)).rejects.toMatchObject({
       response: { code: 'SLUG_ALREADY_EXISTS' },
     });
   });
@@ -512,7 +537,7 @@ describe('AdminProductsService.create', () => {
         { color: 'NOIR', size: '42', stock: 5 },
       ],
     };
-    await expect(service.create(dto as any, ACTOR)).rejects.toMatchObject({
+    await expect(service.create(dto as never, ACTOR)).rejects.toMatchObject({
       response: { code: 'DUPLICATE_VARIANT' },
     });
   });
@@ -530,7 +555,7 @@ describe('AdminProductsService.create', () => {
       promoEnd: '2026-11-01T00:00:00Z',
       variants: [{ color: 'NOIR', size: '42', stock: 10 }],
     };
-    await expect(service.create(dto as any, ACTOR)).rejects.toMatchObject({
+    await expect(service.create(dto as never, ACTOR)).rejects.toMatchObject({
       response: { code: 'PROMO_WINDOW_INVALID' },
     });
   });
@@ -562,6 +587,7 @@ describe('AdminProductsService.update', () => {
       expect.objectContaining({ data: expect.objectContaining({ basePrice: 50000 }) }),
     );
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_PRICE_UPDATED }),
     );
     expect(invalidateProducts).toHaveBeenCalledTimes(1);
@@ -581,9 +607,10 @@ describe('AdminProductsService.update', () => {
     await service.update('product-1', { status: 'PUBLISHED' }, ACTOR);
 
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_STATUS_UPDATED }),
     );
-    transactionMock.mockRestore();
+    transactionMock.mockReset();
   });
 
   it('émet PRODUCT_UPDATED quand les métadonnées changent', async () => {
@@ -600,9 +627,10 @@ describe('AdminProductsService.update', () => {
     await service.update('product-1', { name: 'Nouveau Nom', slug: 'nouveau-slug' }, ACTOR);
 
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_UPDATED }),
     );
-    transactionMock.mockRestore();
+    transactionMock.mockReset();
   });
 
   it('rejette la mise à jour d’un produit introuvable', async () => {
@@ -630,10 +658,11 @@ describe('AdminProductsService.archive', () => {
       expect.objectContaining({ data: { status: 'ARCHIVED' } }),
     );
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_ARCHIVED }),
     );
     expect(invalidateProducts).toHaveBeenCalledTimes(1);
-    transactionMock.mockRestore();
+    transactionMock.mockReset();
   });
 
   it('ne fait rien sur un produit déjà ARCHIVED', async () => {
@@ -649,7 +678,7 @@ describe('AdminProductsService.archive', () => {
 
     expect(tx.product.update).not.toHaveBeenCalled();
     expect(auditCreate).not.toHaveBeenCalled();
-    transactionMock.mockRestore();
+    transactionMock.mockReset();
   });
 
   it('rejette l’archivage d’un produit introuvable', async () => {
@@ -670,13 +699,11 @@ describe('AdminProductsService.replaceVariants', () => {
     const { service, txMock, productCreate, auditCreate, orderItemFindMany, skuGenerator } =
       makeService({
         existingProduct: existing,
-        productCreate: vi
-          .fn()
-          .mockResolvedValue(
-            makeProductRow({
-              variants: [makeVariantRow({ id: 'v-1', sku: 'SKU-OLD', stock: 15 })],
-            }),
-          ),
+        productCreate: vi.fn().mockResolvedValue(
+          makeProductRow({
+            variants: [makeVariantRow({ id: 'v-1', sku: 'SKU-OLD', stock: 15 })],
+          }),
+        ),
       });
     const tx = txMock(productCreate);
     transactionMock.mockImplementation(async (fn) => fn(tx));
@@ -695,12 +722,15 @@ describe('AdminProductsService.replaceVariants', () => {
       }),
     );
     expect(tx.stockMovement.create).toHaveBeenCalledWith(
-      expect.objectContaining({ delta: 5, reason: 'ADJUSTMENT' }),
+      expect.objectContaining({
+        data: expect.objectContaining({ delta: 5, reason: 'ADJUSTMENT' }),
+      }),
     );
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_STOCK_UPDATED, entity: 'ProductVariant' }),
     );
-    transactionMock.mockRestore();
+    transactionMock.mockReset();
   });
 
   it('met à jour le prix et émet PRODUCT_PRICE_UPDATED', async () => {
@@ -711,13 +741,11 @@ describe('AdminProductsService.replaceVariants', () => {
     const { service, txMock, productCreate, auditCreate, orderItemFindMany, skuGenerator } =
       makeService({
         existingProduct: existing,
-        productCreate: vi
-          .fn()
-          .mockResolvedValue(
-            makeProductRow({
-              variants: [makeVariantRow({ id: 'v-1', sku: 'SKU-OLD', price: 5000 })],
-            }),
-          ),
+        productCreate: vi.fn().mockResolvedValue(
+          makeProductRow({
+            variants: [makeVariantRow({ id: 'v-1', sku: 'SKU-OLD', price: 5000 })],
+          }),
+        ),
       });
     const tx = txMock(productCreate);
     transactionMock.mockImplementation(async (fn) => fn(tx));
@@ -734,9 +762,10 @@ describe('AdminProductsService.replaceVariants', () => {
       expect.objectContaining({ data: expect.objectContaining({ price: 5000 }) }),
     );
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_PRICE_UPDATED, entity: 'ProductVariant' }),
     );
-    transactionMock.mockRestore();
+    transactionMock.mockReset();
   });
 
   it('rejette la suppression d’une variante liée à une commande (409)', async () => {
@@ -747,7 +776,7 @@ describe('AdminProductsService.replaceVariants', () => {
       ],
       brand: { id: 'brand-1', name: 'Nike', slug: 'nike', logo: null },
     });
-    const { service, orderItemFindMany, skuGenerator } = makeService({
+    const { service, orderItemFindMany } = makeService({
       existingProduct: existing,
       skuGenerator: vi.fn().mockResolvedValue(new Map()),
     });
@@ -767,7 +796,7 @@ describe('AdminProductsService.replaceVariants', () => {
       variants: [makeVariantRow({ id: 'v-1', sku: 'SKU-1' })],
       brand: { id: 'brand-1', name: 'Nike', slug: 'nike', logo: null },
     });
-    const { service, skuGenerator } = makeService({
+    const { service } = makeService({
       existingProduct: existing,
       skuGenerator: vi.fn().mockResolvedValue(new Map()),
     });
@@ -797,8 +826,8 @@ describe('AdminProductsService.replaceVariants', () => {
       service,
       txMock,
       productCreate,
-      skuGenerator,
       productVariantFindMany,
+      productFindUniqueOrThrow,
       transactionMock: txGlobal,
     } = makeService({
       existingProduct: existing,
@@ -812,6 +841,11 @@ describe('AdminProductsService.replaceVariants', () => {
     const tx = txMock(productCreate);
     txGlobal.mockImplementation(async (fn) => fn(tx));
     productVariantFindMany.mockResolvedValue([]);
+    productFindUniqueOrThrow.mockResolvedValue(
+      makeProductRow({
+        variants: [makeVariantRow({ id: 'v-1', sku: 'SKU-EXISTING' }), newVariant],
+      }),
+    );
 
     const result = await service.replaceVariants(
       'product-1',
@@ -830,7 +864,7 @@ describe('AdminProductsService.replaceVariants', () => {
         }),
       }),
     );
-    txGlobal.mockRestore();
+    txGlobal.mockReset();
   });
 
   it('rejette l’accès à une variante d’un autre produit', async () => {
@@ -838,7 +872,7 @@ describe('AdminProductsService.replaceVariants', () => {
       variants: [makeVariantRow({ id: 'v-1', sku: 'SKU-1' })],
       brand: { id: 'brand-1', name: 'Nike', slug: 'nike', logo: null },
     });
-    const { service, skuGenerator, productFindUniqueResolved } = makeService({
+    const { service, productFindUniqueResolved } = makeService({
       existingProduct: existing,
       skuGenerator: vi.fn().mockResolvedValue(new Map()),
     });
@@ -857,7 +891,7 @@ describe('AdminProductsService.replaceVariants', () => {
     const existing = makeProductRow({
       brand: { id: 'brand-1', name: 'Nike', slug: 'nike', logo: null },
     });
-    const { service, skuGenerator, productFindUniqueResolved } = makeService({
+    const { service, productFindUniqueResolved } = makeService({
       existingProduct: existing,
       skuGenerator: vi.fn().mockResolvedValue(new Map()),
     });
@@ -923,7 +957,6 @@ describe('AdminProductsService.duplicate', () => {
       productCreate,
       auditCreate,
       invalidateProducts,
-      skuGenerator: skuGen,
       transactionMock: txGlobal,
       productFindUniqueResolved,
     } = makeService({
@@ -945,17 +978,20 @@ describe('AdminProductsService.duplicate', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           status: 'DRAFT',
-          variants: expect.arrayContaining([
-            expect.objectContaining({ sku: 'DUP-SKU', stock: 10 }),
-          ]),
+          variants: {
+            create: expect.arrayContaining([
+              expect.objectContaining({ sku: 'DUP-SKU', stock: 10 }),
+            ]),
+          },
         }),
       }),
     );
     expect(auditCreate).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({ action: ACTIONS.PRODUCT_DUPLICATED }),
     );
     expect(invalidateProducts).toHaveBeenCalledTimes(1);
-    txGlobal.mockRestore();
+    txGlobal.mockReset();
   });
 
   it('duplique avec resetStock=true', async () => {
@@ -972,7 +1008,6 @@ describe('AdminProductsService.duplicate', () => {
       service,
       txMock,
       productCreate,
-      skuGenerator: skuGen2,
       transactionMock: txGlobal,
       productFindUniqueResolved,
     } = makeService({
@@ -987,7 +1022,7 @@ describe('AdminProductsService.duplicate', () => {
     const result = await service.duplicate('source-1', { resetStock: true }, ACTOR);
 
     expect(result.variants[0].stock).toBe(0);
-    txGlobal.mockRestore();
+    txGlobal.mockReset();
   });
 
   it('duplique sans variantes quand copyVariants=false', async () => {
@@ -999,7 +1034,6 @@ describe('AdminProductsService.duplicate', () => {
       service,
       txMock,
       productCreate,
-      skuGenerator: skuGen3,
       transactionMock: txGlobal,
       productFindUniqueResolved,
     } = makeService({
@@ -1019,7 +1053,7 @@ describe('AdminProductsService.duplicate', () => {
         data: expect.not.objectContaining({ variants: expect.anything() }),
       }),
     );
-    txGlobal.mockRestore();
+    txGlobal.mockReset();
   });
   it('rejette la duplication d’un produit introuvable', async () => {
     const { service, productFindUniqueResolved } = makeService();
