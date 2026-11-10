@@ -30,6 +30,7 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { MediaModule } from './modules/media/media.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -153,6 +154,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     ReviewsModule,
     WishlistModule,
     NotificationsModule,
+    MediaModule,
     AnalyticsModule,
     SettingsModule,
   ],

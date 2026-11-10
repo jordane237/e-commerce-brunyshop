@@ -308,6 +308,8 @@ model ProductImage {
   // When set, the image only applies to variants of that color.
   variantColor String?
   url          String
+  // CAT-05: processed WebP key (original and thumbnail are derived from it).
+  storageKey   String?
   position     Int      @default(0)
   alt          String?
   createdAt    DateTime @default(now())

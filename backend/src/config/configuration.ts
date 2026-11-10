@@ -1,4 +1,8 @@
 // Typed application configuration derived from validated environment variables.
+import {
+  readStorageSettings,
+  type StorageSettings,
+} from '../infrastructure/storage/storage.settings';
 import { Environment } from './env.validation';
 
 export interface AuthConfig {
@@ -23,6 +27,7 @@ export interface ApplicationConfig {
     productsListTtlSeconds: number;
     similarProductsLimit: number;
   };
+  storage: StorageSettings;
   auth: AuthConfig;
   isProduction: boolean;
 }
@@ -51,6 +56,7 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
       productsListTtlSeconds: Number(env['CACHE_PRODUCTS_LIST_TTL_SECONDS'] ?? 60),
       similarProductsLimit: Number(env['SIMILAR_PRODUCTS_LIMIT'] ?? 6),
     },
+    storage: readStorageSettings(env),
     auth: {
       // Cachier 10.2: access JWT 10-15 min, rotating refresh cookie.
       secret: String(env['JWT_ACCESS_SECRET']),

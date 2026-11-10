@@ -1174,6 +1174,191 @@
         "summary": "Detail dune notification",
         "tags": ["notifications"]
       }
+    },
+    "/api/v1/admin/media/presign": {
+      "post": {
+        "description": "Approche presign + confirm : le client PUT directement le fichier sur MinIO/S3 via l'URL signée, puis appelle /admin/media/confirm. Le Content-Type et la taille déclarés ici ne sont jamais considérés comme une validation : le confirm re-télécharge le fichier et vérifie les magic bytes et la taille réelles. Le fichier est renommé (UUID) et stocké hors de tout dossier exécutable.",
+        "operationId": "AdminMediaController_presign_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "URL signée générée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Type MIME, taille, quota d’images ou clé invalides (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, MAX_IMAGES_REACHED)."
+          },
+          "401": {
+            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          },
+          "429": {
+            "description": "Plus de 30 presigns en 60 secondes (RATE_LIMIT_EXCEEDED)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Obtenir une URL signée pour téléverser une image",
+        "tags": ["admin-media"]
+      }
+    },
+    "/api/v1/admin/media/confirm": {
+      "post": {
+        "description": "Télécharge le fichier brut depuis le stockage, valide son type réel via file-type (JPEG/PNG/WebP uniquement), sa taille et son décodage sharp, puis génère un JPEG optimisé, un WebP et une vignette 400×400. Le fichier brut est supprimé et un ProductImage est créé. Un fichier non image est refusé avec INVALID_IMAGE_TYPE.",
+        "operationId": "AdminMediaController_confirm_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Image traitée et enregistrée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaImageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fichier refusé (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, INVALID_IMAGE, MAX_IMAGES_REACHED, INVALID_MEDIA_KEY)."
+          },
+          "401": {
+            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Produit ou fichier téléversé introuvable (PRODUCT_NOT_FOUND, MEDIA_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Valider et traiter une image téléversée",
+        "tags": ["admin-media"]
+      }
+    },
+    "/api/v1/admin/media/images/{id}": {
+      "delete": {
+        "description": "Supprime les trois versions stockées (JPEG optimisé, WebP, vignette), la ligne ProductImage, écrit un audit et invalide le cache public.",
+        "operationId": "AdminMediaController_deleteImage_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Image supprimée."
+          },
+          "401": {
+            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Image introuvable (IMAGE_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Supprimer une image produit",
+        "tags": ["admin-media"]
+      }
+    },
+    "/api/v1/admin/media/images/reorder": {
+      "patch": {
+        "description": "Met à jour les positions dans une transaction après vérification que toutes les images appartiennent au produit. Audit MEDIA_REORDERED et invalidation du cache.",
+        "operationId": "AdminMediaController_reorder_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderImagesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Positions mises à jour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordre invalide ou image étrangère au produit (INVALID_IMAGE_ORDER)."
+          },
+          "401": {
+            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Réorganiser les images d’un produit",
+        "tags": ["admin-media"]
+      }
     }
   },
   "info": {
@@ -2672,6 +2857,160 @@
           }
         },
         "required": ["valid", "items", "subtotal", "discount", "total", "issues", "meta"]
+      },
+      "PresignUploadDto": {
+        "type": "object",
+        "properties": {
+          "productSlug": {
+            "type": "string",
+            "example": "sneakers-urbanstep-air"
+          },
+          "variantColor": {
+            "type": "string",
+            "example": "noir"
+          },
+          "contentType": {
+            "type": "string",
+            "enum": ["image/jpeg", "image/png", "image/webp"],
+            "example": "image/jpeg"
+          },
+          "declaredSize": {
+            "type": "number",
+            "example": 102400,
+            "description": "Taille annoncée en octets"
+          }
+        },
+        "required": ["productSlug", "contentType", "declaredSize"]
+      },
+      "PresignResponseDto": {
+        "type": "object",
+        "properties": {
+          "uploadUrl": {
+            "type": "string",
+            "description": "URL signée pour PUT direct vers le stockage"
+          },
+          "key": {
+            "type": "string",
+            "description": "Clé de stockage à confirmer"
+          },
+          "publicUrl": {
+            "type": "string",
+            "description": "URL publique prévisionnelle"
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 300
+          },
+          "method": {
+            "type": "string",
+            "enum": ["PUT"]
+          },
+          "headers": {
+            "type": "object",
+            "example": {
+              "Content-Type": "image/jpeg"
+            }
+          }
+        },
+        "required": ["uploadUrl", "key", "publicUrl", "expiresIn", "method", "headers"]
+      },
+      "ConfirmUploadDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "products/sneakers-urbanstep-air/noir/6f1c...e2.webp",
+            "description": "Clé retournée par /admin/media/presign"
+          },
+          "productSlug": {
+            "type": "string",
+            "example": "sneakers-urbanstep-air"
+          },
+          "variantColor": {
+            "type": "string",
+            "example": "noir"
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0
+          },
+          "alt": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Vue de profil"
+          }
+        },
+        "required": ["key", "productSlug"]
+      },
+      "MediaImageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL publique de la version WebP"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "description": "URL publique de la vignette WebP"
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "number"
+          },
+          "variantColor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "url", "thumbnailUrl", "alt", "position", "variantColor"]
+      },
+      "ReorderImageItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0,
+            "example": 0
+          }
+        },
+        "required": ["id", "position"]
+      },
+      "ReorderImagesDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReorderImageItemDto"
+            }
+          }
+        },
+        "required": ["productId", "order"]
+      },
+      "ReorderResponseDto": {
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "number",
+            "example": 4
+          }
+        },
+        "required": ["updated"]
       }
     }
   }

@@ -3,6 +3,7 @@
 import { plainToInstance } from 'class-transformer';
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -120,7 +121,12 @@ export class EnvVariables {
   @IsString()
   public ALLOW_SEED_IN_PRODUCTION?: string;
 
-  // Storage (MinIO / S3)
+  // Storage (MinIO / S3 / local / fake).
+  @IsOptional()
+  @IsIn(['s3', 'local', 'fake', 'minio'])
+  public STORAGE_PROVIDER?: string;
+
+  // Legacy name kept for the existing docker-compose/.env files.
   @IsOptional()
   @IsString()
   public STORAGE_DRIVER?: string;
@@ -144,6 +150,48 @@ export class EnvVariables {
   @IsOptional()
   @IsString()
   public S3_SECRET_ACCESS_KEY?: string;
+
+  @IsOptional()
+  @IsIn(['true', 'false', '1', '0', 'yes', 'no'])
+  public S3_FORCE_PATH_STYLE?: string;
+
+  @IsOptional()
+  @IsString()
+  public MEDIA_BUCKET?: string;
+
+  @IsOptional()
+  @IsString()
+  public MEDIA_PUBLIC_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  public MEDIA_UPLOAD_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  public API_PUBLIC_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  public STORAGE_LOCAL_ROOT?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  public STORAGE_MAX_FILE_SIZE_MB?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(60)
+  @Max(900)
+  public STORAGE_PRESIGN_EXPIRES_SECONDS?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  public STORAGE_MAX_IMAGES_PER_PRODUCT?: number;
 
   // Mail
   @IsOptional()
@@ -229,6 +277,29 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
     throw new Error(
       'Invalid environment variables:\n  CORS_ORIGINS: must contain comma-separated HTTP(S) origins',
     );
+  }
+
+  // S3 credentials are required only when the S3 provider is selected. The
+  // default (no STORAGE_PROVIDER / STORAGE_DRIVER) is local, which keeps a
+  // fresh clone and CI bootable without MinIO.
+  const provider = String(
+    config.STORAGE_PROVIDER ?? config.STORAGE_DRIVER ?? 'local',
+  ).toLowerCase();
+  const usesS3 = provider === 's3' || provider === 'minio';
+  if (usesS3) {
+    const missing = [
+      ['S3_ENDPOINT', config.S3_ENDPOINT],
+      ['S3_ACCESS_KEY_ID', config.S3_ACCESS_KEY_ID],
+      ['S3_SECRET_ACCESS_KEY', config.S3_SECRET_ACCESS_KEY],
+      ['MEDIA_BUCKET or S3_BUCKET', config.MEDIA_BUCKET ?? config.S3_BUCKET],
+    ]
+      .filter(([, value]) => value === undefined || String(value).trim() === '')
+      .map(([name]) => name);
+    if (missing.length > 0) {
+      throw new Error(
+        `Invalid environment variables:\n  ${missing.join(', ')}: required when STORAGE_PROVIDER=s3`,
+      );
+    }
   }
   return config;
 }
