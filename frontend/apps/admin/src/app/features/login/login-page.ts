@@ -213,7 +213,7 @@ export class LoginPage {
     this.busy.set(true);
     this.errorMessage.set('');
     const { identifier, password } = this.form.getRawValue();
-    this.session.login(identifier, password).subscribe({
+    this.session.login({ identifier, password }).subscribe({
       next: (result) => {
         if ('accessToken' in result) {
           this.completeLogin();

@@ -270,12 +270,26 @@ export interface components {
     RegisterDto: {
       /** @example client@exemple.cm */
       email?: string;
-      /** @example +2376XXXXXXXX */
+      /**
+       * @description Format strict +237 suivi de 9 chiffres
+       * @example +237612345678
+       */
       phone?: string;
-      firstName: string;
-      lastName: string;
-      /** @description Minimum 10 chars, server-checked */
       password: string;
+      /** @example Jean */
+      firstName?: string;
+      /** @example Dupont */
+      lastName?: string;
+      /**
+       * @description Consentement aux CGV (obligatoire)
+       * @example true
+       */
+      termsAccepted: boolean;
+      /**
+       * @description Version des CGV acceptée
+       * @example 1.0
+       */
+      termsVersion: string;
     };
     LoginDto: {
       /** @example client@exemple.cm ou +2376XXXXXXXX */

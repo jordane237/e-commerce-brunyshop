@@ -10,6 +10,7 @@ import {
   tap,
   throwError,
 } from 'rxjs';
+import type { LoginDto } from './api-contracts';
 import { API_BASE_URL } from './catalog-api';
 
 export interface SessionUser {
@@ -50,11 +51,11 @@ export class SessionService {
   readonly roles = computed(() => this.userState()?.roles ?? []);
   private refreshRequest?: Observable<{ accessToken: string }>;
 
-  login(identifier: string, password: string): Observable<AuthResponse | AuthChallenge> {
+  login(credentials: LoginDto): Observable<AuthResponse | AuthChallenge> {
     return this.http
       .post<
         AuthResponse | AuthChallenge
-      >(`${this.baseUrl}/auth/login`, { identifier, password }, { withCredentials: true })
+      >(`${this.baseUrl}/auth/login`, credentials, { withCredentials: true })
       .pipe(
         tap((response) => {
           if ('accessToken' in response) this.accept(response);

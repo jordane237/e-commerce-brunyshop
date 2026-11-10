@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/database/database.module';
 import { AuditLogService } from '../audit/audit.service';
+import { CatalogCacheService } from './cache/catalog-cache.service';
 import type { CreateProductDto } from './dto/create-product.dto';
 import type { ListProductsDto } from './dto/list-products.dto';
 
@@ -28,6 +29,7 @@ export class CatalogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLog: AuditLogService,
+    private readonly cache: CatalogCacheService,
   ) {}
 
   async listProducts(query: ListProductsDto) {
@@ -95,15 +97,6 @@ export class CatalogService {
     };
   }
 
-  async getProduct(slug: string) {
-    const product = await this.prisma.product.findFirst({
-      where: { slug, status: 'PUBLISHED', deletedAt: null },
-      select: productSelection,
-    });
-    if (!product) throw new NotFoundException({ code: 'PRODUCT_NOT_FOUND' });
-    return product;
-  }
-
   listCategories() {
     return this.prisma.category.findMany({
       where: {
@@ -165,7 +158,7 @@ export class CatalogService {
   }
 
   async updateProduct(dto: CreateProductDto, slug: string, userId: string, ip?: string) {
-    return this.prisma.$transaction(async (transaction) => {
+    const result = await this.prisma.$transaction(async (transaction) => {
       const product = await transaction.product.update({
         where: { slug },
         data: {
@@ -197,5 +190,9 @@ export class CatalogService {
       });
       return product;
     });
+    // The update sets the product back to DRAFT and rewrites its variants: the
+    // cached detail must not survive it.
+    await this.cache.invalidateProducts();
+    return result;
   }
 }

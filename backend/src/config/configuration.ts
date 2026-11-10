@@ -18,6 +18,7 @@ export interface ApplicationConfig {
   publicAdminUrl: string;
   corsOrigins: string[];
   throttle: { ttlSeconds: number; limit: number };
+  catalog: { productDetailTtlSeconds: number; similarProductsLimit: number };
   auth: AuthConfig;
   isProduction: boolean;
 }
@@ -40,6 +41,10 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
     throttle: {
       ttlSeconds: Number(env['THROTTLE_TTL']),
       limit: Number(env['THROTTLE_LIMIT']),
+    },
+    catalog: {
+      productDetailTtlSeconds: Number(env['CACHE_PRODUCT_DETAIL_TTL_SECONDS'] ?? 300),
+      similarProductsLimit: Number(env['SIMILAR_PRODUCTS_LIMIT'] ?? 6),
     },
     auth: {
       // Cachier 10.2: access JWT 10-15 min, rotating refresh cookie.

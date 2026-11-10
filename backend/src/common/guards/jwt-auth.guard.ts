@@ -71,7 +71,11 @@ export class JwtAuthGuard implements CanActivate {
       where: { id: payload.sub },
       include: { roles: { include: { role: true } } },
     });
-    if (!user || user.deletedAt || user.status !== 'ACTIVE') {
+    // PENDING_VERIFICATION reste autorisé : aucun parcours de vérification
+    // n'existe encore (AUT-01), un compte fraîchement créé doit pouvoir se
+    // connecter. Seuls SUSPENDED et DISABLED sont refusés.
+    const blocked = user?.status === 'SUSPENDED' || user?.status === 'DISABLED';
+    if (!user || user.deletedAt || blocked) {
       throw new UnauthorizedException({ code: 'INVALID_TOKEN' });
     }
 

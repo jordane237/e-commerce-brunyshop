@@ -1,3 +1,4 @@
+export * from './lib/api-contracts';
 export * from './lib/catalog-api';
 export * from './lib/session.service';
 export * from './lib/cart.store';

@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -22,6 +21,7 @@ import { decryptSecret, encryptSecret, randomToken, sha256hex } from '../../comm
 import { assertPasswordStrength } from '../../common/utils/password';
 import type { AccessTokenPayload } from '../../common/guards/jwt-auth.guard';
 import type { RegisterDto } from './dto/register.dto';
+import type { RegisterResponseDto } from './dto/register-response.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { ResetPasswordDto } from './dto/password.dto';
 
@@ -63,6 +63,20 @@ interface ChallengeResult {
   challengeToken: string;
 }
 
+// Masquage des identifiants dans les réponses et les journaux (AUT-01) :
+// jamais d'e-mail ou de téléphone en clair.
+export function maskEmail(email: string | null | undefined): string | null {
+  if (!email) return null;
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return null;
+  return `${local.slice(0, 1)}***@${domain}`;
+}
+
+export function maskPhone(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  return `***${phone.slice(-4)}`;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -80,16 +94,21 @@ export class AuthService {
   // Registration / login
   // -------------------------------------------------------------------------
 
-  async register(dto: RegisterDto, req: Request, res: Response): Promise<AuthResult> {
-    const email = dto.email?.trim().toLowerCase();
-    const phone = dto.phone?.trim();
+  // Contrat AUT-01 (docs/backend/auth.md) : la réponse est neutre — même
+  // statut HTTP et même structure que le compte vienne d'être créé ou que
+  // l'e-mail/téléphone existe déjà — et aucun jeton n'est émis ici (la
+  // connexion passe par POST /auth/login, AUT-02).
+  async register(dto: RegisterDto, req: Request): Promise<RegisterResponseDto> {
+    const email = dto.email?.trim().toLowerCase() || null;
+    const phone = dto.phone?.trim() || null;
     if (!email && !phone) {
       throw new BadRequestException({
         code: 'MISSING_IDENTIFIER',
-        message: 'Renseignez un email ou un téléphone.',
+        message: 'Renseignez un e-mail ou un numéro de téléphone.',
       });
     }
     assertPasswordStrength(dto.password);
+    await this.assertTermsAccepted(dto);
 
     const existing = await this.prisma.user.findFirst({
       where: {
@@ -99,21 +118,107 @@ export class AuthService {
       select: { id: true },
     });
     if (existing) {
-      throw new ConflictException({ code: 'ACCOUNT_EXISTS' });
+      // Doublon silencieux : aucune donnée du compte existant n'est renvoyée
+      // et l'identifiant de la réponse est un UUID aléatoire (neutre).
+      await this.prisma.auditLog.create({
+        data: {
+          userId: existing.id,
+          action: 'USER_REGISTERED_DUPLICATE',
+          entity: 'User',
+          entityId: existing.id,
+          ip: req.ip ?? null,
+        },
+      });
+      return this.buildRegisterResponse({
+        id: randomUUID(),
+        email,
+        phone,
+        firstName: dto.firstName?.trim() || null,
+        lastName: dto.lastName?.trim() || null,
+        status: 'PENDING_VERIFICATION',
+        createdAt: new Date(),
+      });
     }
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: email ?? null,
-        phone: phone ?? null,
-        passwordHash: await hash(dto.password),
-        firstName: dto.firstName.trim(),
-        lastName: dto.lastName.trim(),
-      },
+    // Hachage hors transaction : Argon2id est lent, on ne garde pas la
+    // transaction ouverte pendant le calcul.
+    const passwordHash = await hash(dto.password);
+    const termsAcceptedAt = new Date();
+
+    const created = await this.prisma.$transaction(async (transaction) => {
+      const user = await transaction.user.create({
+        data: {
+          email,
+          phone,
+          passwordHash,
+          firstName: dto.firstName?.trim() ?? '',
+          lastName: dto.lastName?.trim() ?? '',
+          status: 'PENDING_VERIFICATION',
+          termsVersion: dto.termsVersion,
+          termsAcceptedAt,
+        },
+      });
+      const customerRole = await transaction.role.findFirst({
+        where: { name: 'CUSTOMER' },
+        select: { id: true },
+      });
+      if (customerRole) {
+        await transaction.userRole.create({
+          data: { userId: user.id, roleId: customerRole.id },
+        });
+      }
+      return user;
     });
 
-    this.logger.log(`account created: ${user.id}`);
-    return this.issueSession(user.id, [], req, res);
+    this.logger.log(`account created: ${created.id}`);
+    return this.buildRegisterResponse({
+      id: created.id,
+      email,
+      phone,
+      firstName: dto.firstName?.trim() || null,
+      lastName: dto.lastName?.trim() || null,
+      status: 'PENDING_VERIFICATION',
+      createdAt: created.createdAt ?? termsAcceptedAt,
+    });
+  }
+
+  // CGV : consentement et version courante (Setting `terms.version`).
+  private async assertTermsAccepted(dto: RegisterDto): Promise<void> {
+    if (dto.termsAccepted !== true) {
+      throw new BadRequestException({
+        code: 'TERMS_NOT_ACCEPTED',
+        message: 'Vous devez accepter les CGV pour créer un compte.',
+      });
+    }
+    const setting = await this.prisma.setting.findUnique({ where: { key: 'terms.version' } });
+    const currentVersion = typeof setting?.value === 'string' ? setting.value : '1.0';
+    if (dto.termsVersion !== currentVersion) {
+      throw new BadRequestException({
+        code: 'TERMS_VERSION_MISMATCH',
+        message: 'La version des CGV a changé, merci de recharger la page et de réaccepter.',
+      });
+    }
+  }
+
+  private buildRegisterResponse(input: {
+    id: string;
+    email: string | null;
+    phone: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    status: string;
+    createdAt: Date;
+  }): RegisterResponseDto {
+    return {
+      id: input.id,
+      emailMasked: maskEmail(input.email),
+      phoneMasked: maskPhone(input.phone),
+      firstName: input.firstName,
+      lastName: input.lastName,
+      status: input.status,
+      createdAt: input.createdAt,
+      message: 'Compte créé avec succès. Vous pouvez maintenant vous connecter.',
+    };
   }
 
   async login(dto: LoginDto, req: Request, res: Response): Promise<AuthResult | ChallengeResult> {
@@ -140,7 +245,11 @@ export class AuthService {
       ? await verifyHash(user.passwordHash, dto.password)
       : await this.verifyAgainstDummy(dto.password);
 
-    if (!user || !passwordOk || user.status !== 'ACTIVE') {
+    // PENDING_VERIFICATION peut se connecter (aucun parcours de vérification
+    // n'existe encore, AUT-01) ; seuls les comptes suspendus/désactivés sont
+    // refusés.
+    const accountBlocked = user?.status === 'SUSPENDED' || user?.status === 'DISABLED';
+    if (!user || !passwordOk || accountBlocked) {
       await this.recordFailedAttempt(lookup);
       throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS' });
     }
@@ -529,9 +638,7 @@ export class AuthService {
   }
 
   private maskIdentifier(identifier: string): string {
-    const email = identifier.split('@');
-    if (email.length === 2) return `${email[0]?.slice(0, 1) ?? '*'}***@${email[1]}`;
-    return `***${identifier.slice(-2)}`;
+    return maskEmail(identifier) ?? maskPhone(identifier) ?? '***';
   }
 
   private async verifyAgainstDummy(password: string): Promise<boolean> {

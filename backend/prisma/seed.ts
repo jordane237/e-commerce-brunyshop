@@ -28,9 +28,10 @@ import {
 } from '../src/generated/prisma/client';
 
 // Prisma 7 ne charge pas .env automatiquement : on le charge manuellement
-// (voir prisma.config.mjs, docs/prisma-7-env).
-if (existsSync('.env')) process.loadEnvFile('.env');
-else if (existsSync('../.env')) process.loadEnvFile('../.env');
+// (voir prisma.config.mjs, docs/prisma-7-env). Même priorité que l'API
+// (ConfigModule envFilePath ['../.env', '.env']).
+if (existsSync('../.env')) process.loadEnvFile('../.env');
+else if (existsSync('.env')) process.loadEnvFile('.env');
 
 export interface SeedCounts {
   roles: number;

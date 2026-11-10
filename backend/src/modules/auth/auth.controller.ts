@@ -25,6 +25,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterResponseDto } from './dto/register-response.dto';
 import { TwoFactorVerifyDto } from './dto/two-factor.dto';
 
 // Contract: cachier §9 "Authentification" — public routes are rate-limited
@@ -38,12 +39,8 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   @ApiOperation({ summary: 'Création de compte client (email ou téléphone)' })
-  async register(
-    @Body() dto: RegisterDto,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    return this.authService.register(dto, req, res);
+  async register(@Body() dto: RegisterDto, @Req() req: Request): Promise<RegisterResponseDto> {
+    return this.authService.register(dto, req);
   }
 
   @Public()
