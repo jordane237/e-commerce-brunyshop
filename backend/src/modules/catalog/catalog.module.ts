@@ -10,15 +10,24 @@ import { SkuGeneratorService } from './admin/sku/sku-generator.service';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
 import { ProductDetailService } from './products/product-detail.service';
+import { AdminSizeGuidesController } from './size-guides/admin-size-guides.controller';
+import { SizeGuidesController } from './size-guides/size-guides.controller';
+import { SizeGuidesService } from './size-guides/size-guides.service';
 
 @Module({
   // CacheModule is not @Global: it must be imported to inject RedisService.
   imports: [DatabaseModule, AuditModule, CacheModule],
-  controllers: [CatalogController, AdminProductsController],
+  controllers: [
+    CatalogController,
+    AdminProductsController,
+    SizeGuidesController,
+    AdminSizeGuidesController,
+  ],
   providers: [
     CatalogService,
     CatalogCacheService,
     ProductDetailService,
+    SizeGuidesService,
     AdminProductsService,
     SlugGeneratorService,
     SkuGeneratorService,

@@ -25,6 +25,7 @@ export interface ApplicationConfig {
   catalog: {
     productDetailTtlSeconds: number;
     productsListTtlSeconds: number;
+    sizeGuidesTtlSeconds: number;
     similarProductsLimit: number;
   };
   storage: StorageSettings;
@@ -54,6 +55,7 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
     catalog: {
       productDetailTtlSeconds: Number(env['CACHE_PRODUCT_DETAIL_TTL_SECONDS'] ?? 300),
       productsListTtlSeconds: Number(env['CACHE_PRODUCTS_LIST_TTL_SECONDS'] ?? 60),
+      sizeGuidesTtlSeconds: Number(env['CACHE_SIZE_GUIDES_TTL_SECONDS'] ?? 1800),
       similarProductsLimit: Number(env['SIMILAR_PRODUCTS_LIMIT'] ?? 6),
     },
     storage: readStorageSettings(env),

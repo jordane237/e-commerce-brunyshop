@@ -1044,6 +1044,106 @@
         "tags": ["admin-products"]
       }
     },
+    "/api/v1/size-guides/{categoryId}": {
+      "get": {
+        "description": "Retourne les tables de conversion EU/US/UK/cm (men, women, kids) du guide lié à la catégorie. Les guides hérités de la catégorie parente ne sont pas résolus en MVP.",
+        "operationId": "SizeGuidesController_getByCategoryId_v1",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID de la catégorie",
+            "schema": {
+              "format": "uuid",
+              "example": "8b1f2c3d-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guide des tailles de la catégorie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SizeGuideResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Catégorie inexistante (CATEGORY_NOT_FOUND) ou catégorie sans guide (SIZE_GUIDE_NOT_FOUND)."
+          },
+          "429": {
+            "description": "Plus de 100 requêtes par minute (RATE_LIMIT_EXCEEDED)."
+          }
+        },
+        "summary": "Guide des tailles d’une catégorie",
+        "tags": ["catalog"]
+      }
+    },
+    "/api/v1/admin/size-guides/{id}": {
+      "put": {
+        "description": "Met à jour le nom, la description et/ou les tableaux EU/US/UK/cm. Les tableaux sont triés par EU croissant, les doublons EU sont refusés. Une modification de `table` incrémente la version (v1 → v2) ; un changement de nom seul ne l’incrémente pas. Un audit SIZE_GUIDE_UPDATED (résumé) est écrit et le cache public est invalidé.",
+        "operationId": "AdminSizeGuidesController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSizeGuideDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guide mis à jour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SizeGuideResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body vide, tableau vide, doublon EU ou entrée invalide (VALIDATION_ERROR)."
+          },
+          "401": {
+            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Guide introuvable (SIZE_GUIDE_NOT_FOUND)."
+          },
+          "429": {
+            "description": "Plus de 30 mises à jour par minute."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Mettre à jour un guide des tailles",
+        "tags": ["admin-size-guides"]
+      }
+    },
     "/api/v1/cart/validate": {
       "post": {
         "description": "⚠️ Aucun prix fourni par le client n'est utilisé. Tous les prix sont recalculés côté serveur depuis la base (prix de la variante, promotion produit active, sinon prix de base). Le body ne transporte que variantId et quantity ; tout champ de prix non déclaré est rejeté en 400 VALIDATION_ERROR.",
@@ -2631,6 +2731,122 @@
             "type": "boolean",
             "default": false,
             "description": "Remet le stock des variantes copiées à zéro"
+          }
+        }
+      },
+      "SizeGuideEntryDto": {
+        "type": "object",
+        "properties": {
+          "eu": {
+            "type": "number",
+            "example": 42,
+            "description": "Pointure européenne"
+          },
+          "us": {
+            "type": "number",
+            "example": 8.5,
+            "description": "Pointure américaine (US)"
+          },
+          "uk": {
+            "type": "number",
+            "example": 8,
+            "description": "Pointure britannique (UK)"
+          },
+          "cm": {
+            "type": "number",
+            "example": 26.5,
+            "description": "Longueur du pied en centimètres"
+          }
+        },
+        "required": ["eu", "us", "uk", "cm"]
+      },
+      "SizeGuideTableDto": {
+        "type": "object",
+        "properties": {
+          "men": {
+            "description": "Tableau homme",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SizeGuideEntryDto"
+            }
+          },
+          "women": {
+            "description": "Tableau femme",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SizeGuideEntryDto"
+            }
+          },
+          "kids": {
+            "description": "Tableau enfant",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SizeGuideEntryDto"
+            }
+          }
+        }
+      },
+      "SizeGuideResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Guide des pointures — Homme, Femme, Enfant"
+          },
+          "slug": {
+            "type": "string",
+            "example": "guide-pointures-brunyshop"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "table": {
+            "$ref": "#/components/schemas/SizeGuideTableDto"
+          },
+          "version": {
+            "type": "string",
+            "example": "v1"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "table",
+          "version",
+          "publishedAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateSizeGuideDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Guide des pointures 2027"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "table": {
+            "$ref": "#/components/schemas/SizeGuideTableDto"
           }
         }
       },

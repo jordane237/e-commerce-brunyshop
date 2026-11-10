@@ -87,6 +87,12 @@ export class EnvVariables {
   @Min(1)
   public CACHE_PRODUCTS_LIST_TTL_SECONDS?: number;
 
+  // Size guides cache TTL in seconds (default 1800 = 30 min).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  public CACHE_SIZE_GUIDES_TTL_SECONDS?: number;
+
   // Number of similar products returned on a product page (default 6).
   @IsOptional()
   @IsInt()

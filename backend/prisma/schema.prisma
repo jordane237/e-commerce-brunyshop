@@ -211,17 +211,38 @@ model Category {
   name    String
   slug    String  @unique
   parentId String?
-  // No SizeGuide entity in the cahier; kept as a plain reference for now.
+  // CAT-06: optional size guide inherited by the category products.
   sizeGuideId String?
   position Int    @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryTree")
-  products Product[]
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryTree")
+  products  Product[]
+  sizeGuide SizeGuide? @relation(fields: [sizeGuideId], references: [id], onDelete: SetNull)
 
   @@index([parentId])
+  @@index([sizeGuideId])
+}
+
+// CAT-06: EU/US/UK/cm conversion tables. The table payload is JSONB so a new
+// public can be added without a migration; DTOs validate its shape strictly.
+model SizeGuide {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  table       Json
+  version     String    @default("v1")
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  categories Category[]
+
+  @@index([slug])
+  @@map("size_guides")
 }
 
 model Brand {

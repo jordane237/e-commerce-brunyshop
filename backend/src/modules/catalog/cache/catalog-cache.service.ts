@@ -7,6 +7,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { RedisService } from '../../../infrastructure/cache/cache.module';
 import type { ProductDetailDto } from '../dto/product-detail.dto';
 import type { ProductFacetsDto, ProductListResponseDto } from '../dto/product-list.dto';
+import type { SizeGuideResponseDto } from '../size-guides/dto/size-guide-response.dto';
 
 // Catalogue cache (CAT-02 / CAT-03).
 //
@@ -45,6 +46,10 @@ export class CatalogCacheService {
     return Number(this.config.get<number>('app.catalog.productsListTtlSeconds') ?? 60);
   }
 
+  private get sizeGuidesTtlSeconds(): number {
+    return Number(this.config.get<number>('app.catalog.sizeGuidesTtlSeconds') ?? 1800);
+  }
+
   static detailKey(slug: string): string {
     return `catalog:products:detail:${slug}:v1`;
   }
@@ -58,6 +63,10 @@ export class CatalogCacheService {
 
   static facetsKey(): string {
     return 'catalog:products:facets:v1';
+  }
+
+  static sizeGuideKey(categoryId: string): string {
+    return `catalog:size-guides:${categoryId}:v1`;
   }
 
   private async readJson<T>(key: string, label: string): Promise<T | null> {
@@ -122,6 +131,44 @@ export class CatalogCacheService {
       this.listTtlSeconds,
       'catalog facets',
     );
+  }
+
+  getSizeGuide(categoryId: string): Promise<SizeGuideResponseDto | null> {
+    return this.readJson<SizeGuideResponseDto>(
+      CatalogCacheService.sizeGuideKey(categoryId),
+      'catalog size guide',
+    );
+  }
+
+  async setSizeGuide(categoryId: string, guide: SizeGuideResponseDto): Promise<void> {
+    await this.writeJson(
+      CatalogCacheService.sizeGuideKey(categoryId),
+      guide,
+      this.sizeGuidesTtlSeconds,
+      'catalog size guide',
+    );
+  }
+
+  // Invalidates size guides only; product/category caches stay untouched.
+  async invalidateSizeGuides(): Promise<void> {
+    try {
+      let cursor = '0';
+      let iterations = 0;
+      do {
+        const [nextCursor, keys] = await this.redis.scan(
+          cursor,
+          'MATCH',
+          'catalog:size-guides:*',
+          'COUNT',
+          CatalogCacheService.SCAN_COUNT,
+        );
+        cursor = nextCursor;
+        if (keys.length > 0) await this.redis.del(...keys);
+        iterations += 1;
+      } while (cursor !== '0' && iterations < CatalogCacheService.SCAN_MAX_ITERATIONS);
+    } catch (error) {
+      this.logger.warn({ err: error }, 'catalog size guides cache invalidation failed');
+    }
   }
 
   // Invalidates every catalogue product cache entry (detail, list, facets).

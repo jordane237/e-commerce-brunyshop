@@ -14,7 +14,13 @@ function makeService() {
   };
   const logger = { setContext: vi.fn(), warn: vi.fn() };
   const config = {
-    get: vi.fn((key: string) => (key === 'app.catalog.productsListTtlSeconds' ? 60 : 300)),
+    get: vi.fn((key: string) =>
+      key === 'app.catalog.productsListTtlSeconds'
+        ? 60
+        : key === 'app.catalog.sizeGuidesTtlSeconds'
+          ? 1800
+          : 300,
+    ),
   };
   const service = new CatalogCacheService(
     { redis } as unknown as RedisService,
@@ -135,6 +141,32 @@ describe('CatalogCacheService', () => {
       'catalog:products:detail:b:v1',
     );
     expect(redis.del).toHaveBeenNthCalledWith(2, 'catalog:products:list:1:v1');
+  });
+
+  it('utilise une clé de guide distincte et le TTL de 30 min', async () => {
+    const { service, redis } = makeService();
+    const guide = { id: 'guide-1', version: 'v1' };
+
+    expect(CatalogCacheService.sizeGuideKey('cat-1')).toBe('catalog:size-guides:cat-1:v1');
+    await service.setSizeGuide('cat-1', guide as never);
+    expect(redis.set).toHaveBeenCalledWith(
+      'catalog:size-guides:cat-1:v1',
+      JSON.stringify(guide),
+      'EX',
+      1800,
+    );
+    redis.get.mockResolvedValue(JSON.stringify(guide));
+    await expect(service.getSizeGuide('cat-1')).resolves.toEqual(guide);
+  });
+
+  it('invalide uniquement les guides via SCAN', async () => {
+    const { service, redis } = makeService();
+    redis.scan.mockResolvedValueOnce(['0', ['catalog:size-guides:cat-1:v1']]);
+
+    await service.invalidateSizeGuides();
+
+    expect(redis.scan).toHaveBeenCalledWith('0', 'MATCH', 'catalog:size-guides:*', 'COUNT', 100);
+    expect(redis.del).toHaveBeenCalledWith('catalog:size-guides:cat-1:v1');
   });
 
   it('n’échoue pas si l’invalidation cache échoue', async () => {
