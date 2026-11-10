@@ -167,8 +167,9 @@ base : `400 VALIDATION_ERROR`.
 
 - même `categoryId`, produit courant exclu ;
 - `PUBLISHED` et `deletedAt = null` ;
-- fenêtre de prix : prix de base dans `[effectivePrice × 0,5 ; effectivePrice × 1,5]`
-  (préfiltre SQL sur `basePrice`, puis classement par distance au prix effectif) ;
+- fenêtre de prix : prix effectif dans `[effectivePrice × 0,5 ; effectivePrice × 1,5]`.
+  Le préfiltre SQL accepte `basePrice` **ou** `promoPrice` dans la fenêtre, puis le prix
+  effectif (promo active comprise) est vérifié en mémoire avant le classement ;
 - limite `SIMILAR_PRODUCTS_LIMIT` (6 par défaut, 1 à 12) ;
 - si aucun produit dans la fenêtre → **fallback** : les plus récents de la même catégorie,
   sans contrainte de prix ;

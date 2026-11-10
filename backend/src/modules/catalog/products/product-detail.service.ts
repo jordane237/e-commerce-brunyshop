@@ -186,27 +186,43 @@ export class ProductDetailService {
       deletedAt: null,
     };
 
+    // A product can enter the window through its base price or through an
+    // active promo price, so both columns are pre-filtered in SQL. The exact
+    // effective price is then checked in memory (a promo is only active inside
+    // its date window, which SQL cannot express without a raw expression).
     const inWindow = await this.prisma.product.findMany({
-      where: { ...commonWhere, basePrice: { gte: minPrice, lte: maxPrice } },
+      where: {
+        ...commonWhere,
+        OR: [
+          { basePrice: { gte: minPrice, lte: maxPrice } },
+          { promoPrice: { not: null, gte: minPrice, lte: maxPrice } },
+        ],
+      },
       select: summarySelection,
       orderBy: { createdAt: 'desc' },
       take: limit * 2,
     });
+    const decorate = (row: SummaryProduct) => ({
+      row,
+      price: resolvePrice(row, { price: null }, now).unitPrice,
+    });
+    const inWindowRows = inWindow
+      .map(decorate)
+      .filter(({ price }) => price >= minPrice && price <= maxPrice);
     const rows =
-      inWindow.length > 0
-        ? inWindow
-        : await this.prisma.product.findMany({
-            where: commonWhere,
-            select: summarySelection,
-            orderBy: { createdAt: 'desc' },
-            take: limit,
-          });
+      inWindowRows.length > 0
+        ? inWindowRows
+        : (
+            await this.prisma.product.findMany({
+              where: commonWhere,
+              select: summarySelection,
+              orderBy: { createdAt: 'desc' },
+              take: limit,
+            })
+          ).map(decorate);
 
     return rows
-      .map((row) => ({
-        row,
-        distance: Math.abs(resolvePrice(row, { price: null }, now).unitPrice - effectivePrice),
-      }))
+      .map(({ row, price }) => ({ row, distance: Math.abs(price - effectivePrice) }))
       .sort(
         (left, right) =>
           left.distance - right.distance ||

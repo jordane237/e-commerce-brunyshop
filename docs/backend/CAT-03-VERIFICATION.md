@@ -1,60 +1,66 @@
 # CAT-03 — Vérification de la fiche produit API
 
-Branche : `feature/CAT-03-product-detail-api` (créée avant tout code, depuis `ac9121b`).
-Date des vérifications : 9 novembre 2026.
+Branche active : `feature/CAT-03-product-detail-api` (`git branch --show-current`).
+Date des vérifications : 10 novembre 2026.
 
-## Résultats
+## Résultats des 11 contrôles
 
-| # | Vérification | Commande | Résultat |
+| # | Vérification | Résultat | Preuve |
 |---|---|---|---|
-| 1 | Branche active | `git branch --show-current` | ✅ `feature/CAT-03-product-detail-api` |
-| 2 | Build backend | `pnpm -C backend build` | ✅ `prisma generate` + `tsc` sans erreur |
-| 3 | Tests unitaires | `pnpm -C backend test` | ✅ 12 fichiers, **101 tests** (dont 17 fiche produit + 8 cache) |
-| 4 | Tests e2e CAT-03 | `npx vitest run --config vitest.e2e.config.ts test/product-detail.e2e-spec.ts` | ✅ **15 tests** |
-| 5 | e2e sans régression | `npx vitest run --config vitest.e2e.config.ts test/api.e2e-spec.ts test/cart-validation.e2e-spec.ts test/product-detail.e2e-spec.ts` | ✅ 3 fichiers, 41 tests |
-| 6 | ESLint (code livré) | `npx eslint src test/product-detail.e2e-spec.ts test/api.e2e-spec.ts test/cart-validation.e2e-spec.ts --max-warnings=0` | ✅ 0 erreur |
-| 7 | Docker Compose | `docker compose ps` | ✅ `bruny-postgres` (15432) et `bruny-redis` (16379) healthy |
-| 8 | Prisma generate | `pnpm -C backend prisma generate` | ✅ client 7.10.0 généré |
-| 9 | Démarrage + readiness | `PORT=4020 node dist/main.js` puis `GET /api/v1/health/ready` | ✅ `200` (`database: up`, `redis: up`) |
-| 10 | Détail produit | `curl /api/v1/products/sneakers-urbanstep-air` | ✅ `200`, DTO complet |
-| 11 | 404 uniforme | `curl /api/v1/products/produit-inexistant` | ✅ `404 PRODUCT_NOT_FOUND` |
-| 12 | Slug invalide | `curl /api/v1/products/INVALID_SLUG` | ✅ `400 VALIDATION_ERROR` |
-| 13 | Non-régression liste | `curl /api/v1/products?page=1&limit=2` | ✅ `200`, `{ items, pagination }`, `total: 20` |
-| 14 | Absence de stock brut | sérialisation JSON de la fiche | ✅ `"stock":` absent, `reservedStock` absent, `availableStock` présent |
+| 1 | Branche active | ✅ | `feature/CAT-03-product-detail-api` |
+| 2 | Build backend | ✅ | `pnpm -C backend build` → Prisma generate + `tsc` sans erreur |
+| 3 | Tests unitaires complets | ✅ | `pnpm -C backend test` → **102/102** (12 fichiers), dont **18** pour `product-detail.service.test.ts` |
+| 4 | Tests e2e CAT-03 | ✅ | `test/product-detail.e2e-spec.ts` → **15/15** |
+| 5 | E2E sans régression | ✅ | `pnpm -C backend test:e2e` → **41/41** (3 fichiers : api, cart-validation, product-detail) |
+| 6 | ESLint | ✅ | `pnpm -C backend exec eslint src test --max-warnings=0` → 0 erreur / 0 warning |
+| 7 | Docker Compose | ✅ | PostgreSQL `15432` et Redis `16379` healthy (utilisés par les e2e) |
+| 8 | Prisma generate | ✅ | Client 7.10.0 généré (inclus dans le build) |
+| 9 | Démarrage + readiness | ✅ | `PORT=4020 node dist/main.js` → `GET /api/v1/health/ready` **200** (`database: up`, `redis: up`) |
+| 10 | Fiche produit réelle | ✅ | `GET /api/v1/products/sneakers-urbanstep-lady` → **200**, 20 clés DTO, 11 variantes, 11 pointures, 3 similaires, `availableStock = 14` |
+| 11 | 404 / slug invalide / liste | ✅ | slug inconnu → **404 PRODUCT_NOT_FOUND** ; `INVALID_SLUG` → **400 VALIDATION_ERROR** ; `GET /products?page=1&limit=2` → **200**, 2 items / total 20 |
 
-Le serveur de vérification a été lancé sur le port **4020** : un ancien processus de
-développement occupait déjà `4000` (dist antérieur, sans CAT-03). Le `.env` du dépôt pointe
-bien sur `PORT=4000` pour l'usage normal.
+## Absence de stock brut (CA #2)
 
-## Preuves
+Sur la réponse réelle de la fiche :
+
+```text
+"stock" occurrences         : 0
+"reservedStock" occurrences : 0
+availableStock              : 14
+```
+
+Le test e2e crée une variante `stock = 10`, `reservedStock = 4` → `availableStock = 6` et
+vérifie que le JSON sérialisé ne contient ni `"stock":` ni `reservedStock`. Le test unitaire
+couvre `stock = 2`, `reservedStock = 5` → `0` (plancher `Math.max(0, …)`).
+
+## Preuves runtime
 
 ### Fiche produit (extrait réel)
 
 ```json
 {
-  "slug": "sneakers-urbanstep-air",
-  "basePrice": 24500,
-  "effectivePrice": 24500,
+  "slug": "sneakers-urbanstep-lady",
+  "basePrice": 22000,
+  "effectivePrice": 22000,
   "promoPrice": null,
   "isPromoActive": false,
-  "images": 2,
+  "inStock": true,
+  "variants": 11,
   "colors": 1,
   "sizes": 11,
-  "variants": 11,
   "similarProducts": 3,
   "variants[0]": {
     "sku": "BARRAGEF-SNEAKERSUR-36-BLANC",
     "size": "36",
     "color": "BLANC",
-    "effectivePrice": 24500,
+    "effectivePrice": 22000,
     "availableStock": 14,
     "isAvailable": true
-  },
-  "sizes[0]": { "size": "36", "availableStock": 14, "isAvailable": true, "isLowStock": false }
+  }
 }
 ```
 
-### 404 uniforme (extrait réel)
+### 404 uniforme
 
 ```json
 {
@@ -62,31 +68,47 @@ bien sur `PORT=4000` pour l'usage normal.
   "code": "PRODUCT_NOT_FOUND",
   "message": "Produit introuvable.",
   "errors": [],
-  "requestId": "f8eee555-…",
-  "timestamp": "2026-11-09T14:14:47.668Z"
+  "requestId": "…",
+  "timestamp": "…"
 }
 ```
 
-Le test e2e compare ce corps (hors `requestId`/`timestamp`) pour un slug inconnu, un `DRAFT`,
-un `ARCHIVED` et un produit `deletedAt != null` : identique dans les quatre cas.
+Le e2e compare ce corps (hors `requestId`/`timestamp`) pour un slug inconnu, un `DRAFT`, un
+`ARCHIVED` et un produit `deletedAt != null` : identique dans les quatre cas.
 
-### Stock disponible
+### Produits similaires (CA #3)
 
-Le test e2e crée une variante `stock = 10`, `reservedStock = 4` → `availableStock = 6`, et
-vérifie que le JSON ne contient ni `"stock":` ni `reservedStock`. Le test unitaire couvre en
-plus `stock = 2`, `reservedStock = 5` → `0` (plancher).
+- Même catégorie, produit courant exclu, `status = PUBLISHED`, `deletedAt = null`.
+- Fenêtre ±50 % sur le **prix effectif** (promo active incluse). La requête pré-filtre en SQL
+  sur `basePrice` **ou** `promoPrice`, puis vérifie le prix effectif en mémoire.
+- Limite configurable (`SIMILAR_PRODUCTS_LIMIT`, défaut 6), tri par proximité de prix puis
+  récence ; fallback sur les produits les plus récents de la catégorie si la fenêtre est vide.
+- Un test unitaire dédié couvre un produit dont seule la promo active entre dans la fenêtre.
 
-## Limites rencontrées (hors périmètre CAT-03)
+### Cache détail
 
-1. **`pnpm -C backend lint` échoue** à cause de `backend/test/notifications.e2e-spec.ts`,
-   fichier **non suivi** hérité de NTF-01 (variables inutilisées, `any` explicite). Le code
-   CAT-03 et les e2e suivis passent ESLint sans erreur.
-2. **`pnpm -C backend test:e2e` complet** échoue pour la même raison : ce fichier non suivi
-   ne se charge pas. Les 3 suites suivies passent (41 tests).
-3. **Frontend** : le lint des fichiers modifiés passe. Le typecheck global est déjà cassé
-   avant CAT-03 (`frontend/libs/util/src/index.ts` exporte `./lib/cookie.factory`, absent ;
-   `product-card.component.ts` importe `@bruny/util/lib/money`, non résolu par
-   `tsconfig.app.json`) — aucune erreur dans les fichiers CAT-03. `nx build storefront`
-   refuse de démarrer : Angular CLI exige Node ≥ 24.15.0, l'environnement fournit 24.11.0.
-4. **Liste CAT-01** : `GET /products` expose encore le stock brut. L'alignement appartient à
-   CAT-02, absent du dépôt (voir `docs/backend/catalog.md`, limites connues).
+- Clé : `catalog:products:detail:{slug}:v1`, distincte de `catalog:products:list:*` / `facets:*`.
+- TTL : `CACHE_PRODUCT_DETAIL_TTL_SECONDS` (défaut 300 s).
+- Invalidation : `invalidateProducts()` (SCAN `catalog:products:*`), couverte par le e2e
+  « cache puis invalidation ».
+- Les 404 ne sont jamais mis en cache.
+
+## Points d’alignement avec le prompt
+
+- Route publique `GET /api/v1/products/:slug`, `@Throttle` 100/min/IP, déclarée après
+  `GET /products` (non-régression e2e).
+- Slug validé par `ProductSlugParamDto` (`@Matches` kebab-case).
+- Prix : `variant.price` override > promo produit active > `basePrice`, source unique
+  `backend/src/common/pricing/product-pricing.ts` (partagée avec CRT-01).
+- Groupements `colors` et `sizes` calculés côté serveur ; images spécifiques + communes.
+- `.env.example` et validation Joi : `CACHE_PRODUCT_DETAIL_TTL_SECONDS=300`,
+  `SIMILAR_PRODUCTS_LIMIT=6`.
+- Swagger et `openapi.json` régénérés (18 paths, `products/{slug}` présent).
+
+## Limites connues (hors périmètre CAT-03)
+
+- La liste `GET /products` de cette branche (antérieure à CAT-02) sérialise encore les lignes
+  Prisma avec le stock brut ; l’alignement liste est traité par CAT-02, absent de cette
+  branche. La fiche détail CAT-03 n’expose jamais le stock brut.
+- `reservedStock` n’est pas encore alimenté par un job de réservation : il vaut 0 par défaut ;
+  la formule `stock - reservedStock` deviendra exacte sans changement de code.

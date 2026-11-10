@@ -344,12 +344,35 @@ describe('ProductDetailService — produits similaires (CA #3)', () => {
           categoryId: 'c1',
           status: 'PUBLISHED',
           deletedAt: null,
-          basePrice: { gte: 15000, lte: 45000 },
+          OR: expect.arrayContaining([
+            { basePrice: { gte: 15000, lte: 45000 } },
+            { promoPrice: { not: null, gte: 15000, lte: 45000 } },
+          ]),
         }),
         take: 12,
       }),
     );
     expect(detail.similarProducts.map((item) => item.slug)).toEqual(['sneakers-3', 'sneakers-2']);
+  });
+
+  it('inclut un produit dont seule la promo active entre dans la fenêtre de prix', async () => {
+    const { service, prisma } = makeService();
+    prisma.product.findFirst.mockResolvedValue(product());
+    prisma.product.findMany.mockResolvedValue([
+      product({
+        id: 'p-promo',
+        slug: 'sneakers-promo',
+        basePrice: 90000,
+        promoPrice: 30000,
+        promoStart: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        promoEnd: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      }),
+    ]);
+
+    const detail = await service.getProductDetail('sneakers-urbanstep-air');
+
+    expect(detail.similarProducts.map((item) => item.slug)).toEqual(['sneakers-promo']);
+    expect(detail.similarProducts[0]?.effectivePrice).toBe(30000);
   });
 
   it('bascule sur la catégorie sans contrainte de prix quand la fenêtre est vide', async () => {
