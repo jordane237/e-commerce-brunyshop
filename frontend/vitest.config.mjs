@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@bruny/util': join(root, 'libs/util/src/index.ts'),
+      '@bruny/core': join(root, 'libs/core/src/index.ts'),
       '@bruny/data-access': join(root, 'libs/data-access/src/index.ts'),
       '@bruny/ui': join(root, 'libs/ui/src/index.ts'),
     },

@@ -1,14 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  AuthChallenge,
-  PublicConfigService,
-  SessionService,
-  TwoFactorSetup,
-} from '@bruny/data-access';
+import { PublicConfigService } from '@bruny/data-access';
+import { AuthChallenge, AuthService, readApiErrorMessage, TwoFactorSetup } from '@bruny/core';
 import { CaptchaComponent } from '@bruny/ui';
-import { errorMessage } from '../../core/http';
 
 @Component({
   standalone: true,
@@ -205,11 +200,11 @@ import { errorMessage } from '../../core/http';
 })
 export class LoginPage implements OnInit {
   private readonly fb = inject(FormBuilder).nonNullable;
-  private readonly session = inject(SessionService);
+  private readonly auth = inject(AuthService);
   private readonly publicConfig = inject(PublicConfigService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  readonly errorMessage = errorMessage;
+  readonly errorMessage = signal('');
   readonly busy = signal(false);
   readonly challenge = signal<AuthChallenge | null>(null);
   readonly setup = signal<TwoFactorSetup | null>(null);
@@ -257,7 +252,7 @@ export class LoginPage implements OnInit {
     this.busy.set(true);
     this.errorMessage.set('');
     const { identifier, password, turnstileToken } = this.form.getRawValue();
-    this.session
+    this.auth
       .login({
         identifier,
         password,
@@ -271,7 +266,7 @@ export class LoginPage implements OnInit {
           }
           this.challenge.set(result);
           if (result.setupRequired) {
-            this.session.setupTwoFactor(result.challengeToken).subscribe({
+            this.auth.setupTwoFactor(result.challengeToken).subscribe({
               next: (setup) => {
                 this.setup.set(setup);
                 this.busy.set(false);
@@ -280,7 +275,10 @@ export class LoginPage implements OnInit {
             });
           } else this.busy.set(false);
         },
-        error: () => {
+        error: (error: unknown) => {
+          this.errorMessage.set(
+            readApiErrorMessage(error, 'Connexion impossible. Vérifiez votre réseau et réessayez.'),
+          );
           this.busy.set(false);
           this.resetCaptcha();
         },
@@ -292,7 +290,7 @@ export class LoginPage implements OnInit {
     const code = this.codeForm.controls.code.value;
     if (!challenge || this.codeForm.invalid) return;
     this.busy.set(true);
-    this.session.verifyTwoFactor(challenge.challengeToken, code).subscribe({
+    this.auth.verifyTwoFactor(challenge.challengeToken, code).subscribe({
       next: () => this.completeLogin(),
       error: () => this.busy.set(false),
     });

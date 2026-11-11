@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CatalogApi, CatalogProduct, ProductPage } from '@bruny/data-access';
+import { readApiErrorMessage } from '@bruny/core';
 import { FcfaPipe } from '@bruny/util';
-import { errorMessage } from '../../core/http';
 
 @Component({
   standalone: true,
@@ -168,7 +168,7 @@ import { errorMessage } from '../../core/http';
 })
 export class ProductsPage implements OnInit {
   private readonly api = inject(CatalogApi);
-  readonly errorMessage = errorMessage;
+  readonly errorMessage = signal('');
   readonly result = signal<ProductPage | null>(null);
   readonly loading = signal(true);
   readonly page = signal(1);
@@ -187,7 +187,10 @@ export class ProductsPage implements OnInit {
         this.errorMessage.set('');
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (error: unknown) => {
+        this.errorMessage.set(readApiErrorMessage(error, 'Impossible de charger les produits.'));
+        this.loading.set(false);
+      },
     });
   }
 

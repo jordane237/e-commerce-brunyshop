@@ -33,7 +33,7 @@ Le dossier généré est déjà exclu d'ESLint (`ignores: ['**/generated/**']` d
 | `frontend/libs/data-access/src/generated/api-types.ts` | Sortie du générateur, **versionnée**, ne jamais modifier à la main |
 | `frontend/libs/data-access/src/lib/api-contracts.ts` | Noms stables des DTO générés (`LoginDto`, `RegisterDto`…) |
 | `frontend/libs/data-access/src/lib/catalog-api.ts` | Services catalogue écrits à la main ; l'enum de tri `ProductSort` vient du contrat généré |
-| `frontend/libs/data-access/src/lib/session.service.ts` | Session admin, consomme `LoginDto` généré |
+| `frontend/libs/core/src/lib/auth/auth.service.ts` | Session et authentification admin, consomme `LoginDto` généré |
 
 ## Procédure
 
@@ -67,8 +67,10 @@ même PR** que le changement backend, sinon le job CI `api-client` bloque la PR.
 
 ```ts
 import { inject } from '@angular/core';
-import { LoginDto, SessionService } from '@bruny/data-access';
+import { LoginDto } from '@bruny/data-access';
+import { AuthService, SessionService } from '@bruny/core';
 
+const auth = inject(AuthService);
 const session = inject(SessionService);
 session.login({ identifier: 'admin@exemple.cm', password: '…' } satisfies LoginDto);
 ```
