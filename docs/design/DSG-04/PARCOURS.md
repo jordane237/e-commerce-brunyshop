@@ -106,7 +106,7 @@ Si le `cartFingerprint` ne correspond plus au panier actuel, le brouillon d'adre
 | Zone | Frais | Délai affiché |
 | --- | --- | --- |
 | Douala | 1 500 FCFA | Express 24 h |
-| Yaoundé | 2 000 FCFA | 24 à 48 h |
+| Yaoundé | 3 000 FCFA | 24 à 48 h |
 | Autres villes | Sur devis WhatsApp | Non promis |
 
 - **Livraison offerte dès 2 paires** : `shippingFee = 0`, mention « Offerte ».

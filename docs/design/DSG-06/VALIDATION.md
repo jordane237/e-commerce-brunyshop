@@ -4,6 +4,8 @@
 
 **Brouillon à signer.** Aucune signature ne doit être ajoutée avant la revue complète des 21 specs. La signature vaut validation du **design et des parcours**, pas validation de l’implémentation backend.
 
+**Après DSG-07** : la checklist reste valable, mais la signature est toujours attendue. Voir [`../DSG-07/DESIGN-FREEZE.md`](../DSG-07/DESIGN-FREEZE.md) et [`../DSG-07/AUDIT-ACCESSIBILITE.md`](../DSG-07/AUDIT-ACCESSIBILITE.md).
+
 ## Périmètre validé
 
 | Groupe | Écrans | Specs |

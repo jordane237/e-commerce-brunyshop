@@ -3,6 +3,8 @@
 > Ticket de **conception uniquement**. Aucun code applicatif n'est produit ici.
 > Branche : `feature/DSG-04-checkout-tracking-design`.
 
+> **Revue DSG-07 (11 novembre 2026)** : audit WCAG, cohérence et gel disponibles dans [`../DSG-07/`](../DSG-07/README.md). Le tarif Yaoundé est aligné à 3 000 FCFA. La validation reste **non signée**.
+
 ---
 
 ## 1. Contenu

@@ -9,6 +9,7 @@
 - Source visuelle : `design1/bruny shopping/bruny shopping.png`, zone L
 - Référence de conception : mobile 360 px d’abord, desktop 1280 px ensuite
 - Validation : `VALIDATION.md`, **non signé**
+- Revue DSG-07 : audit WCAG, cohérence et gel dans [`../DSG-07/`](../DSG-07/README.md)
 
 ## Les 21 specs
 

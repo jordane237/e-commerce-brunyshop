@@ -155,7 +155,7 @@ Valeurs de référence du seed : Douala Centre 1 500 / 1 j ; Douala Périphérie
 
 | Constat | Décision |
 | --- | --- |
-| DSG-04 affiche Yaoundé à 2 000 FCFA | Incohérence : le seed dit 3 000. **Aligner DSG-04 sur le seed.** |
+| DSG-04 affichait Yaoundé à 2 000 FCFA | **Résolu par DSG-07** : DSG-04 et DSG-05 sont alignés sur le seed à 3 000 FCFA. |
 | Aucune page livraison dans la planche | Conçue |
 | Délais non modélisés par commune | Délai par zone uniquement |
 | Livraison gratuite évoquée ailleurs | Non retenue : aucun seuil défini |

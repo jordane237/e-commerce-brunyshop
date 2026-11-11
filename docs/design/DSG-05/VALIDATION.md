@@ -2,6 +2,8 @@
 
 > **Document signable.** La signature vaut autorisation de passer à l'implémentation. Sans signature, aucune story d'implémentation ne doit être lancée.
 
+> **Après DSG-07** : la checklist reste valable, mais la signature est toujours attendue. Voir [`../DSG-07/DESIGN-FREEZE.md`](../DSG-07/DESIGN-FREEZE.md) et [`../DSG-07/AUDIT-ACCESSIBILITE.md`](../DSG-07/AUDIT-ACCESSIBILITE.md).
+
 ---
 
 ## 1. Périmètre soumis
@@ -140,7 +142,7 @@ Chaque ligne doit être cochée pour **tous** les écrans :
 | 7 | Numéro WhatsApp support | À fournir et configurer | Exploitation |
 | 8 | Identité légale (`legal.ts`) | À fournir avant publication | Juridique |
 | 9 | CAPTCHA | Inactif tant que non disponible | Backend |
-| 10 | DSG-04 affiche Yaoundé à 2 000 FCFA | Aligner sur 3 000 | Design |
+| 10 | DSG-04 affichait Yaoundé à 2 000 FCFA | **Résolu par DSG-07** : aligné sur 3 000 FCFA | Design |
 
 ---
 

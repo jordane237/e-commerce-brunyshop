@@ -4,6 +4,8 @@
 > **La signature est bloquante** : aucun développement du tunnel P08–P13 ne démarre avant validation.
 > Cocher chaque ligne, ajouter un commentaire si nécessaire, puis signer en fin de document.
 
+> **Après DSG-07** : la checklist reste valable, mais la signature est toujours attendue. Voir [`../DSG-07/DESIGN-FREEZE.md`](../DSG-07/DESIGN-FREEZE.md) et [`../DSG-07/AUDIT-ACCESSIBILITE.md`](../DSG-07/AUDIT-ACCESSIBILITE.md).
+
 ---
 
 ## 1. Périmètre et méthode
@@ -39,7 +41,7 @@
 | --- | --- | --- | --- |
 | 3.1 | Champs obligatoires : nom, téléphone, ville, quartier, point de repère, créneau | ☐ | |
 | 3.2 | Téléphone : 9 chiffres, commence par 6, préfixe `+237` non éditable | ☐ | |
-| 3.3 | Zones : Douala (1 500 FCFA, 24 h), Yaoundé (2 000 FCFA, 24–48 h), autres sur devis | ☐ | |
+| 3.3 | Zones : Douala (1 500 FCFA, 24 h), Yaoundé (3 000 FCFA, 24–48 h), autres sur devis | ☐ | |
 | 3.4 | Livraison offerte dès 2 paires | ☐ | |
 | 3.5 | Le créneau est une **préférence**, jamais une garantie | ☐ | |
 | 3.6 | Paiement MVP : **COD uniquement** ; Mobile Money affiché désactivé « Bientôt disponible » | ☐ | |

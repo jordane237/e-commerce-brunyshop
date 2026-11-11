@@ -3,6 +3,8 @@
 > Spécifications de design pour les écrans **P14 à P27e**.
 > Ticket **design uniquement** : aucun composant Angular, aucun endpoint backend, aucune migration.
 
+> **Revue DSG-07 (11 novembre 2026)** : audit WCAG, cohérence et gel disponibles dans [`../DSG-07/`](../DSG-07/README.md). Le conflit tarifaire Yaoundé est résolu à 3 000 FCFA. La validation reste **non signée**.
+
 ---
 
 ## 1. Contenu du dossier
