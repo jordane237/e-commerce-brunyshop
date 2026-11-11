@@ -3,7 +3,7 @@
 ## Mesures présentes
 
 - Validation des variables d’environnement avant le démarrage, validation stricte des DTO, Helmet, liste blanche CORS, cookies HttpOnly et limitation de taille du corps.
-- Garde JWT globale avec routes publiques explicites, contrôle des rôles, rate limiting Redis et mots de passe Argon2id.
+- Garde JWT globale avec routes publiques explicites et refus par défaut, contrôle des rôles (`@Roles`), rate limiting Redis et mots de passe Argon2id. Les erreurs d’authentification distinguent `UNAUTHORIZED`, `INVALID_TOKEN` et `TOKEN_EXPIRED` ; voir [`backend/rbac.md`](backend/rbac.md).
 - Refresh tokens opaques hachés en base, rotation et détection de réutilisation; jetons d’accès gardés en mémoire côté Angular.
 - Journaux structurés avec masquage des champs sensibles; erreurs HTTP uniformisées sans détails internes en production.
 - Suppression logique de plusieurs entités et audit transactionnel de la création de produit.

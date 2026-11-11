@@ -828,7 +828,7 @@
             "description": "Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, DUPLICATE_VARIANT, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND)."
           },
           "401": {
-            "description": "Token invalide ou absent (UNAUTHENTICATED)."
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
           },
           "403": {
             "description": "Rôle insuffisant (FORBIDDEN)."
@@ -1123,7 +1123,7 @@
             "description": "Body vide, tableau vide, doublon EU ou entrée invalide (VALIDATION_ERROR)."
           },
           "401": {
-            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
           },
           "403": {
             "description": "Rôle insuffisant (FORBIDDEN)."
@@ -1237,6 +1237,12 @@
         "responses": {
           "200": {
             "description": "Liste paginée des jobs en échec"
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN)."
           }
         },
         "security": [
@@ -1264,6 +1270,12 @@
         "responses": {
           "200": {
             "description": "Detail de la notification"
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN)."
           }
         },
         "security": [
@@ -1305,7 +1317,7 @@
             "description": "Type MIME, taille, quota d’images ou clé invalides (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, MAX_IMAGES_REACHED)."
           },
           "401": {
-            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
           },
           "403": {
             "description": "Rôle insuffisant (FORBIDDEN)."
@@ -1356,7 +1368,7 @@
             "description": "Fichier refusé (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, INVALID_IMAGE, MAX_IMAGES_REACHED, INVALID_MEDIA_KEY)."
           },
           "401": {
-            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
           },
           "403": {
             "description": "Rôle insuffisant (FORBIDDEN)."
@@ -1394,7 +1406,7 @@
             "description": "Image supprimée."
           },
           "401": {
-            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
           },
           "403": {
             "description": "Rôle insuffisant (FORBIDDEN)."
@@ -1442,7 +1454,7 @@
             "description": "Ordre invalide ou image étrangère au produit (INVALID_IMAGE_ORDER)."
           },
           "401": {
-            "description": "Token absent ou invalide (UNAUTHENTICATED)."
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
           },
           "403": {
             "description": "Rôle insuffisant (FORBIDDEN)."

@@ -300,7 +300,7 @@ describe('Notifications NTF-01 (pipeline + admin)', () => {
     const anonymous = await request(app.getHttpServer())
       .get(`${baseUrl}/admin/notifications/${notificationId}`)
       .expect(401);
-    expect(anonymous.body.code).toBe('UNAUTHENTICATED');
+    expect(anonymous.body.code).toBe('UNAUTHORIZED');
 
     const forbidden = await request(app.getHttpServer())
       .get(`${baseUrl}/admin/notifications/${notificationId}`)

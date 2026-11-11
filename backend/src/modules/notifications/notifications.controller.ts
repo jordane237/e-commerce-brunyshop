@@ -13,7 +13,14 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+} from '@nestjs/swagger';
 import {
   NotificationsService,
   type DeadLetterJob,
@@ -31,6 +38,12 @@ export class NotificationsController {
   @Get('dead-letters')
   @ApiOperation({ summary: 'Liste paginée des tâches en dead-letter' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Liste paginée des jobs en échec' })
+  @ApiUnauthorizedResponse({
+    description: 'Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED).',
+  })
+  @ApiForbiddenResponse({
+    description: 'Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN).',
+  })
   async listDeadLetters(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
@@ -60,6 +73,12 @@ export class NotificationsController {
   @Get(':id')
   @ApiOperation({ summary: 'Detail dune notification' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Detail de la notification' })
+  @ApiUnauthorizedResponse({
+    description: 'Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED).',
+  })
+  @ApiForbiddenResponse({
+    description: 'Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN).',
+  })
   async getNotification(@Param('id', ParseUUIDPipe) id: string): Promise<Notification> {
     const notification = await this.notifications.findOne(id);
     if (notification === null) {

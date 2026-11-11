@@ -53,7 +53,9 @@ export class AdminSizeGuidesController {
     description: 'Body vide, tableau vide, doublon EU ou entrée invalide (VALIDATION_ERROR).',
   })
   @ApiNotFoundResponse({ description: 'Guide introuvable (SIZE_GUIDE_NOT_FOUND).' })
-  @ApiUnauthorizedResponse({ description: 'Token absent ou invalide (UNAUTHENTICATED).' })
+  @ApiUnauthorizedResponse({
+    description: 'Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED).',
+  })
   @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
   @ApiTooManyRequestsResponse({ description: 'Plus de 30 mises à jour par minute.' })
   async update(

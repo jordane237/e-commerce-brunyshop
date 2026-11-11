@@ -81,7 +81,9 @@ export class AdminProductsController {
     description: 'Slug ou SKU déjà utilisé (SLUG_ALREADY_EXISTS, SKU_ALREADY_EXISTS).',
   })
   @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
-  @ApiUnauthorizedResponse({ description: 'Token invalide ou absent (UNAUTHENTICATED).' })
+  @ApiUnauthorizedResponse({
+    description: 'Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED).',
+  })
   @ApiTooManyRequestsResponse({
     description: 'Plus de 60 requêtes en 60 secondes (RATE_LIMIT_EXCEEDED).',
   })

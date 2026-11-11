@@ -52,14 +52,15 @@ export class JwtAuthGuard implements CanActivate {
     const header = request.headers.authorization;
     const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
     if (!token) {
-      throw new UnauthorizedException({ code: 'UNAUTHENTICATED' });
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED' });
     }
 
     let payload: AccessTokenPayload;
     try {
       payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token);
-    } catch {
-      throw new UnauthorizedException({ code: 'INVALID_TOKEN' });
+    } catch (error) {
+      const expired = error instanceof Error && error.name === 'TokenExpiredError';
+      throw new UnauthorizedException({ code: expired ? 'TOKEN_EXPIRED' : 'INVALID_TOKEN' });
     }
     if (payload.typ !== 'access') {
       throw new UnauthorizedException({ code: 'INVALID_TOKEN' });

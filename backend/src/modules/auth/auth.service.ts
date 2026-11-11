@@ -484,7 +484,7 @@ export class AuthService {
       include: { roles: { include: { role: true } } },
     });
     if (!user) {
-      throw new UnauthorizedException({ code: 'UNAUTHENTICATED' });
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED' });
     }
     return this.toProfile(
       user,

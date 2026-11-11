@@ -63,7 +63,9 @@ export class AdminMediaController {
       'Type MIME, taille, quota d’images ou clé invalides (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, MAX_IMAGES_REACHED).',
   })
   @ApiNotFoundResponse({ description: 'Produit introuvable (PRODUCT_NOT_FOUND).' })
-  @ApiUnauthorizedResponse({ description: 'Token absent ou invalide (UNAUTHENTICATED).' })
+  @ApiUnauthorizedResponse({
+    description: 'Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED).',
+  })
   @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
   @ApiTooManyRequestsResponse({
     description: 'Plus de 30 presigns en 60 secondes (RATE_LIMIT_EXCEEDED).',
@@ -92,7 +94,9 @@ export class AdminMediaController {
   @ApiNotFoundResponse({
     description: 'Produit ou fichier téléversé introuvable (PRODUCT_NOT_FOUND, MEDIA_NOT_FOUND).',
   })
-  @ApiUnauthorizedResponse({ description: 'Token absent ou invalide (UNAUTHENTICATED).' })
+  @ApiUnauthorizedResponse({
+    description: 'Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED).',
+  })
   @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
   async confirm(
     @Body() dto: ConfirmUploadDto,
@@ -113,7 +117,9 @@ export class AdminMediaController {
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiNoContentResponse({ description: 'Image supprimée.' })
   @ApiNotFoundResponse({ description: 'Image introuvable (IMAGE_NOT_FOUND).' })
-  @ApiUnauthorizedResponse({ description: 'Token absent ou invalide (UNAUTHENTICATED).' })
+  @ApiUnauthorizedResponse({
+    description: 'Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED).',
+  })
   @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
   async deleteImage(
     @Param('id', ParseUUIDPipe) id: string,
@@ -136,7 +142,9 @@ export class AdminMediaController {
     description: 'Ordre invalide ou image étrangère au produit (INVALID_IMAGE_ORDER).',
   })
   @ApiNotFoundResponse({ description: 'Produit introuvable (PRODUCT_NOT_FOUND).' })
-  @ApiUnauthorizedResponse({ description: 'Token absent ou invalide (UNAUTHENTICATED).' })
+  @ApiUnauthorizedResponse({
+    description: 'Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED).',
+  })
   @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
   async reorder(
     @Body() dto: ReorderImagesDto,
