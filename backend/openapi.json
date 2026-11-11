@@ -1181,6 +1181,49 @@
         "tags": ["cart"]
       }
     },
+    "/api/v1/orders": {
+      "post": {
+        "description": "Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.",
+        "operationId": "OrdersController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Commande créée, stock décrémenté et mouvement de stock enregistré",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body invalide, guest incomplet, coupon ou zone invalides"
+          },
+          "404": {
+            "description": "Variante ou produit introuvable"
+          },
+          "409": {
+            "description": "Stock insuffisant ou clé d’idempotence en conflit"
+          },
+          "429": {
+            "description": "Trop de requêtes (20/min/IP)"
+          }
+        },
+        "summary": "Créer une commande et décrémenter le stock atomiquement",
+        "tags": ["orders"]
+      }
+    },
     "/api/v1/admin/notifications/dead-letters": {
       "get": {
         "operationId": "NotificationsController_listDeadLetters_v1",
@@ -3085,6 +3128,157 @@
           }
         },
         "required": ["valid", "items", "subtotal", "discount", "total", "issues", "meta"]
+      },
+      "CreateOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "description": "Identifiant de la variante choisie"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Quantité commandée"
+          }
+        },
+        "required": ["variantId", "quantity"]
+      },
+      "AddressSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "recipientName": {
+            "type": "string",
+            "description": "Nom du destinataire",
+            "maxLength": 150
+          },
+          "phone": {
+            "type": "string",
+            "description": "Téléphone du destinataire (+237XXXXXXXXX)"
+          },
+          "city": {
+            "type": "string",
+            "description": "Ville de livraison",
+            "maxLength": 100
+          },
+          "district": {
+            "type": "string",
+            "description": "Quartier de livraison",
+            "maxLength": 100
+          },
+          "line": {
+            "type": "string",
+            "description": "Adresse ou rue",
+            "maxLength": 200
+          },
+          "landmark": {
+            "type": "string",
+            "description": "Point de repère",
+            "maxLength": 200
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Instructions de livraison",
+            "maxLength": 300
+          }
+        },
+        "required": ["recipientName", "phone", "city", "district", "line"]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Lignes de la commande (1 à 50)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateOrderItemDto"
+            }
+          },
+          "couponCode": {
+            "type": "string",
+            "description": "Code promo à appliquer",
+            "maxLength": 64
+          },
+          "guestName": {
+            "type": "string",
+            "description": "Nom du client invité",
+            "maxLength": 150
+          },
+          "guestPhone": {
+            "type": "string",
+            "description": "Téléphone du client invité (+237XXXXXXXXX)"
+          },
+          "address": {
+            "$ref": "#/components/schemas/AddressSnapshotDto"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": ["COD", "MOBILE_MONEY", "CARD"],
+            "description": "Moyen de paiement. Seul COD est disponible dans le MVP."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "description": "Clé d’idempotence contre les doubles soumissions"
+          }
+        },
+        "required": ["items", "address", "paymentMethod"]
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "example": "BRN-2611-7K3F"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING_CONFIRMATION"]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": ["PENDING"]
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": ["COD", "MOBILE_MONEY", "CARD"]
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Sous-total (XAF)"
+          },
+          "discount": {
+            "type": "number",
+            "description": "Remise (XAF)"
+          },
+          "shippingFee": {
+            "type": "number",
+            "description": "Frais de livraison (XAF)"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total à payer (XAF)"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-11T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "paymentStatus",
+          "paymentMethod",
+          "subtotal",
+          "discount",
+          "shippingFee",
+          "total",
+          "createdAt"
+        ]
       },
       "PresignUploadDto": {
         "type": "object",

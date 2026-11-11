@@ -619,8 +619,9 @@ model StockMovement {
   delta     Int
   reason    StockMovementReason
   orderId   String?
-  // Author of the movement (manual adjustments always carry a user).
-  userId    String
+  // Author of the movement. Nullable for guest checkout: the order carries
+  // the customer identity, while the movement keeps orderId for traceability.
+  userId    String?
   // Stock levels before/after the movement (RG-STK-05 traceability).
   before    Int
   after     Int
@@ -628,7 +629,7 @@ model StockMovement {
   updatedAt DateTime            @updatedAt
 
   variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  user    User           @relation(fields: [userId], references: [id])
+  user    User?          @relation(fields: [userId], references: [id])
 
   @@index([variantId])
   @@index([orderId])

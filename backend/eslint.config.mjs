@@ -137,6 +137,24 @@ export default tseslint.config(
       ],
     },
   },
+  // Exception : orders compose les modules cart (recalcul des prix/validation)
+  // et inventory (décrément atomique) via leurs services NestJS exportés.
+  {
+    files: ['src/modules/orders/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: crossModulePatterns(['cart', 'inventory']),
+              message: CROSS_MODULE_MESSAGE,
+            },
+          ],
+        },
+      ],
+    },
+  },
   // CLI scripts (seed) print to stdout by design; no-console does not apply.
   // Seeds : cycle d'import via seed.ts orchestrateur — règle locale.
   ...seedConfigForScript,

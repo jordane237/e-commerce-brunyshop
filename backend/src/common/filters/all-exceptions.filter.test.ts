@@ -211,6 +211,40 @@ describe('AllExceptionsFilter', () => {
     expect(fallback.body?.requestId).toBe('unknown');
   });
 
+  it('préserve les détails métier structurés fournis dans errors', () => {
+    const filter = new AllExceptionsFilter(configFor('development'));
+    const exception = new HttpException(
+      {
+        statusCode: 409,
+        code: 'INSUFFICIENT_STOCK',
+        message: 'Stock insuffisant : 1 disponible(s), 2 demandé(s).',
+        errors: [
+          {
+            field: 'items',
+            message: 'Stock insuffisant : 1 disponible(s), 2 demandé(s).',
+            variantId: 'variant-1',
+            requestedQuantity: 2,
+            availableQuantity: 1,
+          },
+        ],
+      },
+      409,
+    );
+
+    const { body } = catchWith(filter, exception, { url: '/api/v1/orders', headers: {} });
+
+    expect(body?.code).toBe('INSUFFICIENT_STOCK');
+    expect(body?.errors).toEqual([
+      {
+        field: 'items',
+        message: 'Stock insuffisant : 1 disponible(s), 2 demandé(s).',
+        variantId: 'variant-1',
+        requestedQuantity: 2,
+        availableQuantity: 1,
+      },
+    ]);
+  });
+
   it("ne remonte jamais la stack d'exception dans le corps", () => {
     const failure = new TypeError("undefined n'est pas une fonction");
 
