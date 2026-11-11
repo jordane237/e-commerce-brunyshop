@@ -14,7 +14,13 @@ const depConstraints = [
   // Une feature ne dépend QUE de couches infra (jamais d'une autre feature).
   {
     sourceTag: 'type:feature',
-    onlyDependOnLibsWithTags: ['type:ui', 'type:util', 'type:data-access', 'type:styles'],
+    onlyDependOnLibsWithTags: [
+      'type:ui',
+      'type:util',
+      'type:data-access',
+      'type:core',
+      'type:styles',
+    ],
   },
   // Une app ne dépend pas d'une autre app (isolation admin <-> storefront).
   {
@@ -23,6 +29,7 @@ const depConstraints = [
       'type:ui',
       'type:util',
       'type:data-access',
+      'type:core',
       'type:styles',
       'type:feature',
     ],
@@ -31,6 +38,11 @@ const depConstraints = [
   {
     sourceTag: 'type:ui',
     onlyDependOnLibsWithTags: ['type:ui', 'type:util', 'type:data-access', 'type:styles'],
+  },
+  // core orchestre session/guards/intercepteurs au-dessus de data-access.
+  {
+    sourceTag: 'type:core',
+    onlyDependOnLibsWithTags: ['type:core', 'type:data-access', 'type:util'],
   },
   // data-access importe uniquement util (effectiveProductPrice).
   { sourceTag: 'type:data-access', onlyDependOnLibsWithTags: ['type:data-access', 'type:util'] },

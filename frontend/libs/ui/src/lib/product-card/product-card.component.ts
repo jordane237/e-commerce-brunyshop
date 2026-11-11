@@ -2,7 +2,6 @@ import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { CatalogProduct } from '@bruny/data-access';
-import { effectiveProductPrice } from '@bruny/util';
 import { BadgeComponent } from '../badge/badge.component';
 import { ButtonComponent } from '../button/button.component';
 import { IconComponent } from '../icon/icon.component';
@@ -36,7 +35,8 @@ export class ProductCardComponent {
   @Output() favoriteChange = new EventEmitter<boolean>();
 
   get price(): number {
-    return effectiveProductPrice(this.product);
+    // Prix calculé côté serveur (promo active ou prix de base).
+    return this.product.effectivePrice;
   }
 
   get compareAt(): number | null {
@@ -58,7 +58,7 @@ export class ProductCardComponent {
 
   get availableSizes(): string[] {
     const sizes = this.product.variants
-      .filter((variant) => variant.stock > 0)
+      .filter((variant) => variant.isAvailable)
       .map((variant) => variant.size);
     return [...new Set(sizes)].sort((a, b) => Number(a) - Number(b));
   }

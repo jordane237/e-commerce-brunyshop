@@ -28,14 +28,16 @@ import {
 } from '../src/generated/prisma/client';
 
 // Prisma 7 ne charge pas .env automatiquement : on le charge manuellement
-// (voir prisma.config.mjs, docs/prisma-7-env).
-if (existsSync('.env')) process.loadEnvFile('.env');
-else if (existsSync('../.env')) process.loadEnvFile('../.env');
+// (voir prisma.config.mjs, docs/prisma-7-env). Même priorité que l'API
+// (ConfigModule envFilePath ['../.env', '.env']).
+if (existsSync('../.env')) process.loadEnvFile('../.env');
+else if (existsSync('.env')) process.loadEnvFile('.env');
 
 export interface SeedCounts {
   roles: number;
   users: number;
   categories: number;
+  sizeGuides: number;
   brands: number;
   products: number;
   variants: number;
@@ -54,6 +56,10 @@ async function seedUsers(prisma: GeneratedPrismaClient): Promise<void> {
 
 async function seedCategories(prisma: GeneratedPrismaClient): Promise<void> {
   await import('./seeds/categories.seed').then((m) => m.seedCategories(prisma));
+}
+
+async function seedSizeGuides(prisma: GeneratedPrismaClient): Promise<void> {
+  await import('./seeds/size-guides.seed').then((m) => m.seedSizeGuides(prisma));
 }
 
 async function seedBrands(prisma: GeneratedPrismaClient): Promise<void> {
@@ -100,6 +106,7 @@ async function main(): Promise<SeedCounts> {
     await seedRoles(prisma);
     await seedUsers(prisma);
     await seedCategories(prisma);
+    await seedSizeGuides(prisma);
     await seedBrands(prisma);
     await seedProducts(prisma);
     await seedDeliveryZones(prisma);
@@ -109,6 +116,7 @@ async function main(): Promise<SeedCounts> {
       roles: await prisma.role.count(),
       users: await prisma.user.count(),
       categories: await prisma.category.count(),
+      sizeGuides: await prisma.sizeGuide.count(),
       brands: await prisma.brand.count(),
       products: await prisma.product.count(),
       variants: await prisma.productVariant.count(),
@@ -125,7 +133,9 @@ main()
   .then((counts) => {
     console.log('✅ Seed terminé avec succès :');
     console.log(`   rôles=${counts.roles}  utilisateurs=${counts.users}`);
-    console.log(`   catégories=${counts.categories}  marques=${counts.brands}`);
+    console.log(
+      `   catégories=${counts.categories}  guides=${counts.sizeGuides}  marques=${counts.brands}`,
+    );
     console.log(`   produits=${counts.products}  variantes=${counts.variants}`);
     console.log(`   images=${counts.images}  zones=${counts.zones}  settings=${counts.settings}`);
     process.exit(0);

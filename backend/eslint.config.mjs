@@ -19,6 +19,7 @@ const MODULES = [
   'catalog',
   'health',
   'inventory',
+  'media',
   'notifications',
   'orders',
   'payments',
@@ -117,6 +118,39 @@ export default tseslint.config(
         'error',
         {
           patterns: [{ group: crossModulePatterns(['audit']), message: CROSS_MODULE_MESSAGE }],
+        },
+      ],
+    },
+  },
+  // Exception : le module media dépend de catalog (invalidation du cache
+  // public) et d'audit (traçabilité), via leurs modules NestJS exportés.
+  {
+    files: ['src/modules/media/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: crossModulePatterns(['audit', 'catalog']), message: CROSS_MODULE_MESSAGE },
+          ],
+        },
+      ],
+    },
+  },
+  // Exception : orders compose les modules cart (recalcul des prix/validation)
+  // et inventory (décrément atomique) via leurs services NestJS exportés.
+  {
+    files: ['src/modules/orders/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: crossModulePatterns(['cart', 'inventory']),
+              message: CROSS_MODULE_MESSAGE,
+            },
+          ],
         },
       ],
     },

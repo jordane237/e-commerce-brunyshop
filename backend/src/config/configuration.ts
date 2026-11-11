@@ -1,5 +1,10 @@
 // Typed application configuration derived from validated environment variables.
+import {
+  readStorageSettings,
+  type StorageSettings,
+} from '../infrastructure/storage/storage.settings';
 import { Environment } from './env.validation';
+import { readTurnstileSettings, type TurnstileSettings } from './turnstile.settings';
 
 export interface AuthConfig {
   secret: string;
@@ -18,7 +23,15 @@ export interface ApplicationConfig {
   publicAdminUrl: string;
   corsOrigins: string[];
   throttle: { ttlSeconds: number; limit: number };
+  catalog: {
+    productDetailTtlSeconds: number;
+    productsListTtlSeconds: number;
+    sizeGuidesTtlSeconds: number;
+    similarProductsLimit: number;
+  };
+  storage: StorageSettings;
   auth: AuthConfig;
+  turnstile: TurnstileSettings;
   isProduction: boolean;
 }
 
@@ -41,6 +54,14 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
       ttlSeconds: Number(env['THROTTLE_TTL']),
       limit: Number(env['THROTTLE_LIMIT']),
     },
+    catalog: {
+      productDetailTtlSeconds: Number(env['CACHE_PRODUCT_DETAIL_TTL_SECONDS'] ?? 300),
+      productsListTtlSeconds: Number(env['CACHE_PRODUCTS_LIST_TTL_SECONDS'] ?? 60),
+      sizeGuidesTtlSeconds: Number(env['CACHE_SIZE_GUIDES_TTL_SECONDS'] ?? 1800),
+      similarProductsLimit: Number(env['SIMILAR_PRODUCTS_LIMIT'] ?? 6),
+    },
+    storage: readStorageSettings(env),
+    turnstile: readTurnstileSettings(env),
     auth: {
       // Cachier 10.2: access JWT 10-15 min, rotating refresh cookie.
       secret: String(env['JWT_ACCESS_SECRET']),

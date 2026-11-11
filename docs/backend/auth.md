@@ -41,7 +41,9 @@ Crée un compte client avec un e-mail **ou** un téléphone (+237). Le mot de pa
 | `TERMS_NOT_ACCEPTED` | 400 | `termsAccepted` vaut `false` |
 | `TERMS_VERSION_MISMATCH` | 400 | `termsVersion` différent de la version courante des CGV (cf. `Setting.terms.version`) |
 | `INVALID_CREDENTIALS` | 401 | (login) |
-| `ACCOUNT_EXISTS` | 409 | (login) |
+
+> **Pas de `409` à l'inscription** : un doublon d'e-mail ou de téléphone est traité
+> par la réponse neutre `201` décrite ci-dessous (anti-énumération de comptes).
 
 ---
 
@@ -60,7 +62,11 @@ Crée un compte client avec un e-mail **ou** un téléphone (+237). Le mot de pa
 }
 ```
 
-> **Règle de neutralité** : en cas de doublon (email ou téléphone déjà existant), la réponse RESTITUE EXACTEMENT la même structure, avec un `id` factice généré aléatoirement (`crypto.randomUUID()`), et le même message. Cela uniformise la réponse et empêche tout test de savoir si un compte existe.
+> **Règle de neutralité** : en cas de doublon (email ou téléphone déjà existant), la réponse RESTITUE EXACTEMENT la même structure, avec un `id` factice généré aléatoirement (`crypto.randomUUID()`), et le même message. Cela uniformise la réponse et empêche tout test de savoir si un compte existe. Chaque tentative est journalisée (`AuditLog`, action `USER_REGISTERED_DUPLICATE`).
+>
+> **Connexion** : `POST /auth/login` accepte un compte `PENDING_VERIFICATION`
+> (aucun parcours de vérification n'est encore livré) ; seuls les comptes
+> `SUSPENDED` et `DISABLED` sont refusés.
 
 ---
 

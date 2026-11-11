@@ -7,6 +7,7 @@ export interface AuditEvent {
   entity: string;
   entityId: string;
   ip?: string;
+  userAgent?: string;
   before?: Prisma.InputJsonValue;
   after?: Prisma.InputJsonValue;
 }
@@ -21,6 +22,7 @@ export class AuditLogService {
         entity: event.entity,
         entityId: event.entityId,
         ip: event.ip,
+        userAgent: event.userAgent,
         before: event.before,
         after: event.after,
       },

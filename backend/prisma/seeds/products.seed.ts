@@ -230,21 +230,6 @@ const PRODUCTS: ProductDef[] = [
 
 const SIZES = Array.from({ length: 11 }, (_, i) => String(i + 36)); // 36..46
 
-function colorIndex(color: string): number {
-  const map: Record<string, number> = {
-    NOIR: 0,
-    BLANC: 1,
-    ROUGE: 2,
-    BLEU: 3,
-    MARRON: 4,
-    VERT: 5,
-    ORANGE: 6,
-    ROSE: 7,
-    GRIS: 8,
-  };
-  return map[color] ?? 0;
-}
-
 function variantsFor(
   productSlug: string,
   brandSlug: string,
@@ -261,12 +246,12 @@ function variantsFor(
     size: string;
     stock: number;
   }[] = [];
-  for (let _colorIndex = 0; _colorIndex < colors.length; _colorIndex += 1) {
-    const [, color, _] = colors[_colorIndex];
+  for (let colorPosition = 0; colorPosition < colors.length; colorPosition += 1) {
+    const [, color] = colors[colorPosition]!;
     for (let sizeIndex = 0; sizeIndex < SIZES.length; sizeIndex += 1) {
-      const size = SIZES[sizeIndex];
-      // 14 - 2*colorIndex - (sizeIndex % 4) : plage 0..14, au moins 2 variantes à 0.
-      const stock = Math.max(0, 14 - colorIndex * 2 - (sizeIndex % 4));
+      const size = SIZES[sizeIndex]!;
+      // Stock 14..0 : au moins deux variantes à 0 par produit.
+      const stock = Math.max(0, 14 - colorPosition * 2 - (sizeIndex % 4));
       variants.push({
         sku: `${skuBrand(brandSlug)}-${skuProduct(productSlug)}-${size}-${color}`,
         color,

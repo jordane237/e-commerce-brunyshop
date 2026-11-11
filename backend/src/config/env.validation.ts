@@ -3,17 +3,24 @@
 import { plainToInstance } from 'class-transformer';
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
   Matches,
+  Max,
+  MaxLength,
   Min,
   MinLength,
   validateSync,
 } from 'class-validator';
 
+import { readTurnstileSettings } from './turnstile.settings';
+
 export enum Environment {
   Development = 'development',
+  Test = 'test',
   Staging = 'staging',
   Production = 'production',
 }
@@ -71,6 +78,32 @@ export class EnvVariables {
   @IsString()
   public COOKIE_DOMAIN?: string;
 
+  // --- Catalogue (CAT-03) ----------------------------------------------
+  // Product detail cache TTL in seconds (default 300 = 5 min).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  public CACHE_PRODUCT_DETAIL_TTL_SECONDS?: number;
+
+  // Catalogue list and facets cache TTL in seconds (default 60).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  public CACHE_PRODUCTS_LIST_TTL_SECONDS?: number;
+
+  // Size guides cache TTL in seconds (default 1800 = 30 min).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  public CACHE_SIZE_GUIDES_TTL_SECONDS?: number;
+
+  // Number of similar products returned on a product page (default 6).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  public SIMILAR_PRODUCTS_LIMIT?: number;
+
   // --- Seed (TEC-07) ---------------------------------------------------
   // Email and password of the development super admin (never hard-coded).
   @IsOptional()
@@ -98,7 +131,12 @@ export class EnvVariables {
   @IsString()
   public ALLOW_SEED_IN_PRODUCTION?: string;
 
-  // Storage (MinIO / S3)
+  // Storage (MinIO / S3 / local / fake).
+  @IsOptional()
+  @IsIn(['s3', 'local', 'fake', 'minio'])
+  public STORAGE_PROVIDER?: string;
+
+  // Legacy name kept for the existing docker-compose/.env files.
   @IsOptional()
   @IsString()
   public STORAGE_DRIVER?: string;
@@ -122,6 +160,48 @@ export class EnvVariables {
   @IsOptional()
   @IsString()
   public S3_SECRET_ACCESS_KEY?: string;
+
+  @IsOptional()
+  @IsIn(['true', 'false', '1', '0', 'yes', 'no'])
+  public S3_FORCE_PATH_STYLE?: string;
+
+  @IsOptional()
+  @IsString()
+  public MEDIA_BUCKET?: string;
+
+  @IsOptional()
+  @IsString()
+  public MEDIA_PUBLIC_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  public MEDIA_UPLOAD_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  public API_PUBLIC_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  public STORAGE_LOCAL_ROOT?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  public STORAGE_MAX_FILE_SIZE_MB?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(60)
+  @Max(900)
+  public STORAGE_PRESIGN_EXPIRES_SECONDS?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  public STORAGE_MAX_IMAGES_PER_PRODUCT?: number;
 
   // Mail
   @IsOptional()
@@ -183,6 +263,33 @@ export class EnvVariables {
   @IsOptional()
   @IsString()
   public SENTRY_DSN?: string;
+
+  // --- Cloudflare Turnstile (AUT-11) ----------------------------------
+  // Optional at schema level so development/test can boot without keys; the
+  // conditional requirement is enforced in validateEnv when CAPTCHA is active.
+  @IsOptional()
+  @IsIn(['true', 'false', '1', '0', 'yes', 'no', 'on', 'off'])
+  public TURNSTILE_ENABLED?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  public TURNSTILE_SITE_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  public TURNSTILE_SECRET_KEY?: string;
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  public TURNSTILE_VERIFY_URL?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1000)
+  @Max(15000)
+  public TURNSTILE_TIMEOUT_MS?: number;
 }
 
 // Synchronous on purpose: @nestjs/config v12 stores the result of `validate`
@@ -207,6 +314,47 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
     throw new Error(
       'Invalid environment variables:\n  CORS_ORIGINS: must contain comma-separated HTTP(S) origins',
     );
+  }
+
+  // CAPTCHA is mandatory when enabled: fail at boot instead of accepting every
+  // request with an unusable empty key. Development/test default to disabled
+  // unless explicitly opted in, so existing local workflows keep working.
+  const turnstile = readTurnstileSettings(config);
+  if (turnstile.enabled) {
+    const missing = [
+      ['TURNSTILE_SITE_KEY', turnstile.siteKey],
+      ['TURNSTILE_SECRET_KEY', turnstile.secretKey],
+    ]
+      .filter(([, value]) => value === null)
+      .map(([name]) => name);
+    if (missing.length > 0) {
+      throw new Error(
+        `Invalid environment variables:\n  ${missing.join(', ')}: required when TURNSTILE_ENABLED=true`,
+      );
+    }
+  }
+
+  // S3 credentials are required only when the S3 provider is selected. The
+  // default (no STORAGE_PROVIDER / STORAGE_DRIVER) is local, which keeps a
+  // fresh clone and CI bootable without MinIO.
+  const provider = String(
+    config.STORAGE_PROVIDER ?? config.STORAGE_DRIVER ?? 'local',
+  ).toLowerCase();
+  const usesS3 = provider === 's3' || provider === 'minio';
+  if (usesS3) {
+    const missing = [
+      ['S3_ENDPOINT', config.S3_ENDPOINT],
+      ['S3_ACCESS_KEY_ID', config.S3_ACCESS_KEY_ID],
+      ['S3_SECRET_ACCESS_KEY', config.S3_SECRET_ACCESS_KEY],
+      ['MEDIA_BUCKET or S3_BUCKET', config.MEDIA_BUCKET ?? config.S3_BUCKET],
+    ]
+      .filter(([, value]) => value === undefined || String(value).trim() === '')
+      .map(([name]) => name);
+    if (missing.length > 0) {
+      throw new Error(
+        `Invalid environment variables:\n  ${missing.join(', ')}: required when STORAGE_PROVIDER=s3`,
+      );
+    }
   }
   return config;
 }

@@ -1,5 +1,11 @@
 import { Module } from '@nestjs/common';
 
-// Inventory workflows will be added with the order and reservation use cases.
-@Module({})
+import { DatabaseModule } from '../../infrastructure/database/database.module';
+import { InventoryService } from './inventory.service';
+
+@Module({
+  imports: [DatabaseModule],
+  providers: [InventoryService],
+  exports: [InventoryService],
+})
 export class InventoryModule {}

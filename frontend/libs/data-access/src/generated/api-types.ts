@@ -202,7 +202,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Liste paginée du catalogue public */
+    /** Liste paginée du catalogue public avec filtres (catégorie, marque, pointure, couleur, prix, disponibilité, promo) et facettes */
     get: operations['CatalogController_listProducts_v1'];
     put?: never;
     post?: never;
@@ -219,8 +219,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Détail public d’un produit publié */
-    get: operations['CatalogController_getProduct_v1'];
+    /** Détail d’un produit publié avec variantes, images par couleur et produits similaires */
+    get: operations['CatalogController_getProductDetail_v1'];
     put?: never;
     post?: never;
     delete?: never;
@@ -255,8 +255,306 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Création d’un produit en brouillon avec variantes */
-    post: operations['CatalogController_createProduct_v1'];
+    /**
+     * Créer un produit avec variantes
+     * @description Crée un produit en brouillon avec ses variantes. Accepte un tableau explicite `variants[]` ou la génération automatique `colors[]+sizes[]` (produit cartésien, stock initial à 0, SKU générés automatiquement). Chaque création est auditée et invalide le cache public immédiatement.
+     */
+    post: operations['AdminProductsController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/products/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Archiver un produit
+     * @description Archive un produit (status = ARCHIVED). Pas de suppression physique : le produit reste en base, il est simplement retiré du catalogue public et des réponses d’administration. Archivé = 204, introuvable = 404.
+     */
+    delete: operations['AdminProductsController_archive_v1'];
+    options?: never;
+    head?: never;
+    /**
+     * Mettre à jour un produit
+     * @description Met à jour les champs métadonnées, prix, promotion et statut d’un produit. Les variantes ne sont PAS modifiées via cette route (réservé à PUT /:id/variants). Chaque modification de prix est auditée.
+     */
+    patch: operations['AdminProductsController_update_v1'];
+    trace?: never;
+  };
+  '/api/v1/admin/products/{id}/variants': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Remplacer les variantes d'un produit
+     * @description Remplace l'ensemble des variantes d'un produit (upsert différentiel). Une variante existante identifiée par `id` est mise à jour ; une variante sans `id` est créée avec un SKU généré automatiquement. Les variantes existantes non présentes dans le payload sont supprimées, sauf si elles sont liées à une commande (409 VARIANT_HAS_ORDERS). Chaque changement de stock ou de prix est audité.
+     */
+    put: operations['AdminProductsController_updateVariants_v1'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/products/{id}/duplicate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Dupliquer un produit
+     * @description Crée une copie en brouillon (DRAFT) du produit source : mêmes catégorie, marque, description, prix, promotions et variantes, avec de nouveaux slugs et SKU générés automatiquement. Les images sont réutilisées (mêmes URLs, pas de duplication physique). Le statut fourni est ignoré et la copie est toujours en DRAFT.
+     */
+    post: operations['AdminProductsController_duplicate_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/size-guides/{categoryId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Guide des tailles d’une catégorie
+     * @description Retourne les tables de conversion EU/US/UK/cm (men, women, kids) du guide lié à la catégorie. Les guides hérités de la catégorie parente ne sont pas résolus en MVP.
+     */
+    get: operations['SizeGuidesController_getByCategoryId_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/size-guides/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Mettre à jour un guide des tailles
+     * @description Met à jour le nom, la description et/ou les tableaux EU/US/UK/cm. Les tableaux sont triés par EU croissant, les doublons EU sont refusés. Une modification de `table` incrémente la version (v1 → v2) ; un changement de nom seul ne l’incrémente pas. Un audit SIZE_GUIDE_UPDATED (résumé) est écrit et le cache public est invalidé.
+     */
+    put: operations['AdminSizeGuidesController_update_v1'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/cart/validate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Valider le panier : recalcul des prix, promotions, stock et écarts
+     * @description ⚠️ Aucun prix fourni par le client n'est utilisé. Tous les prix sont recalculés côté serveur depuis la base (prix de la variante, promotion produit active, sinon prix de base). Le body ne transporte que variantId et quantity ; tout champ de prix non déclaré est rejeté en 400 VALIDATION_ERROR.
+     */
+    post: operations['CartController_validate_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/orders': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Créer une commande et décrémenter le stock atomiquement
+     * @description Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.
+     */
+    post: operations['OrdersController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/notifications/dead-letters': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Liste paginée des tâches en dead-letter */
+    get: operations['NotificationsController_listDeadLetters_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/notifications/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Detail dune notification */
+    get: operations['NotificationsController_getNotification_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/media/presign': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Obtenir une URL signée pour téléverser une image
+     * @description Approche presign + confirm : le client PUT directement le fichier sur MinIO/S3 via l'URL signée, puis appelle /admin/media/confirm. Le Content-Type et la taille déclarés ici ne sont jamais considérés comme une validation : le confirm re-télécharge le fichier et vérifie les magic bytes et la taille réelles. Le fichier est renommé (UUID) et stocké hors de tout dossier exécutable.
+     */
+    post: operations['AdminMediaController_presign_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/media/confirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Valider et traiter une image téléversée
+     * @description Télécharge le fichier brut depuis le stockage, valide son type réel via file-type (JPEG/PNG/WebP uniquement), sa taille et son décodage sharp, puis génère un JPEG optimisé, un WebP et une vignette 400×400. Le fichier brut est supprimé et un ProductImage est créé. Un fichier non image est refusé avec INVALID_IMAGE_TYPE.
+     */
+    post: operations['AdminMediaController_confirm_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/media/images/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Supprimer une image produit
+     * @description Supprime les trois versions stockées (JPEG optimisé, WebP, vignette), la ligne ProductImage, écrit un audit et invalide le cache public.
+     */
+    delete: operations['AdminMediaController_deleteImage_v1'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/media/images/reorder': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Réorganiser les images d’un produit
+     * @description Met à jour les positions dans une transaction après vérification que toutes les images appartiennent au produit. Audit MEDIA_REORDERED et invalidation du cache.
+     */
+    patch: operations['AdminMediaController_reorder_v1'];
+    trace?: never;
+  };
+  '/api/v1/config': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Configuration publique (clés publiques uniquement) */
+    get: operations['PublicConfigController_getPublicConfig_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/contact': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Envoyer un message au support
+     * @description Formulaire public protégé par Cloudflare Turnstile. Le message est persisté pour traitement par le support.
+     */
+    post: operations['ContactController_submit_v1'];
     delete?: never;
     options?: never;
     head?: never;
@@ -270,17 +568,35 @@ export interface components {
     RegisterDto: {
       /** @example client@exemple.cm */
       email?: string;
-      /** @example +2376XXXXXXXX */
+      /**
+       * @description Format strict +237 suivi de 9 chiffres
+       * @example +237612345678
+       */
       phone?: string;
-      firstName: string;
-      lastName: string;
-      /** @description Minimum 10 chars, server-checked */
       password: string;
+      /** @example Jean */
+      firstName?: string;
+      /** @example Dupont */
+      lastName?: string;
+      /**
+       * @description Consentement aux CGV (obligatoire)
+       * @example true
+       */
+      termsAccepted: boolean;
+      /**
+       * @description Version des CGV acceptée
+       * @example 1.0
+       */
+      termsVersion: string;
+      /** @description Jeton Cloudflare Turnstile */
+      turnstileToken?: string;
     };
     LoginDto: {
       /** @example client@exemple.cm ou +2376XXXXXXXX */
       identifier: string;
       password: string;
+      /** @description Jeton Cloudflare Turnstile */
+      turnstileToken?: string;
     };
     ForgotPasswordDto: {
       /** @example client@exemple.cm */
@@ -299,23 +615,827 @@ export interface components {
       code: string;
     };
     Object: Record<string, never>;
-    CreateProductVariantDto: {
+    ProductCategoryDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Sneakers */
+      name: string;
+      /** @example sneakers */
+      slug: string;
+    };
+    ProductBrandDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Barrage Foot */
+      name: string;
+      /** @example barrage-foot */
+      slug: string;
+      /** @description URL du logo de la marque */
+      logo: string | null;
+    };
+    ProductImageDto: {
+      /** Format: uuid */
+      id: string;
+      /** @description URL absolue de l’image */
+      url: string;
+      /** @description Texte alternatif accessible (null si absent) */
+      alt: string | null;
+      /** @description Ordre d’affichage dans la galerie */
+      position: number;
+      /** @description Couleur de la variante concernée ; null = image commune à toutes les couleurs */
+      variantColor: string | null;
+    };
+    ProductVariantSummaryDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example BARF-SNEAKERSUR-42-NOIR */
       sku: string;
-      color: string;
+      /** @example 42 */
       size: string;
-      price?: number;
+      /** @example NOIR */
+      color: string;
+      /** @description Stock disponible (stock - reservedStock) */
+      availableStock: number;
+      /** @description true si availableStock > 0 */
+      isAvailable: boolean;
+    };
+    ProductListItemDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+      /** @description Prix de base en XAF (entier) */
+      basePrice: number;
+      /** @description Prix effectif en XAF : promo active, sinon prix de base */
+      effectivePrice: number;
+      /** @description Prix promo en XAF si la promotion est active, sinon null */
+      promoPrice: number | null;
+      /**
+       * Format: date-time
+       * @description Début de la fenêtre promo (ISO 8601)
+       */
+      promoStart: string | null;
+      /**
+       * Format: date-time
+       * @description Fin de la fenêtre promo (ISO 8601)
+       */
+      promoEnd: string | null;
+      /** @description true si promoPrice est appliqué à cet instant */
+      isPromoActive: boolean;
+      /** @description true si au moins une variante a du stock disponible */
+      inStock: boolean;
+      category: components['schemas']['ProductCategoryDto'];
+      brand: components['schemas']['ProductBrandDto'];
+      /** @description Images du produit (la principale au minimum ; toutes sur la fiche détail) */
+      images: components['schemas']['ProductImageDto'][];
+      variants: components['schemas']['ProductVariantSummaryDto'][];
+    };
+    PaginationDto: {
+      /** @example 1 */
+      page: number;
+      /** @example 12 */
+      limit: number;
+      /** @example 20 */
+      total: number;
+      /** @example 2 */
+      pages: number;
+    };
+    CategoryFacetDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Sneakers */
+      name: string;
+      /** @example sneakers */
+      slug: string;
+      /** @description Nombre de produits publiés dans cette catégorie */
+      count: number;
+    };
+    BrandFacetDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Barrage Foot */
+      name: string;
+      /** @example barrage-foot */
+      slug: string;
+      /** @description Nombre de produits publiés de cette marque */
+      count: number;
+    };
+    ValueFacetDto: {
+      /**
+       * @description Pointure ou couleur
+       * @example 42
+       */
+      value: string;
+      /** @description Nombre de produits ayant au moins une variante disponible */
+      count: number;
+    };
+    AvailabilityFacetDto: {
+      /** @description Produits avec au moins une variante disponible */
+      inStock: number;
+      /** @description Produits sans aucune variante disponible */
+      outOfStock: number;
+    };
+    PromotionFacetDto: {
+      /** @description Produits avec une promotion active à cet instant */
+      active: number;
+      /** @description Produits sans promotion active */
+      inactive: number;
+    };
+    PriceFacetDto: {
+      /** @description Prix de base minimal des produits publiés (XAF) */
+      min: number;
+      /** @description Prix de base maximal des produits publiés (XAF) */
+      max: number;
+    };
+    ProductFacetsDto: {
+      categories: components['schemas']['CategoryFacetDto'][];
+      brands: components['schemas']['BrandFacetDto'][];
+      /** @description Pointures disponibles, triées */
+      sizes: components['schemas']['ValueFacetDto'][];
+      /** @description Couleurs disponibles */
+      colors: components['schemas']['ValueFacetDto'][];
+      availability: components['schemas']['AvailabilityFacetDto'];
+      promotion: components['schemas']['PromotionFacetDto'];
+      price: components['schemas']['PriceFacetDto'];
+    };
+    ProductListResponseDto: {
+      items: components['schemas']['ProductListItemDto'][];
+      pagination: components['schemas']['PaginationDto'];
+      facets: components['schemas']['ProductFacetsDto'];
+    };
+    ColorVariantDto: {
+      /**
+       * @description Libellé de la couleur tel que stocké
+       * @example NOIR
+       */
+      color: string;
+      /**
+       * @description Slug kebab-case de la couleur
+       * @example noir
+       */
+      slug: string;
+      /** @description Images spécifiques à la couleur, puis les images communes (variantColor null) */
+      images: components['schemas']['ProductImageDto'][];
+      /**
+       * @description Pointures avec du stock disponible pour cette couleur
+       * @example [
+       *       "40",
+       *       "41"
+       *     ]
+       */
+      availableSizes: string[];
+      /** @description true si au moins une pointure est disponible dans cette couleur */
+      hasStock: boolean;
+    };
+    SizeVariantDto: {
+      /**
+       * @description Pointure
+       * @example 42
+       */
+      size: string;
+      /** @description Stock disponible (stock - reservedStock) maximal parmi les variantes de cette pointure. Le stock brut interne n’est jamais exposé. */
+      availableStock: number;
+      /** @description true si availableStock > 0 */
+      isAvailable: boolean;
+      /** @description true si 0 < availableStock <= lowStockThreshold (seuil le plus bas de la pointure) */
+      isLowStock: boolean;
+    };
+    ProductVariantDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example BARF-SNEAKERSUR-42-NOIR */
+      sku: string;
+      /** @example 42 */
+      size: string;
+      /** @example NOIR */
+      color: string;
+      /** @description Prix effectif en XAF : override de la variante, sinon promo produit active, sinon prix de base */
+      effectivePrice: number;
+      /** @description Stock disponible (stock - reservedStock), jamais le stock brut interne */
+      availableStock: number;
+      /** @description true si availableStock > 0 */
+      isAvailable: boolean;
+    };
+    ProductSummaryDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+      /** @description Prix de base en XAF (entier) */
+      basePrice: number;
+      /** @description Prix effectif en XAF : promo active, sinon prix de base */
+      effectivePrice: number;
+      /** @description Prix promo en XAF si la promotion est active, sinon null */
+      promoPrice: number | null;
+      /**
+       * Format: date-time
+       * @description Début de la fenêtre promo (ISO 8601)
+       */
+      promoStart: string | null;
+      /**
+       * Format: date-time
+       * @description Fin de la fenêtre promo (ISO 8601)
+       */
+      promoEnd: string | null;
+      /** @description true si promoPrice est appliqué à cet instant */
+      isPromoActive: boolean;
+      /** @description true si au moins une variante a du stock disponible */
+      inStock: boolean;
+      category: components['schemas']['ProductCategoryDto'];
+      brand: components['schemas']['ProductBrandDto'];
+      /** @description Images du produit (la principale au minimum ; toutes sur la fiche détail) */
+      images: components['schemas']['ProductImageDto'][];
+    };
+    ProductDetailDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+      /** @description Prix de base en XAF (entier) */
+      basePrice: number;
+      /** @description Prix effectif en XAF : promo active, sinon prix de base */
+      effectivePrice: number;
+      /** @description Prix promo en XAF si la promotion est active, sinon null */
+      promoPrice: number | null;
+      /**
+       * Format: date-time
+       * @description Début de la fenêtre promo (ISO 8601)
+       */
+      promoStart: string | null;
+      /**
+       * Format: date-time
+       * @description Fin de la fenêtre promo (ISO 8601)
+       */
+      promoEnd: string | null;
+      /** @description true si promoPrice est appliqué à cet instant */
+      isPromoActive: boolean;
+      /** @description true si au moins une variante a du stock disponible */
+      inStock: boolean;
+      category: components['schemas']['ProductCategoryDto'];
+      brand: components['schemas']['ProductBrandDto'];
+      /** @description Images du produit (la principale au minimum ; toutes sur la fiche détail) */
+      images: components['schemas']['ProductImageDto'][];
+      /** @description Description complète affichée sur la fiche produit */
+      description: string;
+      /** @description Titre SEO (null si absent) */
+      seoTitle: string | null;
+      /** @description Description SEO (null si absente) */
+      seoDescription: string | null;
+      /** @description Variantes groupées par couleur, avec images et pointures disponibles */
+      colors: components['schemas']['ColorVariantDto'][];
+      /** @description Pointures agrégées toutes couleurs confondues */
+      sizes: components['schemas']['SizeVariantDto'][];
+      /** @description Toutes les variantes à plat */
+      variants: components['schemas']['ProductVariantDto'][];
+      /** @description Produits similaires : même catégorie, prix effectif à ±50 %, 6 par défaut (fallback même catégorie sans contrainte de prix) */
+      similarProducts: components['schemas']['ProductSummaryDto'][];
+    };
+    CreateProductImageDto: {
+      /** @example https://cdn.brunyshop.cm/products/air-max-noir.jpg */
+      url: string;
+      alt?: string;
       /** @default 0 */
-      stock: Record<string, never>;
+      position: number;
+      /** @description Couleur concernée (null = image commune) */
+      variantColor?: string;
+    };
+    CreateProductVariantDto: {
+      /**
+       * @description Couleur (normalisée en majuscules)
+       * @example NOIR
+       */
+      color: string;
+      /**
+       * @description Pointure ou taille (normalisée en majuscules)
+       * @example 42
+       */
+      size: string;
+      /** @description Prix spécifique XAF (sinon prix produit) */
+      price?: number;
+      /**
+       * @description Stock physique initial
+       * @example 10
+       */
+      stock: number;
+      /** @default 5 */
+      lowStockThreshold: number;
     };
     CreateProductDto: {
+      /** @example Air Max 90 Noir */
+      name: string;
+      /**
+       * @description Généré depuis le nom s’il est absent (unicité garantie : -2, -3…)
+       * @example air-max-90-noir
+       */
+      slug?: string;
+      description: string;
+      /** Format: uuid */
+      categoryId: string;
+      /** Format: uuid */
+      brandId: string;
+      /**
+       * @default DRAFT
+       * @enum {string}
+       */
+      status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+      /**
+       * @description Prix de base XAF (entier)
+       * @example 45000
+       */
+      basePrice: number;
+      /** @description Doit être strictement inférieur à basePrice */
+      promoPrice?: number;
+      /** Format: date-time */
+      promoStart?: string;
+      /** Format: date-time */
+      promoEnd?: string;
+      seoTitle?: string;
+      seoDescription?: string;
+      images?: components['schemas']['CreateProductImageDto'][];
+      /** @description Format explicite (contrôle fin du stock et du prix par variante) */
+      variants?: components['schemas']['CreateProductVariantDto'][];
+      /**
+       * @description Couleurs pour la génération automatique du produit cartésien
+       * @example [
+       *       "noir",
+       *       "blanc"
+       *     ]
+       */
+      colors?: string[];
+      /**
+       * @description Pointures pour la génération automatique du produit cartésien
+       * @example [
+       *       "40",
+       *       "41",
+       *       "42"
+       *     ]
+       */
+      sizes?: string[];
+    };
+    AdminProductCategoryDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+    };
+    AdminProductBrandDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+      logo: string | null;
+    };
+    AdminProductVariantDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example BARRAGEF-AIRMAX90-42-NOIR */
+      sku: string;
+      /** @example NOIR */
+      color: string;
+      /** @example 42 */
+      size: string;
+      /** @description Prix spécifique XAF (null sinon) */
+      price: number | null;
+      /** @description Stock physique */
+      stock: number;
+      /** @description Stock réservé par des commandes en cours */
+      reservedStock: number;
+      /** @description Seuil d’alerte de stock bas */
+      lowStockThreshold: number;
+      /** @description Version d’optimistic locking */
+      version: number;
+    };
+    AdminProductImageDto: {
+      /** Format: uuid */
+      id: string;
+      url: string;
+      alt: string | null;
+      position: number;
+      /** @description Couleur concernée (null = commune) */
+      variantColor: string | null;
+    };
+    AdminProductDetailDto: {
+      /** Format: uuid */
+      id: string;
       name: string;
       slug: string;
       description: string;
-      categoryId: string;
-      brandId: string;
-      /** @description Montant entier en FCFA */
+      /** @enum {string} */
+      status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+      /** @description Prix de base XAF (entier) */
       basePrice: number;
-      variants?: components['schemas']['CreateProductVariantDto'][];
+      promoPrice: number | null;
+      /** Format: date-time */
+      promoStart: string | null;
+      /** Format: date-time */
+      promoEnd: string | null;
+      /** @description Prix appliqué aujourd’hui (promo active ou prix de base) */
+      effectivePrice: number;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+      /** Format: uuid */
+      categoryId: string;
+      /** Format: uuid */
+      brandId: string;
+      category: components['schemas']['AdminProductCategoryDto'];
+      brand: components['schemas']['AdminProductBrandDto'];
+      /** @description Suppression logique (null si actif) */
+      deletedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      variants: components['schemas']['AdminProductVariantDto'][];
+      images: components['schemas']['AdminProductImageDto'][];
+    };
+    UpdateProductDto: {
+      name?: string;
+      slug?: string;
+      description?: string;
+      /** Format: uuid */
+      categoryId?: string;
+      /** Format: uuid */
+      brandId?: string;
+      /** @enum {string} */
+      status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+      basePrice?: number;
+      promoPrice?: number | null;
+      /** Format: date-time */
+      promoStart?: string | null;
+      /** Format: date-time */
+      promoEnd?: string | null;
+      seoTitle?: string;
+      seoDescription?: string;
+    };
+    UpdateProductVariantDto: {
+      /**
+       * Format: uuid
+       * @description Variante existante à mettre à jour
+       */
+      id?: string;
+      /** @example NOIR */
+      color: string;
+      /** @example 42 */
+      size: string;
+      /** @description Prix spécifique XAF (null = prix produit) */
+      price?: number;
+      /** @description Stock physique (seule quantité modifiable) */
+      stock: number;
+      lowStockThreshold?: number;
+    };
+    UpdateVariantsDto: {
+      variants: components['schemas']['UpdateProductVariantDto'][];
+    };
+    DuplicateProductDto: {
+      /** @example Air Max 90 (copie) */
+      name?: string;
+      /**
+       * @description Généré depuis le nom s’il est absent (unicité garantie)
+       * @example air-max-90-copie
+       */
+      slug?: string;
+      /**
+       * @description Seul DRAFT est accepté : une copie ne peut pas être publiée directement
+       * @default DRAFT
+       * @enum {string}
+       */
+      status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+      /** @default true */
+      copyImages: boolean;
+      /** @default true */
+      copyVariants: boolean;
+      /**
+       * @description Remet le stock des variantes copiées à zéro
+       * @default false
+       */
+      resetStock: boolean;
+    };
+    SizeGuideEntryDto: {
+      /**
+       * @description Pointure européenne
+       * @example 42
+       */
+      eu: number;
+      /**
+       * @description Pointure américaine (US)
+       * @example 8.5
+       */
+      us: number;
+      /**
+       * @description Pointure britannique (UK)
+       * @example 8
+       */
+      uk: number;
+      /**
+       * @description Longueur du pied en centimètres
+       * @example 26.5
+       */
+      cm: number;
+    };
+    SizeGuideTableDto: {
+      /** @description Tableau homme */
+      men?: components['schemas']['SizeGuideEntryDto'][];
+      /** @description Tableau femme */
+      women?: components['schemas']['SizeGuideEntryDto'][];
+      /** @description Tableau enfant */
+      kids?: components['schemas']['SizeGuideEntryDto'][];
+    };
+    SizeGuideResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Guide des pointures — Homme, Femme, Enfant */
+      name: string;
+      /** @example guide-pointures-brunyshop */
+      slug: string;
+      description: string | null;
+      table: components['schemas']['SizeGuideTableDto'];
+      /** @example v1 */
+      version: string;
+      /** Format: date-time */
+      publishedAt: string | null;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    UpdateSizeGuideDto: {
+      /** @example Guide des pointures 2027 */
+      name?: string;
+      description?: string;
+      table?: components['schemas']['SizeGuideTableDto'];
+    };
+    CartItemInputDto: {
+      /**
+       * Format: uuid
+       * @description Identifiant de la variante
+       */
+      variantId: string;
+      /** @description Quantité souhaitée (1 à 100 par ligne) */
+      quantity: number;
+      /** @description Prix unitaire mémorisé côté client. Information seule : jamais utilisé dans un calcul, uniquement pour signaler un écart de prix. */
+      previousUnitPrice?: number;
+    };
+    ValidateCartDto: {
+      /** @description Lignes du panier (1 à 50) */
+      items: components['schemas']['CartItemInputDto'][];
+      /** @description Code promo à appliquer (optionnel) */
+      couponCode?: string;
+    };
+    CartIssueDto: {
+      /**
+       * @description Code de l'écart
+       * @enum {string}
+       */
+      code:
+        | 'PRICE_CHANGED'
+        | 'PROMO_APPLIED'
+        | 'PROMO_EXPIRED'
+        | 'INSUFFICIENT_STOCK'
+        | 'OUT_OF_STOCK'
+        | 'PRODUCT_ARCHIVED'
+        | 'PRODUCT_NOT_FOUND'
+        | 'VARIANT_NOT_FOUND'
+        | 'QUANTITY_EXCEEDED'
+        | 'COUPON_INVALID'
+        | 'COUPON_MIN_AMOUNT_NOT_REACHED';
+      /** @description Message en français prêt à afficher */
+      message: string;
+      /**
+       * Format: uuid
+       * @description Variante concernée
+       */
+      variantId?: string;
+      /**
+       * Format: uuid
+       * @description Produit concerné
+       */
+      productId?: string;
+      /** @description Code promo concerné */
+      couponCode?: string;
+      /** @description Quantité demandée par le client */
+      requestedQuantity?: number;
+      /** @description Stock disponible réellement */
+      availableQuantity?: number;
+      /** @description Quantité maximale autorisée par ligne */
+      maxQuantity?: number;
+      /** @description Prix unitaire mémorisé côté client */
+      previousPrice?: number;
+      /** @description Prix unitaire recalculé côté serveur */
+      currentPrice?: number;
+      /** @description Montant minimum requis par le coupon */
+      minAmount?: number;
+      /** @description Sous-total utilisé pour évaluer le coupon */
+      subtotal?: number;
+    };
+    CartItemValidationDto: {
+      /** Format: uuid */
+      variantId: string;
+      /** Format: uuid */
+      productId: string;
+      productName: string;
+      variantSku: string;
+      size: string;
+      color: string;
+      /** @description Quantité retenue (limitée au stock disponible) */
+      quantity: number;
+      /** @description Stock disponible = stock - stock réservé */
+      availableStock: number;
+      /** @description Prix unitaire recalculé côté serveur (XAF) */
+      unitPrice: number;
+      /** @description unitPrice × quantity (XAF) */
+      lineTotal: number;
+      issues: components['schemas']['CartIssueDto'][];
+    };
+    CartValidationMetaDto: {
+      /** @example 2025-01-15T10:30:00.000Z */
+      validatedAt: string;
+      /** @description Nombre de lignes retournées */
+      itemCount: number;
+      /** @description Somme des quantités retenues */
+      totalQuantity: number;
+    };
+    CartValidationResponseDto: {
+      /** @description false dès qu’au moins une issue bloquante est présente */
+      valid: boolean;
+      items: components['schemas']['CartItemValidationDto'][];
+      /** @description Sous-total recalculé (XAF) */
+      subtotal: number;
+      /** @description Remise coupon (XAF) */
+      discount: number;
+      /** @description Total à payer hors livraison (XAF), jamais négatif */
+      total: number;
+      issues: components['schemas']['CartIssueDto'][];
+      meta: components['schemas']['CartValidationMetaDto'];
+    };
+    CreateOrderItemDto: {
+      /** @description Identifiant de la variante choisie */
+      variantId: string;
+      /** @description Quantité commandée */
+      quantity: number;
+    };
+    AddressSnapshotDto: {
+      /** @description Nom du destinataire */
+      recipientName: string;
+      /** @description Téléphone du destinataire (+237XXXXXXXXX) */
+      phone: string;
+      /** @description Ville de livraison */
+      city: string;
+      /** @description Quartier de livraison */
+      district: string;
+      /** @description Adresse ou rue */
+      line: string;
+      /** @description Point de repère */
+      landmark?: string;
+      /** @description Instructions de livraison */
+      instructions?: string;
+    };
+    CreateOrderDto: {
+      /** @description Lignes de la commande (1 à 50) */
+      items: components['schemas']['CreateOrderItemDto'][];
+      /** @description Code promo à appliquer */
+      couponCode?: string;
+      /** @description Nom du client invité */
+      guestName?: string;
+      /** @description Téléphone du client invité (+237XXXXXXXXX) */
+      guestPhone?: string;
+      address: components['schemas']['AddressSnapshotDto'];
+      /**
+       * @description Moyen de paiement. Seul COD est disponible dans le MVP.
+       * @enum {string}
+       */
+      paymentMethod: 'COD' | 'MOBILE_MONEY' | 'CARD';
+      /** @description Clé d’idempotence contre les doubles soumissions */
+      idempotencyKey?: string;
+      /** @description Jeton Cloudflare Turnstile */
+      turnstileToken?: string;
+    };
+    OrderResponseDto: {
+      id: string;
+      /** @example BRN-2611-7K3F */
+      reference: string;
+      /** @enum {string} */
+      status: 'PENDING_CONFIRMATION';
+      /** @enum {string} */
+      paymentStatus: 'PENDING';
+      /** @enum {string} */
+      paymentMethod: 'COD' | 'MOBILE_MONEY' | 'CARD';
+      /** @description Sous-total (XAF) */
+      subtotal: number;
+      /** @description Remise (XAF) */
+      discount: number;
+      /** @description Frais de livraison (XAF) */
+      shippingFee: number;
+      /** @description Total à payer (XAF) */
+      total: number;
+      /** @example 2026-11-11T12:00:00.000Z */
+      createdAt: string;
+    };
+    PresignUploadDto: {
+      /** @example sneakers-urbanstep-air */
+      productSlug: string;
+      /** @example noir */
+      variantColor?: string;
+      /**
+       * @example image/jpeg
+       * @enum {string}
+       */
+      contentType: 'image/jpeg' | 'image/png' | 'image/webp';
+      /**
+       * @description Taille annoncée en octets
+       * @example 102400
+       */
+      declaredSize: number;
+    };
+    PresignResponseDto: {
+      /** @description URL signée pour PUT direct vers le stockage */
+      uploadUrl: string;
+      /** @description Clé de stockage à confirmer */
+      key: string;
+      /** @description URL publique prévisionnelle */
+      publicUrl: string;
+      /** @example 300 */
+      expiresIn: number;
+      /** @enum {string} */
+      method: 'PUT';
+      /**
+       * @example {
+       *       "Content-Type": "image/jpeg"
+       *     }
+       */
+      headers: Record<string, never>;
+    };
+    ConfirmUploadDto: {
+      /**
+       * @description Clé retournée par /admin/media/presign
+       * @example products/sneakers-urbanstep-air/noir/6f1c...e2.webp
+       */
+      key: string;
+      /** @example sneakers-urbanstep-air */
+      productSlug: string;
+      /** @example noir */
+      variantColor?: string;
+      position?: number;
+      /** @example Vue de profil */
+      alt?: string;
+    };
+    MediaImageResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /** @description URL publique de la version WebP */
+      url: string;
+      /** @description URL publique de la vignette WebP */
+      thumbnailUrl: string;
+      alt: string | null;
+      position: number;
+      variantColor: string | null;
+    };
+    ReorderImageItemDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example 0 */
+      position: number;
+    };
+    ReorderImagesDto: {
+      /** Format: uuid */
+      productId: string;
+      order: components['schemas']['ReorderImageItemDto'][];
+    };
+    ReorderResponseDto: {
+      /** @example 4 */
+      updated: number;
+    };
+    PublicConfigDto: {
+      /**
+       * @description Indique si le CAPTCHA est actif côté serveur
+       * @example true
+       */
+      turnstileEnabled: boolean;
+      /**
+       * @description Clé publique Cloudflare Turnstile. Aucun secret n’est exposé.
+       * @example 1x00000000000000000000BB
+       */
+      turnstileSiteKey: Record<string, never> | null;
+    };
+    ContactDto: {
+      /** @example Awa Mbarga */
+      name: string;
+      /** @example awa@example.cm */
+      email: string;
+      /** @example +237699000001 */
+      phone?: string;
+      /**
+       * @description Sujet de la demande
+       * @enum {string}
+       */
+      subject: 'order' | 'product' | 'return' | 'delivery' | 'other';
+      /** @example BRN-2611-7K3F */
+      orderReference?: string;
+      message: string;
+      /**
+       * @description Consentement pour répondre à la demande
+       * @example true
+       */
+      consent: boolean;
+      /** @description Jeton Cloudflare Turnstile obtenu par le widget invisible */
+      turnstileToken?: string;
     };
   };
   responses: never;
@@ -339,7 +1459,15 @@ export interface operations {
       };
     };
     responses: {
-      201: {
+      /** @description CAPTCHA_REQUIRED, CAPTCHA_INVALID ou body invalide */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description CAPTCHA_UNAVAILABLE (service indisponible) */
+      503: {
         headers: {
           [name: string]: unknown;
         };
@@ -360,7 +1488,15 @@ export interface operations {
       };
     };
     responses: {
-      200: {
+      /** @description CAPTCHA_REQUIRED, CAPTCHA_INVALID ou body invalide */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description CAPTCHA_UNAVAILABLE (service indisponible) */
+      503: {
         headers: {
           [name: string]: unknown;
         };
@@ -809,6 +1945,12 @@ export interface operations {
         maxPrice?: number;
         sort?: 'newest' | 'price_asc' | 'price_desc' | 'name';
         q?: string;
+        /** @description Slug de marque */
+        brand?: string;
+        /** @description true = au moins une variante disponible, false = aucune */
+        inStock?: 'true' | 'false';
+        /** @description true = promotion produit active à cet instant */
+        promo?: 'true' | 'false';
       };
       header?: never;
       path?: never;
@@ -816,26 +1958,47 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description availableStock = stock - reservedStock. Le stock brut interne n’est jamais exposé. */
       200: {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['ProductListResponseDto'];
+        };
       };
     };
   };
-  CatalogController_getProduct_v1: {
+  CatalogController_getProductDetail_v1: {
     parameters: {
       query?: never;
       header?: never;
       path: {
+        /** @description Slug kebab-case du produit publié (minuscules, chiffres et tirets) */
         slug: string;
       };
       cookie?: never;
     };
     requestBody?: never;
     responses: {
+      /** @description availableStock = stock - reservedStock. Le stock brut interne n’est jamais exposé. */
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductDetailDto'];
+        };
+      };
+      /** @description Produit introuvable, en brouillon, archivé ou supprimé : même code PRODUCT_NOT_FOUND, même message. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Limite de 100 requêtes par minute et par IP */
+      429: {
         headers: {
           [name: string]: unknown;
         };
@@ -860,7 +2023,7 @@ export interface operations {
       };
     };
   };
-  CatalogController_createProduct_v1: {
+  AdminProductsController_create_v1: {
     parameters: {
       query?: never;
       header?: never;
@@ -873,7 +2036,756 @@ export interface operations {
       };
     };
     responses: {
+      /** @description Produit créé avec ses variantes et SKU générés. */
       201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminProductDetailDto'];
+        };
+      };
+      /** @description Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, DUPLICATE_VARIANT, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Slug ou SKU déjà utilisé (SLUG_ALREADY_EXISTS, SKU_ALREADY_EXISTS). */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Plus de 60 requêtes en 60 secondes (RATE_LIMIT_EXCEEDED). */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminProductsController_archive_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Produit archivé (status ARCHIVED). */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Produit introuvable (PRODUCT_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminProductsController_update_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateProductDto'];
+      };
+    };
+    responses: {
+      /** @description Produit mis à jour. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminProductDetailDto'];
+        };
+      };
+      /** @description Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Produit introuvable (PRODUCT_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Slug déjà utilisé (SLUG_ALREADY_EXISTS). */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminProductsController_updateVariants_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Identifiant UUID du produit. */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateVariantsDto'];
+      };
+    };
+    responses: {
+      /** @description Variantes remplacées. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminProductDetailDto'];
+        };
+      };
+      /** @description Validation échouée (VALIDATION_ERROR, DUPLICATE_VARIANT, VARIANT_NOT_OWNED, RESERVED_STOCK_FORBIDDEN). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Produit introuvable (PRODUCT_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Variante liée à une commande (VARIANT_HAS_ORDERS) ou doublon de couleur/pointure (DUPLICATE_VARIANT). */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminProductsController_duplicate_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Identifiant UUID du produit source. */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DuplicateProductDto'];
+      };
+    };
+    responses: {
+      /** @description Produit dupliqué en DRAFT avec de nouveaux slug et SKU. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminProductDetailDto'];
+        };
+      };
+      /** @description Validation échouée ou statut différent de DRAFT (DUPLICATE_STATUS_FORBIDDEN). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Produit source introuvable (PRODUCT_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Slug déjà utilisé (SLUG_ALREADY_EXISTS). */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  SizeGuidesController_getByCategoryId_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Identifiant UUID de la catégorie */
+        categoryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Guide des tailles de la catégorie. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SizeGuideResponseDto'];
+        };
+      };
+      /** @description Catégorie inexistante (CATEGORY_NOT_FOUND) ou catégorie sans guide (SIZE_GUIDE_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Plus de 100 requêtes par minute (RATE_LIMIT_EXCEEDED). */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminSizeGuidesController_update_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSizeGuideDto'];
+      };
+    };
+    responses: {
+      /** @description Guide mis à jour. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SizeGuideResponseDto'];
+        };
+      };
+      /** @description Body vide, tableau vide, doublon EU ou entrée invalide (VALIDATION_ERROR). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Guide introuvable (SIZE_GUIDE_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Plus de 30 mises à jour par minute. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  CartController_validate_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ValidateCartDto'];
+      };
+    };
+    responses: {
+      /** @description Panier validé avec la liste des écarts (aucun prix client accepté) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CartValidationResponseDto'];
+        };
+      };
+      /** @description Body invalide (champ non autorisé, quantité hors bornes, doublon de prix…) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Trop de requêtes (30/min/IP) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrdersController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateOrderDto'];
+      };
+    };
+    responses: {
+      /** @description Commande créée, stock décrémenté et mouvement de stock enregistré */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrderResponseDto'];
+        };
+      };
+      /** @description Body invalide, guest incomplet, coupon ou zone invalides */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Variante ou produit introuvable */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Stock insuffisant ou clé d’idempotence en conflit */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Trop de requêtes (20/min/IP) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description CAPTCHA_UNAVAILABLE (service indisponible) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  NotificationsController_listDeadLetters_v1: {
+    parameters: {
+      query: {
+        page: number;
+        limit: number;
+        queueName: string;
+        jobName: string;
+        from: string;
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Liste paginée des jobs en échec */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  NotificationsController_getNotification_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Detail de la notification */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminMediaController_presign_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PresignUploadDto'];
+      };
+    };
+    responses: {
+      /** @description URL signée générée. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PresignResponseDto'];
+        };
+      };
+      /** @description Type MIME, taille, quota d’images ou clé invalides (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, MAX_IMAGES_REACHED). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Produit introuvable (PRODUCT_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Plus de 30 presigns en 60 secondes (RATE_LIMIT_EXCEEDED). */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminMediaController_confirm_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConfirmUploadDto'];
+      };
+    };
+    responses: {
+      /** @description Image traitée et enregistrée. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MediaImageResponseDto'];
+        };
+      };
+      /** @description Fichier refusé (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, INVALID_IMAGE, MAX_IMAGES_REACHED, INVALID_MEDIA_KEY). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Produit ou fichier téléversé introuvable (PRODUCT_NOT_FOUND, MEDIA_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminMediaController_deleteImage_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Image supprimée. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Image introuvable (IMAGE_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminMediaController_reorder_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReorderImagesDto'];
+      };
+    };
+    responses: {
+      /** @description Positions mises à jour. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReorderResponseDto'];
+        };
+      };
+      /** @description Ordre invalide ou image étrangère au produit (INVALID_IMAGE_ORDER). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Produit introuvable (PRODUCT_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PublicConfigController_getPublicConfig_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublicConfigDto'];
+        };
+      };
+      /** @description Trop de requêtes (60/min/IP) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ContactController_submit_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ContactDto'];
+      };
+    };
+    responses: {
+      /** @description Message reçu */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description CAPTCHA requis/invalide ou body invalide */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Trop de requêtes (5/min/IP) */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description CAPTCHA_UNAVAILABLE (service indisponible) */
+      503: {
         headers: {
           [name: string]: unknown;
         };

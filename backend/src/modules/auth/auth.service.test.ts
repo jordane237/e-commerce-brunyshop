@@ -1,7 +1,8 @@
 import type { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { BadRequestException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 
 import type { ApplicationConfig } from '../../config/configuration';
 import type { RedisService } from '../../infrastructure/cache/cache.module';
@@ -32,8 +33,8 @@ const appConfig = {
 
 function makeRegisterDto(overrides: Partial<RegisterDto> = {}): RegisterDto {
   return {
-    email: overrides.email ?? 'client@example.cm',
-    phone: overrides.phone ?? null,
+    email: 'email' in overrides ? overrides.email : 'client@example.cm',
+    phone: 'phone' in overrides ? overrides.phone : null,
     password: overrides.password ?? 'SuperSecurePassword123',
     firstName: overrides.firstName ?? 'Jean',
     lastName: overrides.lastName ?? 'Dupont',
@@ -50,49 +51,45 @@ function makeService() {
     del: vi.fn().mockResolvedValue(1),
     set: vi.fn().mockResolvedValue('OK'),
   };
-  const prisma = {
-    user: {
-      findFirst: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      $transaction: vi.fn(
-        async (fn) =>
-          await fn({
-            user: {
-              create: vi.fn(async (data) => ({ id: 'user-123', ...data })),
-            },
-            role: {
-              findFirst: vi.fn(async () => ({ id: 'role-456' })),
-            },
-            userRole: {
-              create: vi.fn().mockResolvedValue({}),
-            },
-          }),
-      ),
-    },
-    refreshToken: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    backupCode: { deleteMany: vi.fn(), createMany: vi.fn(), findMany: vi.fn() },
-    twoFactorSecret: { create: vi.fn(), findUnique: vi.fn(), deleteMany: vi.fn() },
-    setting: { findUnique: vi.fn().mockResolvedValue({ key: 'terms.version', value: '1.0' }) },
-    auditLog: { create: vi.fn().mockResolvedValue({}) },
+
+  const createdUser = {
+    id: 'new-user-id',
+    email: 'client@example.cm',
+    phone: null,
+    firstName: 'Jean',
+    lastName: 'Dupont',
+    status: 'PENDING_VERIFICATION',
+    createdAt: new Date('2026-11-05T10:30:00.000Z'),
   };
+  const user = {
+    create: vi.fn().mockResolvedValue(createdUser),
+    findFirst: vi.fn().mockResolvedValue(null),
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  };
+  const role = { findFirst: vi.fn().mockResolvedValue({ id: 'role-customer' }) };
+  const userRole = { create: vi.fn().mockResolvedValue({}) };
+  const prisma = {
+    user,
+    $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn({ user, role, userRole })),
+    setting: {
+      findUnique: vi.fn().mockResolvedValue({ key: 'terms.version', value: '1.0' }),
+    },
+    auditLog: { create: vi.fn().mockResolvedValue({}) },
+    refreshToken: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    backupCode: { deleteMany: vi.fn(), createMany: vi.fn(), findMany: vi.fn() },
+  };
+
+  const mail = { sendPasswordResetCode: vi.fn().mockResolvedValue(undefined) };
 
   const service = new AuthService(
     prisma as unknown as PrismaService,
     new JwtService({ secret: JWT_SECRET }),
     { get: vi.fn().mockReturnValue(appConfig) } as unknown as ConfigService,
     { redis: redisOps } as unknown as RedisService,
-    { sendPasswordResetCode: vi.fn().mockResolvedValue(undefined) } as unknown as MailService,
-    { record: vi.fn().mockResolvedValue(undefined) } as unknown as AuditLogService,
+    mail as unknown as MailService,
   );
-  return { service, redisOps, prisma, mail };
+  return { service, redisOps, prisma, mail, user, role, userRole, createdUser };
 }
 
 const request = {
@@ -101,108 +98,109 @@ const request = {
   ip: '127.0.0.1',
 } as unknown as Request;
 
-function makeResponse() {
-  return { cookie: vi.fn(), clearCookie: vi.fn() } as unknown as Response;
-}
-
-describe('AuthService - Registration', () => {
+describe('AuthService — Inscription (AUT-01)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should create user with valid data and return RegisterResponseDto', async () => {
-    const { service, prisma } = makeService();
-    const dto = makeRegisterDto();
-    const response = await service.register(dto, request, makeResponse());
+  it('crée le compte avec un rôle CUSTOMER, le consentement CGV et une réponse neutre', async () => {
+    const { service, user, role, userRole, createdUser } = makeService();
 
-    expect(prisma.user.$transaction).toHaveBeenCalledTimes(1);
-    expect(prisma.user.$transaction).toHaveBeenCalledWith(expect.any(Function));
-    const transactionFn = prisma.user.$transaction.mock.calls[0][0];
-    const { created } = (await transactionFn({
-      user: { create: vi.fn().mockResolvedValue({ id: 'new-user-id', createdAt: new Date() }) },
-    })) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    expect(created).toBeDefined();
-    expect(created.passwordHash).not.toBeUndefined();
+    const response = await service.register(makeRegisterDto(), request);
+
+    expect(user.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        email: 'client@example.cm',
+        phone: null,
+        status: 'PENDING_VERIFICATION',
+        termsVersion: '1.0',
+        termsAcceptedAt: expect.any(Date),
+      }),
+    });
+    expect(role.findFirst).toHaveBeenCalledWith({
+      where: { name: 'CUSTOMER' },
+      select: { id: true },
+    });
+    expect(userRole.create).toHaveBeenCalledWith({
+      data: { userId: createdUser.id, roleId: 'role-customer' },
+    });
     expect(response).toEqual({
-      message: 'Compte créé avec succès. Vous pouvez maintenant vous connecter.',
       id: 'new-user-id',
       emailMasked: 'c***@example.cm',
       phoneMasked: null,
+      firstName: 'Jean',
+      lastName: 'Dupont',
       status: 'PENDING_VERIFICATION',
-      createdAt: expect.any(Date),
+      createdAt: createdUser.createdAt,
+      message: 'Compte créé avec succès. Vous pouvez maintenant vous connecter.',
     });
+    // Aucun jeton n'est émis à l'inscription (AUT-02 s'en charge).
+    expect(response).not.toHaveProperty('accessToken');
   });
 
-  it('should reject weak password', async () => {
-    const { service } = makeService();
-    const dto = makeRegisterDto({ password: 'password' });
-    await expect(service.register(dto, request, makeResponse())).rejects.toThrow(
-      'Ce mot de passe est trop courant. Choisissez un mot de passe plus fort.',
-    );
-    expect(prisma.user.$transaction).not.toHaveBeenCalled();
+  it('refuse un mot de passe courant', async () => {
+    const { service, user } = makeService();
+    await expect(
+      service.register(makeRegisterDto({ password: 'password123' }), request),
+    ).rejects.toThrow(BadRequestException);
+    expect(user.create).not.toHaveBeenCalled();
   });
 
-  it('should reject when email and phone are both missing', async () => {
-    const { service } = makeService();
-    const dto = makeRegisterDto({ email: undefined, phone: undefined });
-    await expect(service.register(dto, request, makeResponse())).rejects.toThrow(
-      'Renseignez un email ou un téléphone.',
-    );
-    expect(prisma.user.$transaction).not.toHaveBeenCalled();
+  it('refuse quand ni e-mail ni téléphone ne sont fournis', async () => {
+    const { service, user } = makeService();
+    await expect(
+      service.register(makeRegisterDto({ email: undefined, phone: undefined }), request),
+    ).rejects.toMatchObject({ response: { code: 'MISSING_IDENTIFIER' } });
+    expect(user.create).not.toHaveBeenCalled();
   });
 
-  it('should reject when terms not accepted', async () => {
-    const { service } = makeService();
-    const dto = makeRegisterDto({ termsAccepted: false });
-    await expect(service.register(dto, request, makeResponse())).rejects.toThrow(
-      'Vous devez accepter les CGV pour créer un compte.',
-    );
-    expect(prisma.user.$transaction).not.toHaveBeenCalled();
+  it('refuse quand les CGV ne sont pas acceptées', async () => {
+    const { service, user } = makeService();
+    await expect(
+      service.register(makeRegisterDto({ termsAccepted: false }), request),
+    ).rejects.toMatchObject({ response: { code: 'TERMS_NOT_ACCEPTED' } });
+    expect(user.create).not.toHaveBeenCalled();
   });
 
-  it('should reject when terms version mismatch', async () => {
-    const { service, prisma } = makeService();
+  it('refuse une version des CGV obsolète', async () => {
+    const { service, prisma, user } = makeService();
     prisma.setting.findUnique.mockResolvedValue({ key: 'terms.version', value: '2.0' });
-    const dto = makeRegisterDto({ termsVersion: '0.9' });
-    await expect(service.register(dto, request, makeResponse())).rejects.toThrow(
-      'La version des CGV a changé, merci de recharger la page et de réaccepter.',
-    );
-    expect(prisma.user.$transaction).not.toHaveBeenCalled();
+    await expect(
+      service.register(makeRegisterDto({ termsVersion: '1.0' }), request),
+    ).rejects.toMatchObject({ response: { code: 'TERMS_VERSION_MISMATCH' } });
+    expect(user.create).not.toHaveBeenCalled();
   });
 
-  it('should create user when data is valid (happy path)', async () => {
-    const { service, prisma } = makeService();
-    const dto = makeRegisterDto();
-    const response = await service.register(dto, request, makeResponse());
-    expect(response.message).toContain('succès');
-    expect(response.status).toBe('PENDING_VERIFICATION');
-    expect(response.emailMasked).toBe('c***@example.cm');
-    expect(prisma.user.$transaction).toHaveBeenCalled();
-  });
+  it('répond de façon neutre sur un doublon, sans créer de compte, et journalise', async () => {
+    const { service, prisma, user } = makeService();
+    user.findFirst.mockResolvedValue({ id: 'existing-user-id' });
 
-  it('should return neutral response on duplicate (silent)', async () => {
-    const { service, prisma } = makeService();
-    prisma.user.findFirst.mockResolvedValue({ id: 'existing-user' });
-    const dto = makeRegisterDto();
-    const response = await service.register(dto, request, makeResponse());
-    expect(response.id).toBeDefined();
-    expect(response.id).not.toBe('user-123');
+    const response = await service.register(makeRegisterDto(), request);
+
+    expect(user.create).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'existing-user-id',
+        action: 'USER_REGISTERED_DUPLICATE',
+        entity: 'User',
+      }),
+    });
+    // Même structure que la réponse de création, identifiant opaque différent.
+    expect(response.id).not.toBe('existing-user-id');
     expect(response.emailMasked).toBe('c***@example.cm');
-    expect(response.message).toContain('compte créé');
-    expect(prisma.user.$transaction).not.toHaveBeenCalled();
-    expect(prisma.auditLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'USER_REGISTERED_DUPLICATE' }),
+    expect(response.message).toBe(
+      'Compte créé avec succès. Vous pouvez maintenant vous connecter.',
     );
   });
 });
 
-describe('AuthService - Helpers', () => {
-  it('maskEmail should mask email locally', () => {
+describe('AuthService — Masquage des identifiants', () => {
+  it('masque un e-mail en gardant le domaine', () => {
     expect(maskEmail('client@example.cm')).toBe('c***@example.cm');
     expect(maskEmail(null)).toBeNull();
   });
 
-  it('maskPhone should mask phone', () => {
+  it('masque un téléphone en gardant les 4 derniers chiffres', () => {
     expect(maskPhone('+237612345678')).toBe('***5678');
     expect(maskPhone(null)).toBeNull();
   });

@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Variantes — prototype DSG-06</title>
+    <style>
+      :root {
+        --navy: #131b2e;
+        --navy-soft: #24304a;
+        --gold: #c89b3c;
+        --gold-text: #8a6a1f;
+        --canvas: #fafaf7;
+        --surface: #ffffff;
+        --border: #e5e1d8;
+        --muted: #656b78;
+        --success: #1e8e5a;
+        --danger: #d62839;
+        --warning: #b98500;
+        --radius: 12px;
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--navy);
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+      header {
+        background: var(--navy);
+        color: #fff;
+        padding: 18px 20px;
+      }
+      header .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      header p {
+        margin: 4px 0 0;
+        color: #d8dce6;
+        font-size: 13px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 0 0 12px;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      input,
+      button {
+        font: inherit;
+      }
+      input[type='text'],
+      input[type='number'] {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid #cfc9bc;
+        border-radius: 8px;
+        padding: 8px 12px;
+        background: #fff;
+        color: var(--navy);
+      }
+      input:focus-visible,
+      button:focus-visible {
+        outline: 3px solid var(--gold);
+        outline-offset: 2px;
+      }
+      .btn {
+        min-height: 44px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn-primary {
+        background: var(--navy);
+        color: #fff;
+      }
+      .btn-primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: #fff;
+        border-color: #cfc9bc;
+        color: var(--navy);
+      }
+      .btn-danger {
+        background: #fff;
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .btn-small {
+        min-height: 36px;
+        padding: 4px 10px;
+        font-size: 13px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        min-height: 34px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f2eee4;
+        border: 1px solid #ded7c7;
+        border-radius: 999px;
+        padding: 4px 6px 4px 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .chip button {
+        border: 0;
+        background: transparent;
+        color: var(--navy);
+        cursor: pointer;
+        min-width: 28px;
+        min-height: 28px;
+        border-radius: 50%;
+        font-size: 16px;
+        line-height: 1;
+      }
+      .chip button:hover {
+        background: #e3dccb;
+      }
+      .help {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 6px 0 0;
+      }
+      .counter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .counter strong {
+        font-size: 18px;
+      }
+      .warn {
+        color: var(--danger);
+        font-weight: 600;
+      }
+      .grid-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .empty {
+        border: 1px dashed #cfc9bc;
+        border-radius: 8px;
+        padding: 24px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: middle;
+      }
+      th {
+        background: #f7f4ec;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      td input[type='number'] {
+        min-height: 36px;
+        padding: 4px 8px;
+        width: 96px;
+      }
+      .sku {
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .check {
+        width: 44px;
+        text-align: center;
+      }
+      input[type='checkbox'] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--navy);
+      }
+      .bulkbar {
+        position: sticky;
+        bottom: 12px;
+        z-index: 2;
+        background: var(--navy);
+        color: #fff;
+        border-radius: 10px;
+        padding: 12px;
+        margin: 12px 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 8px;
+        box-shadow: 0 8px 24px rgba(19, 27, 46, 0.18);
+      }
+      .bulkbar .field {
+        display: grid;
+        gap: 3px;
+        font-size: 12px;
+      }
+      .bulkbar input {
+        min-height: 38px;
+        width: 110px;
+      }
+      .bulkbar .spacer {
+        flex: 1;
+      }
+      .bulkbar .count {
+        font-weight: 700;
+        align-self: center;
+        width: 100%;
+      }
+      .cards {
+        display: none;
+      }
+      .variant-card {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: #fff;
+      }
+      .variant-card h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+      .variant-line {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 8px;
+        padding: 10px 0;
+        border-top: 1px solid var(--border);
+      }
+      .variant-line .fields {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 6px 10px;
+        align-items: center;
+      }
+      .variant-line label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .variant-line input[type='number'] {
+        min-height: 44px;
+      }
+      .variant-line .sku {
+        grid-column: 1 / -1;
+        overflow-wrap: anywhere;
+        white-space: normal;
+      }
+      .status {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #eef5f0;
+        color: #145c3a;
+        font-size: 14px;
+        min-height: 42px;
+      }
+      .status[data-tone='error'] {
+        background: #fbecee;
+        color: #8d1622;
+      }
+      .status[data-tone='info'] {
+        background: #eef2f8;
+        color: #2c3e5c;
+      }
+      .footer-note {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 760px) {
+        .steps {
+          grid-template-columns: 1fr;
+        }
+        .table-wrap {
+          display: none;
+        }
+        .cards {
+          display: block;
+        }
+        .bulkbar input {
+          width: 92px;
+        }
+        h1 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <h1>Variantes · Mocassin Glacé</h1>
+        <p>Prototype DSG-06 / A05b — aucune sauvegarde, aucune requête réseau.</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>1. Couleurs et pointures</h2>
+        <div class="steps">
+          <div>
+            <label for="colorInput"><strong>Couleurs</strong></label>
+            <div class="row" style="margin-top: 6px">
+              <input id="colorInput" type="text" placeholder="Ex. Noir" maxlength="30" />
+              <button class="btn btn-secondary" id="addColor" type="button">Ajouter</button>
+            </div>
+            <p class="help">Entrée pour ajouter. Maximum 30 couleurs.</p>
+            <div class="chips" id="colorChips" aria-label="Couleurs sélectionnées"></div>
+          </div>
+          <div>
+            <label for="sizeInput"><strong>Pointures</strong></label>
+            <div class="row" style="margin-top: 6px">
+              <input id="sizeInput" type="text" placeholder="Ex. 42" maxlength="12" />
+              <button class="btn btn-secondary" id="addSize" type="button">Ajouter</button>
+            </div>
+            <p class="help">Entrée pour ajouter. Maximum 30 pointures.</p>
+            <div class="chips" id="sizeChips" aria-label="Pointures sélectionnées"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="counter">
+          <div>
+            <strong id="countText">0 variante</strong>
+            <p class="help" id="limitText">La limite est de 300 variantes.</p>
+          </div>
+          <button class="btn btn-primary" id="generate" type="button">Générer la grille</button>
+        </div>
+      </section>
+
+      <section class="card" id="gridCard">
+        <div class="grid-head">
+          <h2 style="margin: 0">Grille des variantes</h2>
+          <p class="help" id="summaryText" style="margin: 0">Aucune variante générée.</p>
+        </div>
+
+        <div id="emptyGrid" class="empty">
+          Ajoutez au moins une couleur et une pointure, puis générez la grille.
+        </div>
+
+        <div id="gridContent" hidden>
+          <div class="bulkbar" id="bulkbar">
+            <span class="count" id="selectionText">0 variante sélectionnée</span>
+            <label class="field">
+              Prix (FCFA)
+              <input id="bulkPrice" type="number" min="0" step="1" inputmode="numeric" />
+            </label>
+            <button class="btn btn-secondary btn-small" type="button" data-bulk="price">
+              Appliquer le prix
+            </button>
+            <label class="field">
+              Stock
+              <input id="bulkStock" type="number" min="0" step="1" inputmode="numeric" />
+            </label>
+            <button class="btn btn-secondary btn-small" type="button" data-bulk="stock">
+              Appliquer le stock
+            </button>
+            <label class="field">
+              Seuil
+              <input id="bulkThreshold" type="number" min="0" step="1" inputmode="numeric" />
+            </label>
+            <button class="btn btn-secondary btn-small" type="button" data-bulk="threshold">
+              Appliquer le seuil
+            </button>
+            <span class="spacer"></span>
+            <button class="btn btn-danger btn-small" id="deleteSelected" type="button">
+              Supprimer
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <caption style="position: absolute; left: -9999px">
+                Variantes du produit
+              </caption>
+              <thead>
+                <tr>
+                  <th class="check">
+                    <input id="selectAll" type="checkbox" aria-label="Tout sélectionner" />
+                  </th>
+                  <th>Couleur</th>
+                  <th>Pointure</th>
+                  <th>SKU (aperçu)</th>
+                  <th>Prix</th>
+                  <th>Stock</th>
+                  <th>Seuil</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="cards" id="mobileCards"></div>
+          <p class="footer-note">
+            Le SKU affiché est un aperçu. Le SKU final est généré par le serveur et peut être
+            suffixé en cas de collision.
+          </p>
+        </div>
+      </section>
+
+      <div class="status" id="status" role="status" aria-live="polite">
+        Prototype prêt. Ajoutez des couleurs et des pointures.
+      </div>
+    </main>
+
+    <script>
+      const MAX_COLORS = 30;
+      const MAX_SIZES = 30;
+      const MAX_VARIANTS = 300;
+
+      const state = {
+        colors: ['Noir', 'Cognac'],
+        sizes: ['39', '40', '41', '42', '43'],
+        variants: [],
+        selected: new Set(),
+      };
+      let nextId = 1;
+
+      const $ = (id) => document.getElementById(id);
+      const normalize = (value) =>
+        value
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim()
+          .toLowerCase();
+      const keyOf = (color, size) => `${normalize(color)}|${normalize(size)}`;
+      const esc = (value) =>
+        String(value).replace(
+          /[&<>"']/g,
+          (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
+        );
+      const seg = (value, max) =>
+        value
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9]/g, '')
+          .toUpperCase()
+          .slice(0, max);
+      const skuOf = (variant) =>
+        ['BRUNY', 'MOCASSIN', seg(variant.size, 8), seg(variant.color, 12)]
+          .filter(Boolean)
+          .join('-');
+
+      function setStatus(message, tone = 'success') {
+        const node = $('status');
+        node.textContent = message;
+        node.dataset.tone = tone;
+      }
+
+      function addColor() {
+        const input = $('colorInput');
+        const value = input.value.trim();
+        if (!value) return setStatus('Saisissez une couleur.', 'error');
+        if (state.colors.length >= MAX_COLORS) {
+          return setStatus(`Maximum ${MAX_COLORS} couleurs.`, 'error');
+        }
+        if (state.colors.some((color) => normalize(color) === normalize(value))) {
+          return setStatus('Cette couleur existe déjà.', 'error');
+        }
+        state.colors.push(value);
+        input.value = '';
+        render();
+        setStatus(`Couleur « ${value} » ajoutée.`);
+      }
+
+      function addSize() {
+        const input = $('sizeInput');
+        const value = input.value.trim();
+        if (!value) return setStatus('Saisissez une pointure.', 'error');
+        if (state.sizes.length >= MAX_SIZES) {
+          return setStatus(`Maximum ${MAX_SIZES} pointures.`, 'error');
+        }
+        if (state.sizes.some((size) => normalize(size) === normalize(value))) {
+          return setStatus('Cette pointure existe déjà.', 'error');
+        }
+        state.sizes.push(value);
+        input.value = '';
+        render();
+        setStatus(`Pointure « ${value} » ajoutée.`);
+      }
+
+      function removeColor(color) {
+        state.colors = state.colors.filter((item) => item !== color);
+        state.variants = state.variants.filter((variant) => variant.color !== color);
+        pruneSelection();
+        render();
+        setStatus(`Couleur « ${color} » retirée.`, 'info');
+      }
+
+      function removeSize(size) {
+        state.sizes = state.sizes.filter((item) => item !== size);
+        state.variants = state.variants.filter((variant) => variant.size !== size);
+        pruneSelection();
+        render();
+        setStatus(`Pointure « ${size} » retirée.`, 'info');
+      }
+
+      function pruneSelection() {
+        const ids = new Set(state.variants.map((variant) => variant.id));
+        state.selected = new Set([...state.selected].filter((id) => ids.has(id)));
+      }
+
+      function generate() {
+        if (state.colors.length === 0 || state.sizes.length === 0) {
+          return setStatus('Ajoutez au moins une couleur et une pointure.', 'error');
+        }
+        const count = state.colors.length * state.sizes.length;
+        if (count > MAX_VARIANTS) {
+          return setStatus(
+            `${state.colors.length} × ${state.sizes.length} = ${count} variantes. La limite est de ${MAX_VARIANTS}.`,
+            'error',
+          );
+        }
+        const existing = new Map(
+          state.variants.map((variant) => [keyOf(variant.color, variant.size), variant]),
+        );
+        const next = [];
+        for (const color of state.colors) {
+          for (const size of state.sizes) {
+            const previous = existing.get(keyOf(color, size));
+            next.push(
+              previous ?? {
+                id: nextId++,
+                color,
+                size,
+                price: null,
+                stock: 0,
+                threshold: 5,
+              },
+            );
+          }
+        }
+        state.variants = next;
+        pruneSelection();
+        render();
+        setStatus(`Grille générée : ${count} variante(s).`);
+      }
+
+      function updateValue(id, field, raw) {
+        const variant = state.variants.find((item) => item.id === id);
+        if (!variant) return;
+        if (field === 'price') {
+          variant.price = raw === '' ? null : Math.max(0, Math.floor(Number(raw) || 0));
+        } else {
+          const value = Math.max(0, Math.floor(Number(raw) || 0));
+          if (field === 'stock') variant.stock = value;
+          if (field === 'threshold') variant.threshold = value;
+        }
+        updateSummary();
+      }
+
+      function toggleSelection(id, checked) {
+        if (checked) state.selected.add(id);
+        else state.selected.delete(id);
+        updateSelection();
+      }
+
+      function updateSelection() {
+        const total = state.selected.size;
+        $('selectionText').textContent =
+          total === 0 ? 'Aucune variante sélectionnée' : `${total} variante(s) sélectionnée(s)`;
+        const boxes = [...document.querySelectorAll('[data-select]')];
+        boxes.forEach((box) => {
+          box.checked = state.selected.has(Number(box.dataset.select));
+        });
+        const all = $('selectAll');
+        if (all) {
+          all.checked = state.variants.length > 0 && total === state.variants.length;
+          all.indeterminate = total > 0 && total < state.variants.length;
+        }
+      }
+
+      function updateSummary() {
+        const units = state.variants.reduce((sum, variant) => sum + variant.stock, 0);
+        $('summaryText').textContent =
+          `${state.variants.length} variante(s) · ${units} unité(s) · 0 réservée(s)`;
+      }
+
+      function bulk(field) {
+        if (state.selected.size === 0) {
+          return setStatus('Sélectionnez au moins une variante.', 'error');
+        }
+        const source =
+          field === 'price'
+            ? $('bulkPrice')
+            : field === 'stock'
+              ? $('bulkStock')
+              : $('bulkThreshold');
+        if (source.value === '') {
+          return setStatus('Saisissez une valeur à appliquer.', 'error');
+        }
+        const value = Math.max(0, Math.floor(Number(source.value) || 0));
+        state.variants.forEach((variant) => {
+          if (!state.selected.has(variant.id)) return;
+          if (field === 'price') variant.price = value;
+          if (field === 'stock') variant.stock = value;
+          if (field === 'threshold') variant.threshold = value;
+        });
+        const label = field === 'price' ? 'prix' : field === 'stock' ? 'stock' : 'seuil';
+        render();
+        setStatus(`${label} appliqué à ${state.selected.size} variante(s).`);
+      }
+
+      function deleteSelected() {
+        if (state.selected.size === 0) {
+          return setStatus('Sélectionnez au moins une variante.', 'error');
+        }
+        const count = state.selected.size;
+        if (!window.confirm(`Supprimer ${count} variante(s) ?`)) return;
+        state.variants = state.variants.filter((variant) => !state.selected.has(variant.id));
+        state.selected.clear();
+        render();
+        setStatus(`${count} variante(s) supprimée(s).`);
+      }
+
+      function numberInput(variant, field, label) {
+        const value = field === 'price' ? (variant.price ?? '') : variant[field];
+        return `<label>${label}<input type="number" min="0" step="1" inputmode="numeric"
+          data-id="${variant.id}" data-field="${field}" value="${value}" aria-label="${label} ${esc(variant.color)} ${esc(variant.size)}" /></label>`;
+      }
+
+      function render() {
+        $('colorChips').innerHTML = state.colors
+          .map(
+            (color) =>
+              `<span class="chip">${esc(color)}<button type="button" data-remove-color="${esc(color)}" aria-label="Retirer la couleur ${esc(color)}">×</button></span>`,
+          )
+          .join('');
+        $('sizeChips').innerHTML = state.sizes
+          .map(
+            (size) =>
+              `<span class="chip">${esc(size)}<button type="button" data-remove-size="${esc(size)}" aria-label="Retirer la pointure ${esc(size)}">×</button></span>`,
+          )
+          .join('');
+
+        const count = state.colors.length * state.sizes.length;
+        $('countText').textContent = `${count} variante(s)`;
+        const limit = $('limitText');
+        if (count > MAX_VARIANTS) {
+          limit.textContent = `${state.colors.length} × ${state.sizes.length} = ${count}. La limite est de ${MAX_VARIANTS}.`;
+          limit.className = 'help warn';
+        } else {
+          limit.textContent = `${state.colors.length} couleur(s) × ${state.sizes.length} pointure(s). Limite : ${MAX_VARIANTS} variantes.`;
+          limit.className = 'help';
+        }
+        $('generate').disabled =
+          state.colors.length === 0 || state.sizes.length === 0 || count > MAX_VARIANTS;
+
+        const hasVariants = state.variants.length > 0;
+        $('emptyGrid').hidden = hasVariants;
+        $('gridContent').hidden = !hasVariants;
+
+        $('tableBody').innerHTML = state.variants
+          .map(
+            (variant) => `<tr>
+              <td class="check"><input type="checkbox" data-select="${variant.id}" ${
+                state.selected.has(variant.id) ? 'checked' : ''
+              } aria-label="Sélectionner ${esc(variant.color)} ${esc(variant.size)}" /></td>
+              <td>${esc(variant.color)}</td>
+              <td>${esc(variant.size)}</td>
+              <td class="sku">${skuOf(variant)}</td>
+              <td>${numberInput(variant, 'price', 'Prix')}</td>
+              <td>${numberInput(variant, 'stock', 'Stock')}</td>
+              <td>${numberInput(variant, 'threshold', 'Seuil')}</td>
+              <td><button class="btn btn-small btn-secondary" type="button" data-delete="${variant.id}" aria-label="Supprimer ${esc(variant.color)} ${esc(variant.size)}">Supprimer</button></td>
+            </tr>`,
+          )
+          .join('');
+
+        $('mobileCards').innerHTML = state.colors
+          .map((color) => {
+            const rows = state.variants.filter((variant) => variant.color === color);
+            if (rows.length === 0) return '';
+            return `<section class="variant-card">
+              <h3>${esc(color)} <span class="help">(${rows.length})</span></h3>
+              ${rows
+                .map(
+                  (variant) => `<div class="variant-line">
+                    <input type="checkbox" data-select="${variant.id}" ${
+                      state.selected.has(variant.id) ? 'checked' : ''
+                    } aria-label="Sélectionner ${esc(color)} ${esc(variant.size)}" />
+                    <div class="fields">
+                      <strong>${esc(variant.size)}</strong>
+                      <span class="sku">${skuOf(variant)}</span>
+                      ${numberInput(variant, 'price', 'Prix')}
+                      ${numberInput(variant, 'stock', 'Stock')}
+                      ${numberInput(variant, 'threshold', 'Seuil')}
+                      <button class="btn btn-small btn-danger" type="button" data-delete="${variant.id}">Supprimer</button>
+                    </div>
+                  </div>`,
+                )
+                .join('')}
+            </section>`;
+          })
+          .join('');
+
+        updateSelection();
+        updateSummary();
+      }
+
+      $('addColor').addEventListener('click', addColor);
+      $('addSize').addEventListener('click', addSize);
+      $('colorInput').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          addColor();
+        }
+      });
+      $('sizeInput').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          addSize();
+        }
+      });
+      $('generate').addEventListener('click', generate);
+      $('selectAll').addEventListener('change', (event) => {
+        state.selected = event.target.checked
+          ? new Set(state.variants.map((variant) => variant.id))
+          : new Set();
+        updateSelection();
+      });
+      $('deleteSelected').addEventListener('click', deleteSelected);
+      document.querySelectorAll('[data-bulk]').forEach((button) => {
+        button.addEventListener('click', () => bulk(button.dataset.bulk));
+      });
+
+      document.addEventListener('click', (event) => {
+        const removeColorButton = event.target.closest('[data-remove-color]');
+        if (removeColorButton) return removeColor(removeColorButton.dataset.removeColor);
+        const removeSizeButton = event.target.closest('[data-remove-size]');
+        if (removeSizeButton) return removeSize(removeSizeButton.dataset.removeSize);
+        const deleteButton = event.target.closest('[data-delete]');
+        if (deleteButton) {
+          state.variants = state.variants.filter(
+            (variant) => variant.id !== Number(deleteButton.dataset.delete),
+          );
+          pruneSelection();
+          render();
+          setStatus('Variante supprimée.');
+        }
+      });
+
+      document.addEventListener('input', (event) => {
+        const field = event.target.dataset.field;
+        if (!field) return;
+        updateValue(Number(event.target.dataset.id), field, event.target.value);
+      });
+
+      document.addEventListener('change', (event) => {
+        if (event.target.matches('[data-select]')) {
+          toggleSelection(Number(event.target.dataset.select), event.target.checked);
+        }
+      });
+
+      render();
+    </script>
+  </body>
+</html>
