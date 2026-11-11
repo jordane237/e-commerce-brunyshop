@@ -59,4 +59,11 @@ export class RegisterDto {
   @IsNotEmpty()
   @MaxLength(20)
   termsVersion!: string;
+
+  // Optional so the guard can return CAPTCHA_REQUIRED before validation.
+  @ApiPropertyOptional({ description: 'Jeton Cloudflare Turnstile' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4096)
+  turnstileToken?: string;
 }

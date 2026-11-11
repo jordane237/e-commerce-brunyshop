@@ -10,6 +10,7 @@ import type { INestApplication } from '@nestjs/common';
 import type { PrismaService } from '../src/infrastructure/database/database.module';
 
 if (existsSync('../.env')) process.loadEnvFile('../.env');
+process.env['TURNSTILE_ENABLED'] = 'false';
 
 const BASE_URL = '/api/v1';
 const suffix = `${Date.now()}`;

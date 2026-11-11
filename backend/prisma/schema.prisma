@@ -671,18 +671,37 @@ model Setting {
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model BackupCode {
-  id       String    @id @default(uuid())
-  userId   String
+}model BackupCode {
+  id        String    @id @default(uuid())
+  userId    String
   // Argon2id hash of a single-use 2FA recovery code (BOA-04).
   codeHash String
-  usedAt   DateTime?
+  usedAt    DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// AUT-11: public contact form. Anonymous submissions have no User, so they
+// cannot be written to AuditLog (userId required); the message is persisted
+// here instead and a structured Pino event records the submission.
+model ContactMessage {
+  id             String   @id @default(uuid())
+  name           String
+  email          String
+  phone          String?
+  subject        String
+  orderReference String?
+  message        String
+  consent        Boolean
+  ip             String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([email])
+  @@index([createdAt])
 }

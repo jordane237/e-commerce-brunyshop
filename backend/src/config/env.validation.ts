@@ -7,12 +7,16 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
   Matches,
   Max,
+  MaxLength,
   Min,
   MinLength,
   validateSync,
 } from 'class-validator';
+
+import { readTurnstileSettings } from './turnstile.settings';
 
 export enum Environment {
   Development = 'development',
@@ -259,6 +263,33 @@ export class EnvVariables {
   @IsOptional()
   @IsString()
   public SENTRY_DSN?: string;
+
+  // --- Cloudflare Turnstile (AUT-11) ----------------------------------
+  // Optional at schema level so development/test can boot without keys; the
+  // conditional requirement is enforced in validateEnv when CAPTCHA is active.
+  @IsOptional()
+  @IsIn(['true', 'false', '1', '0', 'yes', 'no', 'on', 'off'])
+  public TURNSTILE_ENABLED?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  public TURNSTILE_SITE_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  public TURNSTILE_SECRET_KEY?: string;
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  public TURNSTILE_VERIFY_URL?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1000)
+  @Max(15000)
+  public TURNSTILE_TIMEOUT_MS?: number;
 }
 
 // Synchronous on purpose: @nestjs/config v12 stores the result of `validate`
@@ -283,6 +314,24 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
     throw new Error(
       'Invalid environment variables:\n  CORS_ORIGINS: must contain comma-separated HTTP(S) origins',
     );
+  }
+
+  // CAPTCHA is mandatory when enabled: fail at boot instead of accepting every
+  // request with an unusable empty key. Development/test default to disabled
+  // unless explicitly opted in, so existing local workflows keep working.
+  const turnstile = readTurnstileSettings(config);
+  if (turnstile.enabled) {
+    const missing = [
+      ['TURNSTILE_SITE_KEY', turnstile.siteKey],
+      ['TURNSTILE_SECRET_KEY', turnstile.secretKey],
+    ]
+      .filter(([, value]) => value === null)
+      .map(([name]) => name);
+    if (missing.length > 0) {
+      throw new Error(
+        `Invalid environment variables:\n  ${missing.join(', ')}: required when TURNSTILE_ENABLED=true`,
+      );
+    }
   }
 
   // S3 credentials are required only when the S3 provider is selected. The

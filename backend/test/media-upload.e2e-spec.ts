@@ -24,6 +24,7 @@ import {
 } from '../src/infrastructure/storage/providers/storage-provider.interface';
 
 if (existsSync('../.env')) process.loadEnvFile('../.env');
+process.env['TURNSTILE_ENABLED'] = 'false';
 
 // Force the in-memory provider before AppModule/ConfigModule is imported.
 process.env.STORAGE_PROVIDER = 'fake';

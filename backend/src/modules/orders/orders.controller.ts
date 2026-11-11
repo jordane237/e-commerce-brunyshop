@@ -17,6 +17,7 @@ import {
 } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
+import { TurnstileGuard } from '../../security/turnstile/turnstile.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { OrdersService } from './orders.service';
@@ -29,7 +30,7 @@ export class OrdersController {
   // Guest checkout stays public; OptionalJwtAuthGuard attaches the customer
   // when a valid token is present, so connected orders get userId + movement.
   @Public()
-  @UseGuards(OptionalJwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard, TurnstileGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
@@ -48,6 +49,7 @@ export class OrdersController {
   @ApiConflictResponse({ description: 'Stock insuffisant ou clé d’idempotence en conflit' })
   @ApiNotFoundResponse({ description: 'Variante ou produit introuvable' })
   @ApiResponse({ status: 429, description: 'Trop de requêtes (20/min/IP)' })
+  @ApiResponse({ status: 503, description: 'CAPTCHA_UNAVAILABLE (service indisponible)' })
   create(
     @Body() dto: CreateOrderDto,
     @CurrentUser() user: AuthenticatedUser | undefined,

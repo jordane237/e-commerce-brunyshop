@@ -62,4 +62,11 @@ export class CreateOrderDto {
   @IsOptional()
   @IsUUID()
   idempotencyKey?: string;
+
+  // Optional so TurnstileGuard can return CAPTCHA_REQUIRED before validation.
+  @ApiPropertyOptional({ description: 'Jeton Cloudflare Turnstile' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4096)
+  turnstileToken?: string;
 }

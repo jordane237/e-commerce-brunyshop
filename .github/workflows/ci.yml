@@ -152,11 +152,21 @@ jobs:
       NODE_ENV: test
       DATABASE_URL: postgresql://brunyshop_test:brunyshop_test@localhost:5432/brunyshop_test
       REDIS_URL: redis://localhost:6379
-      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-only-secret-that-is-at-least-thirty-two-characters-long-abcdefg' }}
-      COOKIE_SECRET: ${{ secrets.COOKIE_SECRET || 'ci-cookie-secret-at-least-thirty-two-characters-long-12345678' }}
+      JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'ci-only-access-secret-at-least-forty-eight-characters-abcdefg' }}
+      JWT_ACCESS_TTL: 15m
+      REFRESH_TOKEN_TTL: 30d
+      APP_PUBLIC_URL: http://localhost:4200
+      ADMIN_PUBLIC_URL: http://localhost:4300
+      THROTTLE_TTL: 60
+      THROTTLE_LIMIT: 1000
+      CORS_ORIGINS: http://localhost:4200,http://localhost:4300
+      # CAPTCHA off for generic e2e. The three captcha-*.e2e-spec.ts files
+      # override these values with Cloudflare's public always-pass/fail keys.
+      TURNSTILE_ENABLED: 'false'
+      STORAGE_PROVIDER: fake
+      MAIL_DRIVER: console
       SEED_SUPER_ADMIN_EMAIL: admin@brunyshopping.example
       SEED_SUPER_ADMIN_PASSWORD: ci-test-password-only
-      CORS_ORIGINS: http://localhost:4200
     steps:
       - name: Checkout
         uses: actions/checkout@v4

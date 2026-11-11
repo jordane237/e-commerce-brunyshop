@@ -16,8 +16,11 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "400": {
+            "description": "CAPTCHA_REQUIRED, CAPTCHA_INVALID ou body invalide"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
           }
         },
         "summary": "Création de compte client (email ou téléphone)",
@@ -39,8 +42,11 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "400": {
+            "description": "CAPTCHA_REQUIRED, CAPTCHA_INVALID ou body invalide"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
           }
         },
         "summary": "Connexion : access JWT + cookie de rafraîchissement (ou défi 2FA)",
@@ -1218,6 +1224,9 @@
           },
           "429": {
             "description": "Trop de requêtes (20/min/IP)"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
           }
         },
         "summary": "Créer une commande et décrémenter le stock atomiquement",
@@ -1514,6 +1523,62 @@
         "summary": "Réorganiser les images d’un produit",
         "tags": ["admin-media"]
       }
+    },
+    "/api/v1/config": {
+      "get": {
+        "operationId": "PublicConfigController_getPublicConfig_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes (60/min/IP)"
+          }
+        },
+        "summary": "Configuration publique (clés publiques uniquement)",
+        "tags": ["config"]
+      }
+    },
+    "/api/v1/contact": {
+      "post": {
+        "description": "Formulaire public protégé par Cloudflare Turnstile. Le message est persisté pour traitement par le support.",
+        "operationId": "ContactController_submit_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message reçu"
+          },
+          "400": {
+            "description": "CAPTCHA requis/invalide ou body invalide"
+          },
+          "429": {
+            "description": "Trop de requêtes (5/min/IP)"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
+          }
+        },
+        "summary": "Envoyer un message au support",
+        "tags": ["contact"]
+      }
     }
   },
   "info": {
@@ -1562,6 +1627,10 @@
             "type": "string",
             "example": "1.0",
             "description": "Version des CGV acceptée"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Jeton Cloudflare Turnstile"
           }
         },
         "required": ["password", "termsAccepted", "termsVersion"]
@@ -1575,6 +1644,10 @@
           },
           "password": {
             "type": "string"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Jeton Cloudflare Turnstile"
           }
         },
         "required": ["identifier", "password"]
@@ -3220,6 +3293,10 @@
           "idempotencyKey": {
             "type": "string",
             "description": "Clé d’idempotence contre les doubles soumissions"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Jeton Cloudflare Turnstile"
           }
         },
         "required": ["items", "address", "paymentMethod"]
@@ -3433,6 +3510,66 @@
           }
         },
         "required": ["updated"]
+      },
+      "PublicConfigDto": {
+        "type": "object",
+        "properties": {
+          "turnstileEnabled": {
+            "type": "boolean",
+            "description": "Indique si le CAPTCHA est actif côté serveur",
+            "example": true
+          },
+          "turnstileSiteKey": {
+            "type": "object",
+            "nullable": true,
+            "description": "Clé publique Cloudflare Turnstile. Aucun secret n’est exposé.",
+            "example": "1x00000000000000000000BB"
+          }
+        },
+        "required": ["turnstileEnabled", "turnstileSiteKey"]
+      },
+      "ContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Awa Mbarga",
+            "maxLength": 150
+          },
+          "email": {
+            "type": "string",
+            "example": "awa@example.cm",
+            "maxLength": 254
+          },
+          "phone": {
+            "type": "string",
+            "example": "+237699000001"
+          },
+          "subject": {
+            "type": "string",
+            "enum": ["order", "product", "return", "delivery", "other"],
+            "description": "Sujet de la demande"
+          },
+          "orderReference": {
+            "type": "string",
+            "example": "BRN-2611-7K3F"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 5000
+          },
+          "consent": {
+            "type": "boolean",
+            "example": true,
+            "description": "Consentement pour répondre à la demande"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Jeton Cloudflare Turnstile obtenu par le widget invisible"
+          }
+        },
+        "required": ["name", "email", "subject", "message", "consent"]
       }
     }
   }

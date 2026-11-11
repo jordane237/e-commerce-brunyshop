@@ -23,6 +23,7 @@ import type { NotificationsService } from '../src/modules/notifications/notifica
 import type { Queue } from 'bullmq';
 
 if (existsSync('../.env')) process.loadEnvFile('../.env');
+process.env['TURNSTILE_ENABLED'] = 'false';
 
 // Mode console déterministe : le worker réussit sans dépendre de Mailpit.
 // (process.env prime sur le fichier .env lu par ConfigModule.)

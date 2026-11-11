@@ -18,6 +18,7 @@ import { RedisService } from '../src/infrastructure/cache/cache.module';
 import { PrismaService } from '../src/infrastructure/database/database.module';
 
 if (existsSync('../.env')) process.loadEnvFile('../.env');
+process.env['TURNSTILE_ENABLED'] = 'false';
 if (process.env.REDIS_URL) {
   const redisUrl = new URL(process.env.REDIS_URL);
   redisUrl.pathname = '/1';

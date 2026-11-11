@@ -4,6 +4,7 @@ import {
   type StorageSettings,
 } from '../infrastructure/storage/storage.settings';
 import { Environment } from './env.validation';
+import { readTurnstileSettings, type TurnstileSettings } from './turnstile.settings';
 
 export interface AuthConfig {
   secret: string;
@@ -30,6 +31,7 @@ export interface ApplicationConfig {
   };
   storage: StorageSettings;
   auth: AuthConfig;
+  turnstile: TurnstileSettings;
   isProduction: boolean;
 }
 
@@ -59,6 +61,7 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
       similarProductsLimit: Number(env['SIMILAR_PRODUCTS_LIMIT'] ?? 6),
     },
     storage: readStorageSettings(env),
+    turnstile: readTurnstileSettings(env),
     auth: {
       // Cachier 10.2: access JWT 10-15 min, rotating refresh cookie.
       secret: String(env['JWT_ACCESS_SECRET']),

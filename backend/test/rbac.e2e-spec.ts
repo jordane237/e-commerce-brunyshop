@@ -21,6 +21,7 @@ import { RedisService } from '../src/infrastructure/cache/cache.module';
 import { PrismaService } from '../src/infrastructure/database/database.module';
 
 if (existsSync('../.env')) process.loadEnvFile('../.env');
+process.env['TURNSTILE_ENABLED'] = 'false';
 
 // Isolation du rate-limit et de BullMQ : db Redis dédiée aux e2e.
 if (process.env.REDIS_URL) {

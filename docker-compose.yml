@@ -161,6 +161,11 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200,http://localhost:4201}
       THROTTLE_TTL: ${THROTTLE_TTL:-60}
       THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
+      TURNSTILE_ENABLED: ${TURNSTILE_ENABLED:-true}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:?TURNSTILE_SITE_KEY requis dans .env}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:?TURNSTILE_SECRET_KEY requis dans .env}
+      TURNSTILE_VERIFY_URL: ${TURNSTILE_VERIFY_URL:-https://challenges.cloudflare.com/turnstile/v0/siteverify}
+      TURNSTILE_TIMEOUT_MS: ${TURNSTILE_TIMEOUT_MS:-5000}
       MAIL_DRIVER: ${MAIL_DRIVER:-mailpit}
       MAIL_FROM: ${MAIL_FROM:-noreply@brunyshopping.example}
       SMTP_HOST: mailpit

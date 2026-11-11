@@ -9,8 +9,9 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 
@@ -19,6 +20,7 @@ import {
   type AuthenticatedUser,
 } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { TurnstileGuard } from '../../security/turnstile/turnstile.guard';
 import { AuthService } from './auth.service';
 // Value imports: emitDecoratorMetadata needs the DTO classes at runtime for
 // the global ValidationPipe (type-only imports would degrade to Object).
@@ -36,20 +38,26 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @UseGuards(TurnstileGuard)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   @ApiOperation({ summary: 'Création de compte client (email ou téléphone)' })
+  @ApiResponse({ status: 400, description: 'CAPTCHA_REQUIRED, CAPTCHA_INVALID ou body invalide' })
+  @ApiResponse({ status: 503, description: 'CAPTCHA_UNAVAILABLE (service indisponible)' })
   async register(@Body() dto: RegisterDto, @Req() req: Request): Promise<RegisterResponseDto> {
     return this.authService.register(dto, req);
   }
 
   @Public()
+  @UseGuards(TurnstileGuard)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Connexion : access JWT + cookie de rafraîchissement (ou défi 2FA)',
   })
+  @ApiResponse({ status: 400, description: 'CAPTCHA_REQUIRED, CAPTCHA_INVALID ou body invalide' })
+  @ApiResponse({ status: 503, description: 'CAPTCHA_UNAVAILABLE (service indisponible)' })
   async login(
     @Body() dto: LoginDto,
     @Req() req: Request,

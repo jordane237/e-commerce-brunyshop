@@ -8,11 +8,13 @@
 - Journaux structurés avec masquage des champs sensibles; erreurs HTTP uniformisées sans détails internes en production.
 - Suppression logique de plusieurs entités et audit transactionnel de la création de produit.
 - `.env` ignoré par Git; `.env.example` contient uniquement des valeurs d’exemple non secrètes.
+- CAPTCHA Cloudflare Turnstile sur les formulaires sensibles, vérifié côté serveur avec timeout et fail-closed ; voir [`security/CAPTCHA.md`](security/CAPTCHA.md).
 
 ## Avant mise en production
 
 - [ ] Générer des secrets aléatoires uniques et stocker les dans un gestionnaire de secrets.
 - [ ] Configurer HTTPS, domaine/cookie `Secure`, CORS strict et CSP selon les domaines réels.
+- [ ] Remplacer les clés Turnstile de test par un widget de production et tester l’alerte `TURNSTILE_UNAVAILABLE`.
 - [ ] Exécuter `docker compose -f docker-compose.yml -f docker-compose.production.yml --profile full config` et vérifier les ports privés.
 - [ ] Configurer SMTP/SMS/paiement réels, vérifier les signatures webhook et les procédures de remboursement.
 - [ ] Réaliser une revue indépendante des flux d’authentification, permissions et migration de base.

@@ -12,6 +12,7 @@ import { PrismaService } from '../src/infrastructure/database/database.module';
 import { CatalogCacheService } from '../src/modules/catalog/cache/catalog-cache.service';
 
 if (existsSync('../.env')) process.loadEnvFile('../.env');
+process.env['TURNSTILE_ENABLED'] = 'false';
 
 const PREFIX = 'e2e-cat02';
 const IN_STOCK = `${PREFIX}-in-stock`;

@@ -58,7 +58,7 @@ Le mot de passe du compte seed est lu depuis `SEED_ADMIN_PASSWORD`. Le seed est 
 
 ## Configuration
 
-Copier `.env.example` vers `.env` et remplacer chaque `CHANGE_ME` ; chaque variable y est décrite. Les secrets réels ne doivent jamais être commités et `.env` est ignoré par Git. `docker compose up` échoue volontairement avec un message explicite si `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` ou `JWT_ACCESS_SECRET` manquent.
+Copier `.env.example` vers `.env` et remplacer chaque `CHANGE_ME` ; chaque variable y est décrite. Les secrets réels ne doivent jamais être commités et `.env` est ignoré par Git. `docker compose up` échoue volontairement avec un message explicite si `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `JWT_ACCESS_SECRET`, `TURNSTILE_SITE_KEY` ou `TURNSTILE_SECRET_KEY` manquent.
 
 Les ports sont publiés sur `127.0.0.1` uniquement, et les services sont isolés par réseau (`backend`, `mail`, `storage`, `edge`). Pour la configuration sans ports d’infrastructure exposés, voir `docker-compose.production.yml`.
 
@@ -139,4 +139,4 @@ pnpm audit --audit-level=high  # Audit des dépendances (échec si high/critical
 
 ## Documentation et limites connues
 
-Lire [l’architecture](docs/architecture.md), [la sécurité](docs/security.md), [les conventions](docs/conventions.md) et les [ADR](docs/adr/README.md). Cette livraison est une fondation : panier côté client et flux de paiement/commande ne sont pas encore des parcours transactionnels complets; les modules correspondants sont câblés mais restent des squelettes.
+Lire [l’architecture](docs/architecture.md), [la sécurité](docs/security.md), [le CAPTCHA Turnstile](docs/security/CAPTCHA.md), [les conventions](docs/conventions.md) et les [ADR](docs/adr/README.md). Cette livraison est une fondation : panier côté client et flux de paiement/commande ne sont pas encore des parcours transactionnels complets; les modules correspondants sont câblés mais restent des squelettes.
