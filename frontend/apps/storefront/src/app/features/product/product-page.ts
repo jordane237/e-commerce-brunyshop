@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogApi, CatalogProductDetail } from '@bruny/data-access';
 import { CartStore } from '@bruny/data-access';
-import { PriceTagComponent, SizeSelectorComponent } from '@bruny/ui';
+import { PriceTagComponent, SizeSelectorComponent, type SizeSelectorItem } from '@bruny/ui';
 import { NgOptimizedImage } from '@angular/common';
 import { SeoService } from '../../core/seo.service';
 
@@ -54,9 +54,9 @@ import { SeoService } from '../../core/seo.service';
             <p class="description">{{ product()!.description }}</p>
             <h2>Choisissez votre pointure</h2>
             <bruny-size-selector
-              [sizes]="availableSizes()"
-              [selected]="selectedSize()"
-              (selectedSize)="selectedSize.set($event)"
+              [items]="availableSizes()"
+              [selected]="selectedSize() ? { id: selectedSize()!, size: selectedSize()! } : null"
+              (select)="selectedSize.set($event.size)"
             />
             @if (selectedSize()) {
               <p class="availability">Disponible en {{ selectedSize() }}</p>
@@ -178,7 +178,7 @@ export class ProductPage implements OnInit {
   readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   readonly product = signal<CatalogProductDetail | null>(null);
   readonly selectedSize = signal<string | null>(null);
-  readonly availableSizes = signal<string[]>([]);
+  readonly availableSizes = signal<SizeSelectorItem[]>([]);
   readonly added = signal(false);
 
   effectivePrice(): number {
@@ -200,7 +200,9 @@ export class ProductPage implements OnInit {
           // Groupements calculés côté serveur : le stock exposé est le stock
           // disponible (stock - réservé), jamais le stock physique brut.
           this.availableSizes.set(
-            item.sizes.filter((size) => size.isAvailable).map((size) => size.size),
+            item.sizes
+              .filter((size) => size.isAvailable)
+              .map((size) => ({ id: size.size, size: size.size, stock: size.availableStock })),
           );
           this.state.set('ready');
         },

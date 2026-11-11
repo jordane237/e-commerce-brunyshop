@@ -51,6 +51,10 @@ export class SizeSelectorComponent {
     return `+${remaining} autres pointures`;
   });
 
+  isEqual(item: SizeSelectorItem, selected: { id: string; size: string } | null): boolean {
+    return selected !== null && selected.id === item.id;
+  }
+
   isAvailable(item: SizeSelectorItem): boolean {
     return item.stock > 0;
   }

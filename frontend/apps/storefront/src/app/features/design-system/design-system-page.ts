@@ -102,7 +102,14 @@ export class DesignSystemPage {
   readonly payment = signal('livraison');
   readonly notifications = signal(true);
   readonly antiTheft = signal(false);
-  readonly size = signal('41');
+  readonly size = signal<{ id: string; size: string } | null>({ id: 'v-41', size: '41' });
+  readonly sizeItems = computed(() => [
+    { id: 'v-40', size: '40', stock: 6 },
+    { id: 'v-41', size: '41', stock: 3 },
+    { id: 'v-42', size: '42', stock: 2 },
+    { id: 'v-43', size: '43', stock: 0 },
+    { id: 'v-44', size: '44', stock: 6 },
+  ]);
   readonly modalOpen = signal(false);
 
   readonly toastMessage = signal('');
