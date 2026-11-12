@@ -279,6 +279,8 @@ export class CatalogPage implements OnInit {
     );
     this.route.queryParamMap.subscribe((params) => {
       this.page.set(Number(params.get('page') ?? 1));
+      // Les pastilles de la page d'accueil arrivent avec ?category=<slug> (CAT-07).
+      this.filters.category = params.get('category') ?? undefined;
       this.load();
     });
     this.api

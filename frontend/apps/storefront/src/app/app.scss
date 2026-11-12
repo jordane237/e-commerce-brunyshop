@@ -18,7 +18,8 @@
   letter-spacing: 0.08em;
 }
 .brand span {
-  color: #c9a227;
+  // Or accessible sur fond clair (DSG-02, 4,83:1) — l'ancien #c9a227 échouait AA.
+  color: var(--bs-color-accent-text);
 }
 .site-header nav {
   display: flex;
