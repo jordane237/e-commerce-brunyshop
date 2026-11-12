@@ -7,17 +7,17 @@
 
 ## 2. Merge et push
 - Merge de `review/sprint-2-final-audit` sur `working` : effectué en fast-forward
-- HEAD `working` : `cd1acf9`
+- Merge commit : `cd1acf9`, suivi du commit de documentation final
 - `git log origin/working..working` : vide, `working` est poussé
 - Branche de revue conservée : `origin/review/sprint-2-final-audit`
 
 ## 3. Position des branches
 | Élément | Valeur |
 | --- | --- |
-| HEAD `working` | `cd1acf9` |
+| HEAD `working` | merge `cd1acf9` + commit de documentation final |
 | HEAD `review/sprint-2-final-audit` | `cd1acf9` |
 | Commits d'avance de la revue sur `working` | 0 |
-| Commits de `working` absents de la revue | 0 |
+| Commits de `working` absents de la revue | 1 (documentation finale uniquement) |
 | Backup | `origin/backup/sprint-2-before-review-20261111-144049` (`2c87b1d`) |
 
 ## 4. Branches

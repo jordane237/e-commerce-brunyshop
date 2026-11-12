@@ -54,7 +54,7 @@ Voir FRONTEND-BACKEND-CONSUMPTION.md.
 - Confirmer le CAPTCHA sur commande/contact (AUT-11).
 
 ## 7. État final du dépôt
-- `working` : `cd1acf9`, propre et poussé
+- `working` : contient le merge `cd1acf9` et le commit de documentation final, propre et poussé
 - `review/sprint-2-final-audit` : `cd1acf9`, mergée en fast-forward dans `working`
 - Les 18 tickets Sprint 2 sont intégrés dans `working`
 - Backup : `origin/backup/sprint-2-before-review-20261111-144049` (`2c87b1d`)
