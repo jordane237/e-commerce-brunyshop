@@ -19,6 +19,7 @@ const MODULES = [
   'catalog',
   'health',
   'inventory',
+  'media',
   'notifications',
   'orders',
   'payments',
@@ -41,6 +42,36 @@ function crossModulePatterns(allowedForThisModule = []) {
   return blocked.flatMap((m) => [`../${m}/**`, `../../${m}/**`]);
 }
 
+// --- Seeds (seed.ts au niveau de prisma) : cycle d'import géré en dur -------
+// seed.ts importe les seeds/*.ts et chaque seed importe seed.ts (cycle).
+// C'est l'unique graphe de dépendance du seed orchestrateur : on le laisse
+// passer. Règle locale à la racine du seed, sans toucher à la config globale.
+const seedConfigForScript = [
+  {
+    files: ['prisma/seeds/**/*.ts', 'prisma/seed.ts'],
+    rules: {
+      'no-console': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['../prisma/seeds/**', '../prisma/seed.ts'],
+              message: 'Import vers seed.ts interdit dans les seeds.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
+
+// --- Config globale --------------------------------------------------------
+// Règles communes à tous les fichiers TypeScript du backend :
+//   - pas de console sauf pour les seeds (scripts CLI),
+//   - pas de variable inutilisée,
+//   - imports cycliques ignorés pour les seeds (seed.ts ne peut pas importer
+//     les seeds sans créer de cycle : c'est l'unique graphe du seed orchestrateur).
 export default tseslint.config(
   { ignores: ['dist', 'src/generated'] },
   // Plain JavaScript ESM configs: provide the Node globals explicitly.
@@ -63,6 +94,9 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       'no-console': 'error',
+      // Imports cycliques dans les seeds (seed.ts ne peut pas importer les seeds
+      // sans créer de cycle : c'est l'unique graphe du seed orchestrateur).
+      'import/no-cycle': 'off',
     },
   },
   // Frontières entre modules NestJS : blocage par défaut.
@@ -88,11 +122,40 @@ export default tseslint.config(
       ],
     },
   },
-  // CLI scripts (seed) print to stdout by design; no-console does not apply.
+  // Exception : le module media dépend de catalog (invalidation du cache
+  // public) et d'audit (traçabilité), via leurs modules NestJS exportés.
   {
-    files: ['prisma/**/*.ts'],
+    files: ['src/modules/media/**/*.ts'],
     rules: {
-      'no-console': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: crossModulePatterns(['audit', 'catalog']), message: CROSS_MODULE_MESSAGE },
+          ],
+        },
+      ],
     },
   },
+  // Exception : orders compose les modules cart (recalcul des prix/validation)
+  // et inventory (décrément atomique) via leurs services NestJS exportés.
+  {
+    files: ['src/modules/orders/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: crossModulePatterns(['cart', 'inventory']),
+              message: CROSS_MODULE_MESSAGE,
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // CLI scripts (seed) print to stdout by design; no-console does not apply.
+  // Seeds : cycle d'import via seed.ts orchestrateur — règle locale.
+  ...seedConfigForScript,
 );

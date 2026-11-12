@@ -1,7 +1,23 @@
 import { isPlatformBrowser } from '@angular/common';
 import { afterNextRender, computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
-import type { CatalogProduct, CatalogVariant } from './catalog-api';
-import { effectiveProductPrice } from '@bruny/util';
+
+// Minimal product/variant shapes the cart needs. Prices are always the ones
+// computed server-side (`effectivePrice`, already promotion-aware), so the cart
+// never recomputes a price the API did not confirm.
+export interface CartAddProduct {
+  id: string;
+  name: string;
+  slug: string;
+  images: Array<{ url: string }>;
+}
+
+export interface CartAddVariant {
+  id: string;
+  size: string;
+  color: string;
+  unitPrice: number;
+  availableStock: number;
+}
 
 export interface CartLine {
   variantId: string;
@@ -34,14 +50,14 @@ export class CartStore {
     afterNextRender(() => this.lineState.set(this.read()));
   }
 
-  add(product: CatalogProduct, variant: CatalogVariant): void {
-    if (variant.stock < 1) return;
+  add(product: CartAddProduct, variant: CartAddVariant): void {
+    if (variant.availableStock < 1) return;
     this.lineState.update((lines) => {
       const existing = lines.find((line) => line.variantId === variant.id);
       if (existing) {
         return lines.map((line) =>
           line.variantId === variant.id
-            ? { ...line, quantity: Math.min(line.quantity + 1, variant.stock) }
+            ? { ...line, quantity: Math.min(line.quantity + 1, variant.availableStock) }
             : line,
         );
       }
@@ -55,7 +71,7 @@ export class CartStore {
           size: variant.size,
           color: variant.color,
           image: product.images[0]?.url ?? null,
-          unitPrice: variant.price ?? effectiveProductPrice(product),
+          unitPrice: variant.unitPrice,
           quantity: 1,
         },
       ];

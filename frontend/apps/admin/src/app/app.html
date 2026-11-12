@@ -12,5 +12,13 @@
   </aside>
   }
   <main><router-outlet /></main>
-  <bruny-toast [message]="errorMessage()" />
+  @if (toast.current(); as currentToast) {
+  <bruny-toast
+    [message]="currentToast.message"
+    [variant]="currentToast.variant"
+    [title]="currentToast.title ?? ''"
+    [duration]="currentToast.duration"
+    (closed)="toast.dismissCurrent()"
+  />
+  }
 </div>

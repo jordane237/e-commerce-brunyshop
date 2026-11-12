@@ -1,6 +1,6 @@
 {
-  "name": "ui",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "ui",
   "projectType": "library",
   "sourceRoot": "libs/ui/src",
   "tags": ["scope:shared", "type:ui"],
@@ -11,6 +11,14 @@
         "command": "eslint .",
         "cwd": "{projectRoot}"
       }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vitest run --config vitest.config.mjs --reporter=verbose --include=libs/ui/src/lib/product-card/product-card.component.spec.ts --include=libs/ui/src/lib/price-tag/price-tag.component.spec.ts --include=libs/ui/src/lib/skeleton/skeleton.component.spec.ts --include=libs/ui/src/lib/input/input.component.spec.ts --include=libs/ui/src/lib/size-selector/size-selector.component.spec.ts --include=libs/ui/src/lib/modal/modal.component.spec.ts --include=libs/ui/src/lib/select/select.component.spec.ts --include=libs/ui/src/lib/table/table.component.spec.ts",
+        "cwd": "{workspaceRoot}"
+      },
+      "defaultConfiguration": "development"
     }
   }
 }

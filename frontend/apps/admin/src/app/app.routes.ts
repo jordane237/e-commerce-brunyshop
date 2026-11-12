@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { authGuard, guestGuard, roleGuard } from './core/guards';
+import { authGuard, guestGuard, roleGuard } from '@bruny/core';
 
 export const appRoutes: Route[] = [
   { path: '', pathMatch: 'full', redirectTo: 'produits' },
@@ -10,8 +10,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'produits',
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['ADMIN', 'STOCK_MANAGER'] },
+    canActivate: [authGuard, roleGuard(['ADMIN', 'STOCK_MANAGER'])],
     loadComponent: () =>
       import('./features/products/products-page').then((module) => module.ProductsPage),
   },
