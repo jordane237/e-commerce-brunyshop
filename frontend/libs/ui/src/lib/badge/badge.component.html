@@ -1,0 +1,18 @@
+<span
+  class="bs-badge"
+  [class.bs-badge--promo]="variant === 'promo'"
+  [class.bs-badge--new]="variant === 'new'"
+  [class.bs-badge--accent]="variant === 'accent'"
+  [class.bs-badge--success]="variant === 'success'"
+  [class.bs-badge--warning]="variant === 'warning'"
+  [class.bs-badge--danger]="variant === 'danger'"
+  [class.bs-badge--info]="variant === 'info'"
+  [class.bs-badge--neutral]="variant === 'neutral'"
+  [class.bs-badge--outline]="variant === 'outline'"
+  [class.bs-badge--md]="size === 'md'"
+>
+  @if (dot) {
+    <span class="bs-badge__dot" aria-hidden="true"></span>
+  }
+  <ng-content />
+</span>

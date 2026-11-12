@@ -1,0 +1,7 @@
+# Alias Git du workflow — inclus via `include.path = ../aliases.gitconfig`.
+# Chaque alias délègue à scripts/git-flow.sh pour rester lisible et testable.
+[alias]
+	nf = "!bash scripts/git-flow.sh nf"
+	sync = "!bash scripts/git-flow.sh sync"
+	publish = "!bash scripts/git-flow.sh publish"
+	release = "!bash scripts/git-flow.sh release"

@@ -1,0 +1,24 @@
+<button
+  class="bs-button"
+  [class.bs-button--primary]="variant === 'primary'"
+  [class.bs-button--secondary]="variant === 'secondary'"
+  [class.bs-button--ghost]="variant === 'ghost'"
+  [class.bs-button--danger]="variant === 'danger'"
+  [class.bs-button--whatsapp]="variant === 'whatsapp'"
+  [class.bs-button--sm]="size === 'sm'"
+  [class.bs-button--lg]="size === 'lg'"
+  [class.bs-button--block]="block"
+  [class.bs-button--icon-only]="iconOnly"
+  [class.bs-button--loading]="loading"
+  [type]="type"
+  [disabled]="disabled || loading"
+  [attr.aria-label]="ariaLabel"
+  [attr.aria-busy]="loading ? 'true' : null"
+>
+  @if (loading) {
+    <bruny-spinner size="sm" [inline]="true" />
+  } @else {
+    <ng-content select="[bsIcon]" />
+  }
+  <span class="bs-button__label"><ng-content /></span>
+</button>

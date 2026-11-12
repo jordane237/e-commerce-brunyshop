@@ -1,0 +1,48 @@
+<div
+  class="bs-size-selector"
+  [class.bs-size-selector--readonly]="readonly()"
+  [class.bs-size-selector--loading]="loading()"
+>
+  <button
+    type="button"
+    class="bs-size-selector__label"
+    [attr.aria-label]="'Sélectionner la pointure'"
+    [attr.aria-busy]="loading() ? 'true' : null"
+    [disabled]="readonly() || loading()"
+  >
+    @if (selected(); as selectedItem) {
+      {{ selectedItem.size }}
+    } @else {
+      Sélectionner
+    }
+  </button>
+
+  <div class="bs-size-selector__list" role="group" aria-label="Les pointures disponibles">
+    @for (item of visibleItems(); track item.id) {
+      <button
+        type="button"
+        class="bs-size"
+        [class.bs-size--selected]="isEqual(item, selected())"
+        [class.bs-size--disabled]="!isAvailable(item)"
+        [disabled]="!isAvailable(item) || readonly() || loading()"
+        [attr.aria-pressed]="isEqual(item, selected())"
+        [attr.aria-label]="ariaLabel(item)"
+        [attr.aria-disabled]="!isAvailable(item)"
+        (click)="onSelect(item)"
+      >
+        {{ item.size }}
+      </button>
+    }
+  </div>
+
+  @if (showMore()) {
+    <button
+      type="button"
+      class="bs-size-selector__more"
+      [disabled]="readonly() || loading()"
+      (click)="toggleMore()"
+    >
+      {{ moreLabel() }}
+    </button>
+  }
+</div>

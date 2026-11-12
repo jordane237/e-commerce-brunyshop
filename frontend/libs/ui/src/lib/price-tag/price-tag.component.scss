@@ -1,0 +1,37 @@
+:host {
+  display: inline-flex;
+}
+
+.bs-price {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--bs-space-2);
+  font-family: var(--bs-font-family-base);
+  line-height: var(--bs-line-height-tight);
+}
+
+.bs-price__current {
+  color: var(--bs-color-text);
+  font-size: var(--bs-font-size-xl);
+  font-weight: var(--bs-font-weight-extrabold);
+  letter-spacing: var(--bs-letter-spacing-heading);
+}
+
+.bs-price__compare {
+  color: var(--bs-color-text-subtle);
+  font-size: var(--bs-font-size-xs);
+  font-weight: var(--bs-font-weight-medium);
+}
+
+.bs-price--sm .bs-price__current {
+  font-size: var(--bs-font-size-md);
+}
+
+.bs-price--lg .bs-price__current {
+  font-size: var(--bs-font-size-2xl);
+}
+
+.bs-price--lg .bs-price__compare {
+  font-size: var(--bs-font-size-sm);
+}

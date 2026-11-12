@@ -1,11 +1,29 @@
+# Dependabot — mise à jour automatique des dépendances
+#
+# Gère les mises à jour de packages (pnpm) et d'actions GitHub.
+
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: /
+  # ── Packages pnpm (workspaces) ──
+  - package-ecosystem: 'pnpm'
+    directory: '/'
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
-  - package-ecosystem: github-actions
-    directory: /
+      day: monday
+      time: '06:00'
+    open-pull-request-branch-name: 'dependabot/pnpm/${package}'
+    labels: ['dependencies']
+    allow:
+      - dependency-type: direct
+    versioning: semver
+
+  # ── Actions GitHub ──
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
       interval: weekly
+      day: monday
+      time: '06:00'
+    open-pull-request-branch-name: 'dependabot/actions/${package}'
+    labels: ['dependencies']
+    versioning: semver

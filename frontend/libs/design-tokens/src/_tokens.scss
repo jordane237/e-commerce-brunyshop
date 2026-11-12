@@ -1,0 +1,369 @@
+// BRUNY SHOPPING — design tokens (source SCSS).
+// Values extracted from design1/bruny shopping/bruny shopping.png.
+// Non-labelled values are documented in docs/design-system/ASSUMPTIONS.md.
+@use 'sass:map';
+
+// ---------------------------------------------------------------------------
+// Brand colours
+// ---------------------------------------------------------------------------
+$bs-color-primary: #131b2e !default; // Bleu Nuit — primaire prestige
+$bs-color-primary-hover: #232f47 !default;
+$bs-color-primary-active: #0e1524 !default;
+$bs-color-primary-soft: #e6eaf1 !default;
+
+$bs-color-accent: #c89b3c !default; // Or Chaud — décor, fonds navy
+$bs-color-accent-text: #8a6a1f !default; // Or accessible sur fond clair (4,83:1)
+$bs-color-accent-hover: #b0852e !default;
+$bs-color-accent-soft: #fbf7ed !default;
+
+$bs-color-canvas: #fafaf7 !default; // Blanc Cassé
+$bs-color-surface: #ffffff !default;
+$bs-color-surface-muted: #f4f3ef !default;
+$bs-color-surface-skeleton: #f1f0ed !default;
+
+$bs-color-whatsapp: #25d366 !default; // Surface uniquement
+$bs-color-whatsapp-strong: #0f7a40 !default; // Texte blanc autorisé (5,41:1)
+$bs-color-whatsapp-soft: #e7faee !default;
+
+$bs-color-success: #1e8e5a !default;
+$bs-color-success-strong: #0f7a40 !default;
+$bs-color-success-soft: #eaf6ef !default;
+
+$bs-color-danger: #d62839 !default;
+$bs-color-danger-strong: #a31727 !default;
+$bs-color-danger-soft: #fde7e9 !default;
+
+$bs-color-warning: #b98500 !default;
+$bs-color-warning-strong: #7a5b12 !default;
+$bs-color-warning-soft: #fff3d6 !default;
+
+$bs-color-info: #2f5d8a !default;
+$bs-color-info-strong: #244a6e !default;
+$bs-color-info-soft: #e8edf9 !default;
+
+// Neutral scale (estimée depuis les aplats de la maquette)
+$bs-color-white: #ffffff !default;
+$bs-color-neutral-50: #fafaf7 !default;
+$bs-color-neutral-100: #f4f3ef !default;
+$bs-color-neutral-150: #f1f0ed !default;
+$bs-color-neutral-200: #ece9e2 !default;
+$bs-color-neutral-300: #dce0e7 !default;
+$bs-color-neutral-400: #c3c7d0 !default;
+$bs-color-neutral-500: #8990a0 !default;
+$bs-color-neutral-600: #6b7280 !default;
+$bs-color-neutral-700: #687087 !default;
+$bs-color-neutral-800: #3b4353 !default;
+$bs-color-neutral-900: #1c2333 !default;
+$bs-color-neutral-950: #0e1524 !default;
+$bs-color-black: #000000 !default;
+
+// Semantic colours
+$bs-color-text: $bs-color-primary !default;
+$bs-color-text-muted: $bs-color-neutral-700 !default;
+$bs-color-text-subtle: $bs-color-neutral-600 !default;
+$bs-color-text-inverse: $bs-color-white !default;
+$bs-color-border: $bs-color-neutral-200 !default;
+$bs-color-border-strong: $bs-color-neutral-300 !default;
+$bs-color-border-focus: $bs-color-primary !default;
+$bs-color-overlay: rgb(19 27 46 / 60%) !default;
+
+// ---------------------------------------------------------------------------
+// Typography
+// ---------------------------------------------------------------------------
+$bs-font-family-base:
+  'Plus Jakarta Sans Variable',
+  'Plus Jakarta Sans',
+  system-ui,
+  -apple-system,
+  'Segoe UI',
+  sans-serif !default;
+$bs-font-family-display: $bs-font-family-base !default;
+$bs-font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace !default;
+
+$bs-font-size-2xs: 0.6875rem !default; // 11px — micro-libellés
+$bs-font-size-xs: 0.75rem !default; // 12px
+$bs-font-size-sm: 0.875rem !default; // 14px
+$bs-font-size-md: 1rem !default; // 16px
+$bs-font-size-lg: 1.125rem !default; // 18px
+$bs-font-size-xl: 1.25rem !default; // 20px
+$bs-font-size-2xl: 1.5rem !default; // 24px
+$bs-font-size-3xl: 1.875rem !default; // 30px
+$bs-font-size-4xl: 2.375rem !default; // 38px
+$bs-font-size-5xl: 3rem !default; // 48px
+
+$bs-font-weight-regular: 400 !default;
+$bs-font-weight-medium: 500 !default;
+$bs-font-weight-semibold: 600 !default;
+$bs-font-weight-bold: 700 !default;
+$bs-font-weight-extrabold: 800 !default;
+
+$bs-line-height-tight: 1.1 !default;
+$bs-line-height-snug: 1.25 !default;
+$bs-line-height-normal: 1.5 !default;
+$bs-line-height-relaxed: 1.65 !default;
+
+$bs-letter-spacing-tight: -0.03em !default;
+$bs-letter-spacing-heading: -0.02em !default;
+$bs-letter-spacing-normal: 0 !default;
+$bs-letter-spacing-wide: 0.08em !default;
+
+// ---------------------------------------------------------------------------
+// Spacing (base 4px)
+// ---------------------------------------------------------------------------
+$bs-space-0: 0 !default;
+$bs-space-1: 0.25rem !default; // 4
+$bs-space-2: 0.5rem !default; // 8
+$bs-space-3: 0.75rem !default; // 12
+$bs-space-4: 1rem !default; // 16
+$bs-space-5: 1.25rem !default; // 20
+$bs-space-6: 1.5rem !default; // 24
+$bs-space-8: 2rem !default; // 32
+$bs-space-10: 2.5rem !default; // 40
+$bs-space-12: 3rem !default; // 48
+$bs-space-16: 4rem !default; // 64
+
+$bs-space-xs: $bs-space-1 !default;
+$bs-space-sm: $bs-space-2 !default;
+$bs-space-md: $bs-space-4 !default;
+$bs-space-lg: $bs-space-6 !default;
+$bs-space-xl: $bs-space-8 !default;
+$bs-space-2xl: $bs-space-12 !default;
+
+// ---------------------------------------------------------------------------
+// Radii, borders, shadows
+// ---------------------------------------------------------------------------
+$bs-radius-xs: 4px !default;
+$bs-radius-sm: 6px !default;
+$bs-radius-md: 8px !default;
+$bs-radius-lg: 12px !default;
+$bs-radius-xl: 20px !default;
+$bs-radius-full: 999px !default;
+
+$bs-border-width: 1px !default;
+$bs-border-width-strong: 2px !default;
+
+$bs-shadow-sm: 0 1px 2px rgb(19 27 46 / 6%) !default;
+$bs-shadow-md: 0 8px 24px rgb(19 27 46 / 8%) !default;
+$bs-shadow-lg: 0 16px 40px rgb(19 27 46 / 14%) !default;
+$bs-shadow-focus:
+  0 0 0 2px $bs-color-canvas,
+  0 0 0 4px $bs-color-primary !default;
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+$bs-breakpoints: (
+  sm: 480px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px,
+) !default;
+
+$bs-container-max: 1200px !default;
+$bs-touch-target: 44px !default;
+$bs-control-height-sm: 36px !default;
+$bs-control-height-md: 44px !default;
+$bs-control-height-lg: 52px !default;
+
+// ---------------------------------------------------------------------------
+// Z-index
+// ---------------------------------------------------------------------------
+$bs-z-base: 0 !default;
+$bs-z-sticky: 100 !default;
+$bs-z-dropdown: 1000 !default;
+$bs-z-overlay: 1040 !default;
+$bs-z-modal: 1050 !default;
+$bs-z-toast: 1100 !default;
+
+// ---------------------------------------------------------------------------
+// Motion
+// ---------------------------------------------------------------------------
+$bs-duration-fast: 120ms !default;
+$bs-duration-base: 180ms !default;
+$bs-duration-slow: 240ms !default;
+$bs-easing-standard: cubic-bezier(0.2, 0, 0, 1) !default;
+$bs-easing-in: cubic-bezier(0.4, 0, 1, 1) !default;
+$bs-easing-out: cubic-bezier(0, 0, 0.2, 1) !default;
+
+// ---------------------------------------------------------------------------
+// Mixins
+// ---------------------------------------------------------------------------
+@mixin bs-media-up($breakpoint) {
+  @if not map.has-key($bs-breakpoints, $breakpoint) {
+    @error 'Unknown breakpoint: #{$breakpoint}. Available: #{map.keys($bs-breakpoints)}.';
+  }
+  @media (min-width: map.get($bs-breakpoints, $breakpoint)) {
+    @content;
+  }
+}
+
+@mixin bs-reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+@mixin bs-focus-ring {
+  outline: 2px solid $bs-color-primary;
+  outline-offset: 2px;
+}
+
+@mixin bs-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@mixin bs-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin bs-css-variables {
+  :root {
+    // Brand
+    --bs-color-primary: #{$bs-color-primary};
+    --bs-color-primary-hover: #{$bs-color-primary-hover};
+    --bs-color-primary-active: #{$bs-color-primary-active};
+    --bs-color-primary-soft: #{$bs-color-primary-soft};
+    --bs-color-accent: #{$bs-color-accent};
+    --bs-color-accent-text: #{$bs-color-accent-text};
+    --bs-color-accent-hover: #{$bs-color-accent-hover};
+    --bs-color-accent-soft: #{$bs-color-accent-soft};
+    --bs-color-canvas: #{$bs-color-canvas};
+    --bs-color-surface: #{$bs-color-surface};
+    --bs-color-surface-muted: #{$bs-color-surface-muted};
+    --bs-color-surface-skeleton: #{$bs-color-surface-skeleton};
+    --bs-color-whatsapp: #{$bs-color-whatsapp};
+    --bs-color-whatsapp-strong: #{$bs-color-whatsapp-strong};
+    --bs-color-whatsapp-soft: #{$bs-color-whatsapp-soft};
+    --bs-color-success: #{$bs-color-success};
+    --bs-color-success-strong: #{$bs-color-success-strong};
+    --bs-color-success-soft: #{$bs-color-success-soft};
+    --bs-color-danger: #{$bs-color-danger};
+    --bs-color-danger-strong: #{$bs-color-danger-strong};
+    --bs-color-danger-soft: #{$bs-color-danger-soft};
+    --bs-color-warning: #{$bs-color-warning};
+    --bs-color-warning-strong: #{$bs-color-warning-strong};
+    --bs-color-warning-soft: #{$bs-color-warning-soft};
+    --bs-color-info: #{$bs-color-info};
+    --bs-color-info-strong: #{$bs-color-info-strong};
+    --bs-color-info-soft: #{$bs-color-info-soft};
+
+    // Neutrals
+    --bs-color-white: #{$bs-color-white};
+    --bs-color-neutral-50: #{$bs-color-neutral-50};
+    --bs-color-neutral-100: #{$bs-color-neutral-100};
+    --bs-color-neutral-150: #{$bs-color-neutral-150};
+    --bs-color-neutral-200: #{$bs-color-neutral-200};
+    --bs-color-neutral-300: #{$bs-color-neutral-300};
+    --bs-color-neutral-400: #{$bs-color-neutral-400};
+    --bs-color-neutral-500: #{$bs-color-neutral-500};
+    --bs-color-neutral-600: #{$bs-color-neutral-600};
+    --bs-color-neutral-700: #{$bs-color-neutral-700};
+    --bs-color-neutral-800: #{$bs-color-neutral-800};
+    --bs-color-neutral-900: #{$bs-color-neutral-900};
+    --bs-color-neutral-950: #{$bs-color-neutral-950};
+    --bs-color-black: #{$bs-color-black};
+
+    // Semantic
+    --bs-color-text: #{$bs-color-text};
+    --bs-color-text-muted: #{$bs-color-text-muted};
+    --bs-color-text-subtle: #{$bs-color-text-subtle};
+    --bs-color-text-inverse: #{$bs-color-text-inverse};
+    --bs-color-border: #{$bs-color-border};
+    --bs-color-border-strong: #{$bs-color-border-strong};
+    --bs-color-border-focus: #{$bs-color-border-focus};
+    --bs-color-overlay: #{$bs-color-overlay};
+
+    // Typography
+    --bs-font-family-base: #{$bs-font-family-base};
+    --bs-font-family-display: #{$bs-font-family-display};
+    --bs-font-family-mono: #{$bs-font-family-mono};
+    --bs-font-size-2xs: #{$bs-font-size-2xs};
+    --bs-font-size-xs: #{$bs-font-size-xs};
+    --bs-font-size-sm: #{$bs-font-size-sm};
+    --bs-font-size-md: #{$bs-font-size-md};
+    --bs-font-size-lg: #{$bs-font-size-lg};
+    --bs-font-size-xl: #{$bs-font-size-xl};
+    --bs-font-size-2xl: #{$bs-font-size-2xl};
+    --bs-font-size-3xl: #{$bs-font-size-3xl};
+    --bs-font-size-4xl: #{$bs-font-size-4xl};
+    --bs-font-size-5xl: #{$bs-font-size-5xl};
+    --bs-font-weight-regular: #{$bs-font-weight-regular};
+    --bs-font-weight-medium: #{$bs-font-weight-medium};
+    --bs-font-weight-semibold: #{$bs-font-weight-semibold};
+    --bs-font-weight-bold: #{$bs-font-weight-bold};
+    --bs-font-weight-extrabold: #{$bs-font-weight-extrabold};
+    --bs-line-height-tight: #{$bs-line-height-tight};
+    --bs-line-height-snug: #{$bs-line-height-snug};
+    --bs-line-height-normal: #{$bs-line-height-normal};
+    --bs-line-height-relaxed: #{$bs-line-height-relaxed};
+    --bs-letter-spacing-tight: #{$bs-letter-spacing-tight};
+    --bs-letter-spacing-heading: #{$bs-letter-spacing-heading};
+    --bs-letter-spacing-normal: #{$bs-letter-spacing-normal};
+    --bs-letter-spacing-wide: #{$bs-letter-spacing-wide};
+
+    // Spacing
+    --bs-space-0: #{$bs-space-0};
+    --bs-space-1: #{$bs-space-1};
+    --bs-space-2: #{$bs-space-2};
+    --bs-space-3: #{$bs-space-3};
+    --bs-space-4: #{$bs-space-4};
+    --bs-space-5: #{$bs-space-5};
+    --bs-space-6: #{$bs-space-6};
+    --bs-space-8: #{$bs-space-8};
+    --bs-space-10: #{$bs-space-10};
+    --bs-space-12: #{$bs-space-12};
+    --bs-space-16: #{$bs-space-16};
+    --bs-space-xs: #{$bs-space-xs};
+    --bs-space-sm: #{$bs-space-sm};
+    --bs-space-md: #{$bs-space-md};
+    --bs-space-lg: #{$bs-space-lg};
+    --bs-space-xl: #{$bs-space-xl};
+    --bs-space-2xl: #{$bs-space-2xl};
+
+    // Shapes
+    --bs-radius-xs: #{$bs-radius-xs};
+    --bs-radius-sm: #{$bs-radius-sm};
+    --bs-radius-md: #{$bs-radius-md};
+    --bs-radius-lg: #{$bs-radius-lg};
+    --bs-radius-xl: #{$bs-radius-xl};
+    --bs-radius-full: #{$bs-radius-full};
+    --bs-border-width: #{$bs-border-width};
+    --bs-border-width-strong: #{$bs-border-width-strong};
+    --bs-shadow-sm: #{$bs-shadow-sm};
+    --bs-shadow-md: #{$bs-shadow-md};
+    --bs-shadow-lg: #{$bs-shadow-lg};
+    --bs-shadow-focus: #{$bs-shadow-focus};
+
+    // Layout
+    --bs-container-max: #{$bs-container-max};
+    --bs-touch-target: #{$bs-touch-target};
+    --bs-control-height-sm: #{$bs-control-height-sm};
+    --bs-control-height-md: #{$bs-control-height-md};
+    --bs-control-height-lg: #{$bs-control-height-lg};
+
+    // Z-index
+    --bs-z-sticky: #{$bs-z-sticky};
+    --bs-z-dropdown: #{$bs-z-dropdown};
+    --bs-z-overlay: #{$bs-z-overlay};
+    --bs-z-modal: #{$bs-z-modal};
+    --bs-z-toast: #{$bs-z-toast};
+
+    // Motion
+    --bs-duration-fast: #{$bs-duration-fast};
+    --bs-duration-base: #{$bs-duration-base};
+    --bs-duration-slow: #{$bs-duration-slow};
+    --bs-easing-standard: #{$bs-easing-standard};
+    --bs-easing-in: #{$bs-easing-in};
+    --bs-easing-out: #{$bs-easing-out};
+  }
+}

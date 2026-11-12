@@ -6,12 +6,14 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { json } from 'express';
+import { json, raw } from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { validationExceptionFactory } from './common/pipes/validation-exception.factory';
 import { AppModule } from './app.module';
+import type { StorageSettings } from './infrastructure/storage/storage.settings';
 import { Logger } from 'nestjs-pino';
 
 const BODY_SIZE_LIMIT = '32kb'; // No endpoint legitimately receives big payloads at step 3.
@@ -30,6 +32,7 @@ async function bootstrap(): Promise<void> {
     publicAppUrl: string;
     publicAdminUrl: string;
     port: number;
+    storage: StorageSettings;
   }>('app');
 
   if (!appConfig) {
@@ -58,6 +61,14 @@ async function bootstrap(): Promise<void> {
       hsts: appConfig.isProduction ? { maxAge: 31536000, includeSubDomains: true } : false,
     }),
   );
+  // Raw body for the local-only signed upload endpoint (images are binary,
+  // not JSON). Production uploads go directly to MinIO/S3 via presigned URL.
+  app.use(
+    raw({
+      type: ['image/jpeg', 'image/png', 'image/webp'],
+      limit: appConfig.storage.maxFileSizeBytes,
+    }),
+  );
   app.use(json({ limit: BODY_SIZE_LIMIT }));
   app.use(cookieParser());
 
@@ -75,6 +86,8 @@ async function bootstrap(): Promise<void> {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
+      // Stable business code for every DTO violation (400 VALIDATION_ERROR).
+      exceptionFactory: validationExceptionFactory,
     }),
   );
 

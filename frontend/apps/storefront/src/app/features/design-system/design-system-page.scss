@@ -1,0 +1,298 @@
+:host {
+  display: block;
+}
+
+.ds-page {
+  width: min(var(--bs-container-max), calc(100% - 2 * var(--bs-space-4)));
+  margin-inline: auto;
+  padding: var(--bs-space-8) 0 var(--bs-space-16);
+  display: grid;
+  gap: var(--bs-space-12);
+  font-family: var(--bs-font-family-base);
+  color: var(--bs-color-text);
+}
+
+.ds-hero {
+  display: grid;
+  gap: var(--bs-space-4);
+  padding: clamp(var(--bs-space-6), 5vw, var(--bs-space-12));
+  border-radius: var(--bs-radius-xl);
+  background: var(--bs-color-primary);
+  color: var(--bs-color-text-inverse);
+}
+
+.ds-hero h1 {
+  margin: 0;
+  font-size: clamp(var(--bs-font-size-4xl), 6vw, var(--bs-font-size-5xl));
+  line-height: var(--bs-line-height-tight);
+  letter-spacing: var(--bs-letter-spacing-tight);
+}
+
+.ds-intro {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--bs-color-neutral-300);
+  font-size: var(--bs-font-size-md);
+  line-height: var(--bs-line-height-relaxed);
+}
+
+.ds-intro code {
+  color: var(--bs-color-accent);
+}
+
+.ds-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bs-space-2);
+}
+
+.ds-eyebrow {
+  margin: 0;
+  color: var(--bs-color-accent-text);
+  font-size: var(--bs-font-size-2xs);
+  font-weight: var(--bs-font-weight-extrabold);
+  letter-spacing: var(--bs-letter-spacing-wide);
+  text-transform: uppercase;
+}
+
+.ds-hero .ds-eyebrow {
+  color: var(--bs-color-accent);
+}
+
+.ds-section {
+  display: grid;
+  gap: var(--bs-space-5);
+  padding-top: var(--bs-space-8);
+  border-top: var(--bs-border-width) solid var(--bs-color-border);
+}
+
+.ds-section-heading {
+  display: grid;
+  gap: var(--bs-space-2);
+}
+
+.ds-section-heading h2 {
+  margin: 0;
+  font-size: var(--bs-font-size-2xl);
+  line-height: var(--bs-line-height-snug);
+  letter-spacing: var(--bs-letter-spacing-heading);
+}
+
+.ds-section-heading p:not(.ds-eyebrow) {
+  max-width: 75ch;
+  margin: 0;
+  color: var(--bs-color-text-muted);
+  font-size: var(--bs-font-size-sm);
+  line-height: var(--bs-line-height-normal);
+}
+
+.ds-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--bs-space-3);
+}
+
+.ds-swatch {
+  display: grid;
+  gap: var(--bs-space-1);
+  padding: var(--bs-space-3);
+  border: var(--bs-border-width) solid var(--bs-color-border);
+  border-radius: var(--bs-radius-lg);
+  background: var(--bs-color-surface);
+}
+
+.ds-swatch__color {
+  display: block;
+  height: 72px;
+  margin-bottom: var(--bs-space-2);
+  border-radius: var(--bs-radius-md);
+  border: var(--bs-border-width) solid rgb(19 27 46 / 8%);
+}
+
+.ds-swatch strong {
+  font-size: var(--bs-font-size-sm);
+}
+
+.ds-swatch code,
+.ds-swatch small {
+  color: var(--bs-color-text-muted);
+  font-size: var(--bs-font-size-xs);
+}
+
+.ds-swatch--primary {
+  background: var(--bs-color-primary);
+}
+
+.ds-swatch--accent {
+  background: var(--bs-color-accent);
+}
+
+.ds-swatch--canvas {
+  background: var(--bs-color-canvas);
+}
+
+.ds-swatch--whatsapp {
+  background: var(--bs-color-whatsapp);
+}
+
+.ds-swatch--danger {
+  background: var(--bs-color-danger);
+}
+
+.ds-swatch--success {
+  background: var(--bs-color-success);
+}
+
+.ds-type-scale {
+  display: grid;
+  gap: var(--bs-space-2);
+  padding: var(--bs-space-5);
+  border-radius: var(--bs-radius-lg);
+  background: var(--bs-color-surface-muted);
+}
+
+.ds-type-display {
+  margin: 0;
+  font-size: clamp(var(--bs-font-size-3xl), 6vw, var(--bs-font-size-5xl));
+  font-weight: var(--bs-font-weight-extrabold);
+  line-height: var(--bs-line-height-tight);
+  letter-spacing: var(--bs-letter-spacing-tight);
+}
+
+.ds-type-h2 {
+  margin: 0;
+  font-size: var(--bs-font-size-2xl);
+  font-weight: var(--bs-font-weight-bold);
+}
+
+.ds-type-body {
+  max-width: 70ch;
+  margin: 0;
+  line-height: var(--bs-line-height-relaxed);
+}
+
+.ds-type-label {
+  margin: 0;
+  color: var(--bs-color-accent-text);
+  font-size: var(--bs-font-size-2xs);
+  font-weight: var(--bs-font-weight-bold);
+  letter-spacing: var(--bs-letter-spacing-wide);
+  text-transform: uppercase;
+}
+
+.ds-demo {
+  display: grid;
+  gap: var(--bs-space-3);
+}
+
+.ds-demo-label {
+  margin: 0;
+  color: var(--bs-color-text-muted);
+  font-size: var(--bs-font-size-xs);
+  font-weight: var(--bs-font-weight-bold);
+  letter-spacing: var(--bs-letter-spacing-wide);
+  text-transform: uppercase;
+}
+
+.ds-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--bs-space-3);
+}
+
+.ds-row--center {
+  align-items: center;
+}
+
+.ds-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--bs-space-5);
+}
+
+.ds-three-cols,
+.ds-two-cols,
+.ds-product-grid {
+  display: grid;
+  gap: var(--bs-space-4);
+}
+
+.ds-three-cols {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ds-two-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ds-product-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+.ds-card {
+  display: grid;
+  align-content: start;
+  gap: var(--bs-space-3);
+  padding: var(--bs-space-4);
+  border: var(--bs-border-width) solid var(--bs-color-border);
+  border-radius: var(--bs-radius-lg);
+  background: var(--bs-color-surface);
+}
+
+.ds-card--wide {
+  max-width: 560px;
+}
+
+.ds-note {
+  margin: 0;
+  color: var(--bs-color-text-muted);
+  font-size: var(--bs-font-size-xs);
+  line-height: var(--bs-line-height-normal);
+}
+
+.ds-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--bs-space-2);
+}
+
+.ds-checklist {
+  display: grid;
+  gap: var(--bs-space-2);
+  margin: 0;
+  padding-left: var(--bs-space-5);
+  color: var(--bs-color-text);
+  font-size: var(--bs-font-size-sm);
+  line-height: var(--bs-line-height-relaxed);
+}
+
+.ds-checklist li::marker {
+  color: var(--bs-color-success-strong);
+}
+
+.ds-section--a11y {
+  padding-bottom: var(--bs-space-4);
+}
+
+@media (max-width: 1023px) {
+  .ds-three-cols,
+  .ds-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .ds-three-cols,
+  .ds-two-cols,
+  .ds-product-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ds-page {
+    width: calc(100% - 2 * var(--bs-space-4));
+    gap: var(--bs-space-8);
+  }
+}

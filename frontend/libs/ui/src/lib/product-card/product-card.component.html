@@ -1,0 +1,77 @@
+<article class="bs-product-card" [attr.aria-busy]="loading ? 'true' : null">
+  <div class="bs-product-card__media">
+    @if (loading) {
+      <bruny-skeleton height="100%" radius="lg" />
+    } @else {
+      <a
+        class="bs-product-card__image-link"
+        [routerLink]="['/produit', product.slug]"
+        [attr.aria-label]="'Voir ' + product.name"
+      >
+        @if (imageUrl) {
+          <img
+            [ngSrc]="imageUrl"
+            [alt]="imageAlt"
+            width="600"
+            height="600"
+            class="bs-product-card__image"
+          />
+        } @else {
+          <span class="bs-product-card__placeholder" aria-hidden="true"></span>
+        }
+      </a>
+
+      <div class="bs-product-card__badges">
+        @if (discount > 0) {
+          <bruny-badge variant="promo">-{{ discount }}%</bruny-badge>
+        }
+        @if (isNew) {
+          <bruny-badge variant="new">Nouveau</bruny-badge>
+        }
+      </div>
+
+      <button
+        class="bs-product-card__favorite"
+        type="button"
+        [attr.aria-pressed]="favorite"
+        [attr.aria-label]="favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+        (click)="toggleFavorite()"
+      >
+        <bruny-icon name="heart" [size]="18" />
+      </button>
+    }
+  </div>
+
+  <div class="bs-product-card__body">
+    @if (loading) {
+      <bruny-skeleton variant="text" [lines]="3" height="0.85rem" />
+    } @else {
+      <p class="bs-product-card__category">{{ product.category.name }}</p>
+      <h3 class="bs-product-card__title">
+        <a [routerLink]="['/produit', product.slug]">{{ product.name }}</a>
+      </h3>
+      <bruny-price-tag [amount]="price" [compareAt]="compareAt" size="md" />
+
+      @if (showSizes && availableSizes.length) {
+        <div class="bs-product-card__sizes">
+          <span class="bs-product-card__sizes-label">Pointures disponibles</span>
+          <div class="bs-product-card__size-list">
+            @for (size of availableSizes.slice(0, 5); track size) {
+              <span class="bs-product-card__size">{{ size }}</span>
+            }
+            @if (availableSizes.length > 5) {
+              <span class="bs-product-card__size">+{{ availableSizes.length - 5 }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (showAdd) {
+        <bruny-button variant="primary" [block]="true" (click)="onAdd()">
+          <bruny-icon bsIcon name="cart" [size]="18" />
+          Ajouter
+        </bruny-button>
+      }
+    }
+  </div>
+</article>

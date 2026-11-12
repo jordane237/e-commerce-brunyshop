@@ -1,0 +1,68 @@
+:host {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bs-skeleton {
+  display: inline-block;
+  background: var(--bs-color-neutral-100);
+  border-radius: var(--bs-radius-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.bs-skeleton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bs-color-neutral-200);
+  opacity: 0.4;
+}
+
+.bs-skeleton--text {
+  height: 0.875rem;
+  width: 100%;
+  border-radius: var(--bs-radius-sm);
+}
+
+.bs-skeleton--circular {
+  border-radius: 50%;
+  aspect-ratio: 1;
+  width: var(--bs-touch-target);
+}
+
+.bs-skeleton--rectangular {
+  width: 100%;
+  border-radius: var(--bs-radius-md);
+}
+
+.bs-skeleton--image {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  border-radius: var(--bs-radius-md);
+  background: var(--bs-color-neutral-50);
+}
+
+.bs-skeleton--sm {
+  height: 0.75rem;
+}
+
+.bs-skeleton--sm.bs-skeleton--circular {
+  width: calc(var(--bs-touch-target) - var(--bs-space-1));
+}
+
+.bs-skeleton--lg {
+  height: 1.5rem;
+}
+
+.bs-skeleton--lg.bs-skeleton--circular {
+  width: calc(var(--bs-touch-target) + var(--bs-space-2));
+}
+
+.bs-size {
+  &,
+  &:focus-visible {
+    position: relative;
+  }
+}

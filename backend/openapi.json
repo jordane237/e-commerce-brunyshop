@@ -1,0 +1,3576 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "AuthController_register_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "CAPTCHA_REQUIRED, CAPTCHA_INVALID ou body invalide"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
+          }
+        },
+        "summary": "Création de compte client (email ou téléphone)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "CAPTCHA_REQUIRED, CAPTCHA_INVALID ou body invalide"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
+          }
+        },
+        "summary": "Connexion : access JWT + cookie de rafraîchissement (ou défi 2FA)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Rotation du cookie : nouveau access JWT",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Révocation de la session (famille de jetons)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "operationId": "AuthController_forgotPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "summary": "Demande de réinitialisation (réponse identique si compte absent)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Réinitialisation avec code à usage unique",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/2fa/setup": {
+      "post": {
+        "description": "Bearer = challengeToken reçu au login (purpose setup).",
+        "operationId": "AuthController_setupTwoFactor_v1",
+        "parameters": [
+          {
+            "name": "authorization",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Activation 2FA (ADMIN/SUPER_ADMIN) : secret TOTP + codes de secours",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/2fa/verify": {
+      "post": {
+        "description": "Bearer = challengeToken reçu au login.",
+        "operationId": "AuthController_verifyTwoFactor_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorVerifyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Validation du second facteur : code TOTP (6) ou code de secours (8)",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "operationId": "MeController_getProfile_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Profil courant",
+        "tags": ["account"]
+      }
+    },
+    "/api/v1/health/live": {
+      "get": {
+        "operationId": "HealthController_live_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok", "degraded"],
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["error", "shutting_down"],
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Health"]
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "operationId": "HealthController_ready_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok", "degraded"],
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["error", "shutting_down"],
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["up", "degraded", "down"]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Health"]
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "operationId": "CatalogController_listProducts_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 48,
+              "default": 12,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "color",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPrice",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["newest", "price_asc", "price_desc", "name"]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brand",
+            "required": false,
+            "in": "query",
+            "description": "Slug de marque",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "inStock",
+            "required": false,
+            "in": "query",
+            "description": "true = au moins une variante disponible, false = aucune",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          },
+          {
+            "name": "promo",
+            "required": false,
+            "in": "query",
+            "description": "true = promotion produit active à cet instant",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "availableStock = stock - reservedStock. Le stock brut interne n’est jamais exposé.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Liste paginée du catalogue public avec filtres (catégorie, marque, pointure, couleur, prix, disponibilité, promo) et facettes",
+        "tags": ["catalog"]
+      }
+    },
+    "/api/v1/products/{slug}": {
+      "get": {
+        "operationId": "CatalogController_getProductDetail_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "description": "Slug kebab-case du produit publié (minuscules, chiffres et tirets)",
+            "schema": {
+              "example": "sneakers-urbanstep-air",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "availableStock = stock - reservedStock. Le stock brut interne n’est jamais exposé.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produit introuvable, en brouillon, archivé ou supprimé : même code PRODUCT_NOT_FOUND, même message."
+          },
+          "429": {
+            "description": "Limite de 100 requêtes par minute et par IP"
+          }
+        },
+        "summary": "Détail d’un produit publié avec variantes, images par couleur et produits similaires",
+        "tags": ["catalog"]
+      }
+    },
+    "/api/v1/categories": {
+      "get": {
+        "operationId": "CatalogController_listCategories_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Catégories ayant des produits publiés",
+        "tags": ["catalog"]
+      }
+    },
+    "/api/v1/admin/products": {
+      "post": {
+        "description": "Crée un produit en brouillon avec ses variantes. Accepte un tableau explicite `variants[]` ou la génération automatique `colors[]+sizes[]` (produit cartésien, stock initial à 0, SKU générés automatiquement). Chaque création est auditée et invalide le cache public immédiatement.",
+        "operationId": "AdminProductsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              },
+              "examples": {
+                "variantsExplicites": {
+                  "summary": "Variantes explicites (contrôle fin du stock/prix)",
+                  "value": {
+                    "name": "Air Max 90 Noir",
+                    "description": "Sneakers iconiques en cuir et mesh.",
+                    "categoryId": "a1b2c3d4-0000-4000-8000-000000000001",
+                    "brandId": "a1b2c3d4-0000-4000-8000-000000000002",
+                    "basePrice": 45000,
+                    "variants": [
+                      {
+                        "color": "NOIR",
+                        "size": "42",
+                        "stock": 10,
+                        "lowStockThreshold": 3
+                      },
+                      {
+                        "color": "BLANC",
+                        "size": "42",
+                        "stock": 5
+                      }
+                    ]
+                  }
+                },
+                "cartesien": {
+                  "summary": "Génération automatique couleurs × pointures",
+                  "value": {
+                    "name": "Air Max 90",
+                    "description": "Sneakers iconiques en cuir et mesh.",
+                    "categoryId": "a1b2c3d4-0000-4000-8000-000000000001",
+                    "brandId": "a1b2c3d4-0000-4000-8000-000000000002",
+                    "basePrice": 45000,
+                    "colors": ["NOIR", "BLANC"],
+                    "sizes": ["40", "41", "42"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Produit créé avec ses variantes et SKU générés.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, DUPLICATE_VARIANT, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND)."
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "409": {
+            "description": "Slug ou SKU déjà utilisé (SLUG_ALREADY_EXISTS, SKU_ALREADY_EXISTS)."
+          },
+          "429": {
+            "description": "Plus de 60 requêtes en 60 secondes (RATE_LIMIT_EXCEEDED)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Créer un produit avec variantes",
+        "tags": ["admin-products"]
+      }
+    },
+    "/api/v1/admin/products/{id}": {
+      "patch": {
+        "description": "Met à jour les champs métadonnées, prix, promotion et statut d’un produit. Les variantes ne sont PAS modifiées via cette route (réservé à PUT /:id/variants). Chaque modification de prix est auditée.",
+        "operationId": "AdminProductsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Produit mis à jour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée (VALIDATION_ERROR, PROMO_PRICE_INVALID, PROMO_WINDOW_INVALID, PUBLISHED_REQUIRES_STOCK, CATEGORY_NOT_FOUND, BRAND_NOT_FOUND)."
+          },
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          },
+          "409": {
+            "description": "Slug déjà utilisé (SLUG_ALREADY_EXISTS)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Mettre à jour un produit",
+        "tags": ["admin-products"]
+      },
+      "delete": {
+        "description": "Archive un produit (status = ARCHIVED). Pas de suppression physique : le produit reste en base, il est simplement retiré du catalogue public et des réponses d’administration. Archivé = 204, introuvable = 404.",
+        "operationId": "AdminProductsController_archive_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Produit archivé (status ARCHIVED)."
+          },
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Archiver un produit",
+        "tags": ["admin-products"]
+      }
+    },
+    "/api/v1/admin/products/{id}/variants": {
+      "put": {
+        "description": "Remplace l'ensemble des variantes d'un produit (upsert différentiel). Une variante existante identifiée par `id` est mise à jour ; une variante sans `id` est créée avec un SKU généré automatiquement. Les variantes existantes non présentes dans le payload sont supprimées, sauf si elles sont liées à une commande (409 VARIANT_HAS_ORDERS). Chaque changement de stock ou de prix est audité.",
+        "operationId": "AdminProductsController_updateVariants_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID du produit.",
+            "schema": {
+              "example": "a1b2c3d4-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVariantsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Variantes remplacées.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée (VALIDATION_ERROR, DUPLICATE_VARIANT, VARIANT_NOT_OWNED, RESERVED_STOCK_FORBIDDEN)."
+          },
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          },
+          "409": {
+            "description": "Variante liée à une commande (VARIANT_HAS_ORDERS) ou doublon de couleur/pointure (DUPLICATE_VARIANT)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Remplacer les variantes d'un produit",
+        "tags": ["admin-products"]
+      }
+    },
+    "/api/v1/admin/products/{id}/duplicate": {
+      "post": {
+        "description": "Crée une copie en brouillon (DRAFT) du produit source : mêmes catégorie, marque, description, prix, promotions et variantes, avec de nouveaux slugs et SKU générés automatiquement. Les images sont réutilisées (mêmes URLs, pas de duplication physique). Le statut fourni est ignoré et la copie est toujours en DRAFT.",
+        "operationId": "AdminProductsController_duplicate_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID du produit source.",
+            "schema": {
+              "example": "a1b2c3d4-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DuplicateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Produit dupliqué en DRAFT avec de nouveaux slug et SKU.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée ou statut différent de DRAFT (DUPLICATE_STATUS_FORBIDDEN)."
+          },
+          "404": {
+            "description": "Produit source introuvable (PRODUCT_NOT_FOUND)."
+          },
+          "409": {
+            "description": "Slug déjà utilisé (SLUG_ALREADY_EXISTS)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dupliquer un produit",
+        "tags": ["admin-products"]
+      }
+    },
+    "/api/v1/size-guides/{categoryId}": {
+      "get": {
+        "description": "Retourne les tables de conversion EU/US/UK/cm (men, women, kids) du guide lié à la catégorie. Les guides hérités de la catégorie parente ne sont pas résolus en MVP.",
+        "operationId": "SizeGuidesController_getByCategoryId_v1",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID de la catégorie",
+            "schema": {
+              "format": "uuid",
+              "example": "8b1f2c3d-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guide des tailles de la catégorie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SizeGuideResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Catégorie inexistante (CATEGORY_NOT_FOUND) ou catégorie sans guide (SIZE_GUIDE_NOT_FOUND)."
+          },
+          "429": {
+            "description": "Plus de 100 requêtes par minute (RATE_LIMIT_EXCEEDED)."
+          }
+        },
+        "summary": "Guide des tailles d’une catégorie",
+        "tags": ["catalog"]
+      }
+    },
+    "/api/v1/admin/size-guides/{id}": {
+      "put": {
+        "description": "Met à jour le nom, la description et/ou les tableaux EU/US/UK/cm. Les tableaux sont triés par EU croissant, les doublons EU sont refusés. Une modification de `table` incrémente la version (v1 → v2) ; un changement de nom seul ne l’incrémente pas. Un audit SIZE_GUIDE_UPDATED (résumé) est écrit et le cache public est invalidé.",
+        "operationId": "AdminSizeGuidesController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSizeGuideDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guide mis à jour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SizeGuideResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body vide, tableau vide, doublon EU ou entrée invalide (VALIDATION_ERROR)."
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Guide introuvable (SIZE_GUIDE_NOT_FOUND)."
+          },
+          "429": {
+            "description": "Plus de 30 mises à jour par minute."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Mettre à jour un guide des tailles",
+        "tags": ["admin-size-guides"]
+      }
+    },
+    "/api/v1/cart/validate": {
+      "post": {
+        "description": "⚠️ Aucun prix fourni par le client n'est utilisé. Tous les prix sont recalculés côté serveur depuis la base (prix de la variante, promotion produit active, sinon prix de base). Le body ne transporte que variantId et quantity ; tout champ de prix non déclaré est rejeté en 400 VALIDATION_ERROR.",
+        "operationId": "CartController_validate_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateCartDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Panier validé avec la liste des écarts (aucun prix client accepté)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartValidationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body invalide (champ non autorisé, quantité hors bornes, doublon de prix…)"
+          },
+          "429": {
+            "description": "Trop de requêtes (30/min/IP)"
+          }
+        },
+        "summary": "Valider le panier : recalcul des prix, promotions, stock et écarts",
+        "tags": ["cart"]
+      }
+    },
+    "/api/v1/orders": {
+      "post": {
+        "description": "Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.",
+        "operationId": "OrdersController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Commande créée, stock décrémenté et mouvement de stock enregistré",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body invalide, guest incomplet, coupon ou zone invalides"
+          },
+          "404": {
+            "description": "Variante ou produit introuvable"
+          },
+          "409": {
+            "description": "Stock insuffisant ou clé d’idempotence en conflit"
+          },
+          "429": {
+            "description": "Trop de requêtes (20/min/IP)"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
+          }
+        },
+        "summary": "Créer une commande et décrémenter le stock atomiquement",
+        "tags": ["orders"]
+      }
+    },
+    "/api/v1/admin/notifications/dead-letters": {
+      "get": {
+        "operationId": "NotificationsController_listDeadLetters_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "queueName",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobName",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste paginée des jobs en échec"
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN)."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Liste paginée des tâches en dead-letter",
+        "tags": ["notifications"]
+      }
+    },
+    "/api/v1/admin/notifications/{id}": {
+      "get": {
+        "operationId": "NotificationsController_getNotification_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail de la notification"
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN)."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Detail dune notification",
+        "tags": ["notifications"]
+      }
+    },
+    "/api/v1/admin/media/presign": {
+      "post": {
+        "description": "Approche presign + confirm : le client PUT directement le fichier sur MinIO/S3 via l'URL signée, puis appelle /admin/media/confirm. Le Content-Type et la taille déclarés ici ne sont jamais considérés comme une validation : le confirm re-télécharge le fichier et vérifie les magic bytes et la taille réelles. Le fichier est renommé (UUID) et stocké hors de tout dossier exécutable.",
+        "operationId": "AdminMediaController_presign_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "URL signée générée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Type MIME, taille, quota d’images ou clé invalides (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, MAX_IMAGES_REACHED)."
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          },
+          "429": {
+            "description": "Plus de 30 presigns en 60 secondes (RATE_LIMIT_EXCEEDED)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Obtenir une URL signée pour téléverser une image",
+        "tags": ["admin-media"]
+      }
+    },
+    "/api/v1/admin/media/confirm": {
+      "post": {
+        "description": "Télécharge le fichier brut depuis le stockage, valide son type réel via file-type (JPEG/PNG/WebP uniquement), sa taille et son décodage sharp, puis génère un JPEG optimisé, un WebP et une vignette 400×400. Le fichier brut est supprimé et un ProductImage est créé. Un fichier non image est refusé avec INVALID_IMAGE_TYPE.",
+        "operationId": "AdminMediaController_confirm_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Image traitée et enregistrée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaImageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fichier refusé (INVALID_IMAGE_TYPE, FILE_TOO_LARGE, INVALID_IMAGE, MAX_IMAGES_REACHED, INVALID_MEDIA_KEY)."
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Produit ou fichier téléversé introuvable (PRODUCT_NOT_FOUND, MEDIA_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Valider et traiter une image téléversée",
+        "tags": ["admin-media"]
+      }
+    },
+    "/api/v1/admin/media/images/{id}": {
+      "delete": {
+        "description": "Supprime les trois versions stockées (JPEG optimisé, WebP, vignette), la ligne ProductImage, écrit un audit et invalide le cache public.",
+        "operationId": "AdminMediaController_deleteImage_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Image supprimée."
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Image introuvable (IMAGE_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Supprimer une image produit",
+        "tags": ["admin-media"]
+      }
+    },
+    "/api/v1/admin/media/images/reorder": {
+      "patch": {
+        "description": "Met à jour les positions dans une transaction après vérification que toutes les images appartiennent au produit. Audit MEDIA_REORDERED et invalidation du cache.",
+        "operationId": "AdminMediaController_reorder_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderImagesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Positions mises à jour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordre invalide ou image étrangère au produit (INVALID_IMAGE_ORDER)."
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED)."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Réorganiser les images d’un produit",
+        "tags": ["admin-media"]
+      }
+    },
+    "/api/v1/config": {
+      "get": {
+        "operationId": "PublicConfigController_getPublicConfig_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Trop de requêtes (60/min/IP)"
+          }
+        },
+        "summary": "Configuration publique (clés publiques uniquement)",
+        "tags": ["config"]
+      }
+    },
+    "/api/v1/contact": {
+      "post": {
+        "description": "Formulaire public protégé par Cloudflare Turnstile. Le message est persisté pour traitement par le support.",
+        "operationId": "ContactController_submit_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message reçu"
+          },
+          "400": {
+            "description": "CAPTCHA requis/invalide ou body invalide"
+          },
+          "429": {
+            "description": "Trop de requêtes (5/min/IP)"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
+          }
+        },
+        "summary": "Envoyer un message au support",
+        "tags": ["contact"]
+      }
+    }
+  },
+  "info": {
+    "title": "BRUNY SHOPPING API",
+    "description": "BRUNY SHOPPING e-commerce contract (prices in FCFA).",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "client@exemple.cm"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+237612345678",
+            "description": "Format strict +237 suivi de 9 chiffres"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 128
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Jean",
+            "maxLength": 100
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Dupont",
+            "maxLength": 100
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "example": true,
+            "description": "Consentement aux CGV (obligatoire)"
+          },
+          "termsVersion": {
+            "type": "string",
+            "example": "1.0",
+            "description": "Version des CGV acceptée"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Jeton Cloudflare Turnstile"
+          }
+        },
+        "required": ["password", "termsAccepted", "termsVersion"]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "example": "client@exemple.cm ou +2376XXXXXXXX"
+          },
+          "password": {
+            "type": "string"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Jeton Cloudflare Turnstile"
+          }
+        },
+        "required": ["identifier", "password"]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "client@exemple.cm"
+          }
+        },
+        "required": ["email"]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "client@exemple.cm"
+          },
+          "code": {
+            "type": "string",
+            "description": "6-digit code received by email"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Minimum 10 chars, server-checked"
+          }
+        },
+        "required": ["email", "code", "newPassword"]
+      },
+      "TwoFactorVerifyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "TOTP 6 digits or backup code 8 digits"
+          }
+        },
+        "required": ["code"]
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "ProductCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Sneakers"
+          },
+          "slug": {
+            "type": "string",
+            "example": "sneakers"
+          }
+        },
+        "required": ["id", "name", "slug"]
+      },
+      "ProductBrandDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Barrage Foot"
+          },
+          "slug": {
+            "type": "string",
+            "example": "barrage-foot"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL du logo de la marque"
+          }
+        },
+        "required": ["id", "name", "slug", "logo"]
+      },
+      "ProductImageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL absolue de l’image"
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Texte alternatif accessible (null si absent)"
+          },
+          "position": {
+            "type": "number",
+            "description": "Ordre d’affichage dans la galerie"
+          },
+          "variantColor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Couleur de la variante concernée ; null = image commune à toutes les couleurs"
+          }
+        },
+        "required": ["id", "url", "alt", "position", "variantColor"]
+      },
+      "ProductVariantSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "BARF-SNEAKERSUR-42-NOIR"
+          },
+          "size": {
+            "type": "string",
+            "example": "42"
+          },
+          "color": {
+            "type": "string",
+            "example": "NOIR"
+          },
+          "availableStock": {
+            "type": "number",
+            "description": "Stock disponible (stock - reservedStock)"
+          },
+          "isAvailable": {
+            "type": "boolean",
+            "description": "true si availableStock > 0"
+          }
+        },
+        "required": ["id", "sku", "size", "color", "availableStock", "isAvailable"]
+      },
+      "ProductListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "basePrice": {
+            "type": "number",
+            "description": "Prix de base en XAF (entier)"
+          },
+          "effectivePrice": {
+            "type": "number",
+            "description": "Prix effectif en XAF : promo active, sinon prix de base"
+          },
+          "promoPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Prix promo en XAF si la promotion est active, sinon null"
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Début de la fenêtre promo (ISO 8601)"
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fin de la fenêtre promo (ISO 8601)"
+          },
+          "isPromoActive": {
+            "type": "boolean",
+            "description": "true si promoPrice est appliqué à cet instant"
+          },
+          "inStock": {
+            "type": "boolean",
+            "description": "true si au moins une variante a du stock disponible"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ProductCategoryDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/ProductBrandDto"
+          },
+          "images": {
+            "description": "Images du produit (la principale au minimum ; toutes sur la fiche détail)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductImageDto"
+            }
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductVariantSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "basePrice",
+          "effectivePrice",
+          "promoPrice",
+          "promoStart",
+          "promoEnd",
+          "isPromoActive",
+          "inStock",
+          "category",
+          "brand",
+          "images",
+          "variants"
+        ]
+      },
+      "PaginationDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 12
+          },
+          "total": {
+            "type": "number",
+            "example": 20
+          },
+          "pages": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": ["page", "limit", "total", "pages"]
+      },
+      "CategoryFacetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Sneakers"
+          },
+          "slug": {
+            "type": "string",
+            "example": "sneakers"
+          },
+          "count": {
+            "type": "number",
+            "description": "Nombre de produits publiés dans cette catégorie"
+          }
+        },
+        "required": ["id", "name", "slug", "count"]
+      },
+      "BrandFacetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Barrage Foot"
+          },
+          "slug": {
+            "type": "string",
+            "example": "barrage-foot"
+          },
+          "count": {
+            "type": "number",
+            "description": "Nombre de produits publiés de cette marque"
+          }
+        },
+        "required": ["id", "name", "slug", "count"]
+      },
+      "ValueFacetDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "example": "42",
+            "description": "Pointure ou couleur"
+          },
+          "count": {
+            "type": "number",
+            "description": "Nombre de produits ayant au moins une variante disponible"
+          }
+        },
+        "required": ["value", "count"]
+      },
+      "AvailabilityFacetDto": {
+        "type": "object",
+        "properties": {
+          "inStock": {
+            "type": "number",
+            "description": "Produits avec au moins une variante disponible"
+          },
+          "outOfStock": {
+            "type": "number",
+            "description": "Produits sans aucune variante disponible"
+          }
+        },
+        "required": ["inStock", "outOfStock"]
+      },
+      "PromotionFacetDto": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "number",
+            "description": "Produits avec une promotion active à cet instant"
+          },
+          "inactive": {
+            "type": "number",
+            "description": "Produits sans promotion active"
+          }
+        },
+        "required": ["active", "inactive"]
+      },
+      "PriceFacetDto": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number",
+            "description": "Prix de base minimal des produits publiés (XAF)"
+          },
+          "max": {
+            "type": "number",
+            "description": "Prix de base maximal des produits publiés (XAF)"
+          }
+        },
+        "required": ["min", "max"]
+      },
+      "ProductFacetsDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryFacetDto"
+            }
+          },
+          "brands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BrandFacetDto"
+            }
+          },
+          "sizes": {
+            "description": "Pointures disponibles, triées",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValueFacetDto"
+            }
+          },
+          "colors": {
+            "description": "Couleurs disponibles",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValueFacetDto"
+            }
+          },
+          "availability": {
+            "$ref": "#/components/schemas/AvailabilityFacetDto"
+          },
+          "promotion": {
+            "$ref": "#/components/schemas/PromotionFacetDto"
+          },
+          "price": {
+            "$ref": "#/components/schemas/PriceFacetDto"
+          }
+        },
+        "required": [
+          "categories",
+          "brands",
+          "sizes",
+          "colors",
+          "availability",
+          "promotion",
+          "price"
+        ]
+      },
+      "ProductListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductListItemDto"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "facets": {
+            "$ref": "#/components/schemas/ProductFacetsDto"
+          }
+        },
+        "required": ["items", "pagination", "facets"]
+      },
+      "ColorVariantDto": {
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": "string",
+            "example": "NOIR",
+            "description": "Libellé de la couleur tel que stocké"
+          },
+          "slug": {
+            "type": "string",
+            "example": "noir",
+            "description": "Slug kebab-case de la couleur"
+          },
+          "images": {
+            "description": "Images spécifiques à la couleur, puis les images communes (variantColor null)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductImageDto"
+            }
+          },
+          "availableSizes": {
+            "example": ["40", "41"],
+            "description": "Pointures avec du stock disponible pour cette couleur",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hasStock": {
+            "type": "boolean",
+            "description": "true si au moins une pointure est disponible dans cette couleur"
+          }
+        },
+        "required": ["color", "slug", "images", "availableSizes", "hasStock"]
+      },
+      "SizeVariantDto": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string",
+            "example": "42",
+            "description": "Pointure"
+          },
+          "availableStock": {
+            "type": "number",
+            "description": "Stock disponible (stock - reservedStock) maximal parmi les variantes de cette pointure. Le stock brut interne n’est jamais exposé."
+          },
+          "isAvailable": {
+            "type": "boolean",
+            "description": "true si availableStock > 0"
+          },
+          "isLowStock": {
+            "type": "boolean",
+            "description": "true si 0 < availableStock <= lowStockThreshold (seuil le plus bas de la pointure)"
+          }
+        },
+        "required": ["size", "availableStock", "isAvailable", "isLowStock"]
+      },
+      "ProductVariantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "BARF-SNEAKERSUR-42-NOIR"
+          },
+          "size": {
+            "type": "string",
+            "example": "42"
+          },
+          "color": {
+            "type": "string",
+            "example": "NOIR"
+          },
+          "effectivePrice": {
+            "type": "number",
+            "description": "Prix effectif en XAF : override de la variante, sinon promo produit active, sinon prix de base"
+          },
+          "availableStock": {
+            "type": "number",
+            "description": "Stock disponible (stock - reservedStock), jamais le stock brut interne"
+          },
+          "isAvailable": {
+            "type": "boolean",
+            "description": "true si availableStock > 0"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "size",
+          "color",
+          "effectivePrice",
+          "availableStock",
+          "isAvailable"
+        ]
+      },
+      "ProductSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "basePrice": {
+            "type": "number",
+            "description": "Prix de base en XAF (entier)"
+          },
+          "effectivePrice": {
+            "type": "number",
+            "description": "Prix effectif en XAF : promo active, sinon prix de base"
+          },
+          "promoPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Prix promo en XAF si la promotion est active, sinon null"
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Début de la fenêtre promo (ISO 8601)"
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fin de la fenêtre promo (ISO 8601)"
+          },
+          "isPromoActive": {
+            "type": "boolean",
+            "description": "true si promoPrice est appliqué à cet instant"
+          },
+          "inStock": {
+            "type": "boolean",
+            "description": "true si au moins une variante a du stock disponible"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ProductCategoryDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/ProductBrandDto"
+          },
+          "images": {
+            "description": "Images du produit (la principale au minimum ; toutes sur la fiche détail)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductImageDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "basePrice",
+          "effectivePrice",
+          "promoPrice",
+          "promoStart",
+          "promoEnd",
+          "isPromoActive",
+          "inStock",
+          "category",
+          "brand",
+          "images"
+        ]
+      },
+      "ProductDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "basePrice": {
+            "type": "number",
+            "description": "Prix de base en XAF (entier)"
+          },
+          "effectivePrice": {
+            "type": "number",
+            "description": "Prix effectif en XAF : promo active, sinon prix de base"
+          },
+          "promoPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Prix promo en XAF si la promotion est active, sinon null"
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Début de la fenêtre promo (ISO 8601)"
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fin de la fenêtre promo (ISO 8601)"
+          },
+          "isPromoActive": {
+            "type": "boolean",
+            "description": "true si promoPrice est appliqué à cet instant"
+          },
+          "inStock": {
+            "type": "boolean",
+            "description": "true si au moins une variante a du stock disponible"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ProductCategoryDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/ProductBrandDto"
+          },
+          "images": {
+            "description": "Images du produit (la principale au minimum ; toutes sur la fiche détail)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductImageDto"
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "Description complète affichée sur la fiche produit"
+          },
+          "seoTitle": {
+            "type": "string",
+            "nullable": true,
+            "description": "Titre SEO (null si absent)"
+          },
+          "seoDescription": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description SEO (null si absente)"
+          },
+          "colors": {
+            "description": "Variantes groupées par couleur, avec images et pointures disponibles",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColorVariantDto"
+            }
+          },
+          "sizes": {
+            "description": "Pointures agrégées toutes couleurs confondues",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SizeVariantDto"
+            }
+          },
+          "variants": {
+            "description": "Toutes les variantes à plat",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductVariantDto"
+            }
+          },
+          "similarProducts": {
+            "description": "Produits similaires : même catégorie, prix effectif à ±50 %, 6 par défaut (fallback même catégorie sans contrainte de prix)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "basePrice",
+          "effectivePrice",
+          "promoPrice",
+          "promoStart",
+          "promoEnd",
+          "isPromoActive",
+          "inStock",
+          "category",
+          "brand",
+          "images",
+          "description",
+          "seoTitle",
+          "seoDescription",
+          "colors",
+          "sizes",
+          "variants",
+          "similarProducts"
+        ]
+      },
+      "CreateProductImageDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://cdn.brunyshop.cm/products/air-max-noir.jpg"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "variantColor": {
+            "type": "string",
+            "description": "Couleur concernée (null = image commune)"
+          }
+        },
+        "required": ["url"]
+      },
+      "CreateProductVariantDto": {
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": "string",
+            "example": "NOIR",
+            "description": "Couleur (normalisée en majuscules)"
+          },
+          "size": {
+            "type": "string",
+            "example": "42",
+            "description": "Pointure ou taille (normalisée en majuscules)"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Prix spécifique XAF (sinon prix produit)"
+          },
+          "stock": {
+            "type": "number",
+            "minimum": 0,
+            "example": 10,
+            "description": "Stock physique initial"
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "default": 5
+          }
+        },
+        "required": ["color", "size", "stock"]
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Air Max 90 Noir"
+          },
+          "slug": {
+            "type": "string",
+            "example": "air-max-90-noir",
+            "description": "Généré depuis le nom s’il est absent (unicité garantie : -2, -3…)"
+          },
+          "description": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"],
+            "default": "DRAFT"
+          },
+          "basePrice": {
+            "type": "number",
+            "minimum": 0,
+            "example": 45000,
+            "description": "Prix de base XAF (entier)"
+          },
+          "promoPrice": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Doit être strictement inférieur à basePrice"
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seoTitle": {
+            "type": "string"
+          },
+          "seoDescription": {
+            "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateProductImageDto"
+            }
+          },
+          "variants": {
+            "description": "Format explicite (contrôle fin du stock et du prix par variante)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateProductVariantDto"
+            }
+          },
+          "colors": {
+            "example": ["noir", "blanc"],
+            "description": "Couleurs pour la génération automatique du produit cartésien",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sizes": {
+            "example": ["40", "41", "42"],
+            "description": "Pointures pour la génération automatique du produit cartésien",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["name", "description", "categoryId", "brandId", "basePrice"]
+      },
+      "AdminProductCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "slug"]
+      },
+      "AdminProductBrandDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "slug", "logo"]
+      },
+      "AdminProductVariantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "BARRAGEF-AIRMAX90-42-NOIR"
+          },
+          "color": {
+            "type": "string",
+            "example": "NOIR"
+          },
+          "size": {
+            "type": "string",
+            "example": "42"
+          },
+          "price": {
+            "type": "number",
+            "nullable": true,
+            "description": "Prix spécifique XAF (null sinon)"
+          },
+          "stock": {
+            "type": "number",
+            "description": "Stock physique"
+          },
+          "reservedStock": {
+            "type": "number",
+            "description": "Stock réservé par des commandes en cours"
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "description": "Seuil d’alerte de stock bas"
+          },
+          "version": {
+            "type": "number",
+            "description": "Version d’optimistic locking"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "color",
+          "size",
+          "price",
+          "stock",
+          "reservedStock",
+          "lowStockThreshold",
+          "version"
+        ]
+      },
+      "AdminProductImageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "number"
+          },
+          "variantColor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Couleur concernée (null = commune)"
+          }
+        },
+        "required": ["id", "url", "alt", "position", "variantColor"]
+      },
+      "AdminProductDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+          },
+          "basePrice": {
+            "type": "number",
+            "description": "Prix de base XAF (entier)"
+          },
+          "promoPrice": {
+            "type": "number",
+            "nullable": true
+          },
+          "promoStart": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "promoEnd": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "effectivePrice": {
+            "type": "number",
+            "description": "Prix appliqué aujourd’hui (promo active ou prix de base)"
+          },
+          "seoTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "seoDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "$ref": "#/components/schemas/AdminProductCategoryDto"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/AdminProductBrandDto"
+          },
+          "deletedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Suppression logique (null si actif)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminProductVariantDto"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminProductImageDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "status",
+          "basePrice",
+          "promoPrice",
+          "promoStart",
+          "promoEnd",
+          "effectivePrice",
+          "categoryId",
+          "brandId",
+          "category",
+          "brand",
+          "deletedAt",
+          "createdAt",
+          "updatedAt",
+          "variants",
+          "images"
+        ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+          },
+          "basePrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "promoPrice": {
+            "type": "number",
+            "minimum": 1,
+            "nullable": true
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "seoTitle": {
+            "type": "string"
+          },
+          "seoDescription": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateProductVariantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Variante existante à mettre à jour"
+          },
+          "color": {
+            "type": "string",
+            "example": "NOIR"
+          },
+          "size": {
+            "type": "string",
+            "example": "42"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Prix spécifique XAF (null = prix produit)"
+          },
+          "stock": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Stock physique (seule quantité modifiable)"
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": ["color", "size", "stock"]
+      },
+      "UpdateVariantsDto": {
+        "type": "object",
+        "properties": {
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateProductVariantDto"
+            }
+          }
+        },
+        "required": ["variants"]
+      },
+      "DuplicateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Air Max 90 (copie)"
+          },
+          "slug": {
+            "type": "string",
+            "example": "air-max-90-copie",
+            "description": "Généré depuis le nom s’il est absent (unicité garantie)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"],
+            "default": "DRAFT",
+            "description": "Seul DRAFT est accepté : une copie ne peut pas être publiée directement"
+          },
+          "copyImages": {
+            "type": "boolean",
+            "default": true
+          },
+          "copyVariants": {
+            "type": "boolean",
+            "default": true
+          },
+          "resetStock": {
+            "type": "boolean",
+            "default": false,
+            "description": "Remet le stock des variantes copiées à zéro"
+          }
+        }
+      },
+      "SizeGuideEntryDto": {
+        "type": "object",
+        "properties": {
+          "eu": {
+            "type": "number",
+            "example": 42,
+            "description": "Pointure européenne"
+          },
+          "us": {
+            "type": "number",
+            "example": 8.5,
+            "description": "Pointure américaine (US)"
+          },
+          "uk": {
+            "type": "number",
+            "example": 8,
+            "description": "Pointure britannique (UK)"
+          },
+          "cm": {
+            "type": "number",
+            "example": 26.5,
+            "description": "Longueur du pied en centimètres"
+          }
+        },
+        "required": ["eu", "us", "uk", "cm"]
+      },
+      "SizeGuideTableDto": {
+        "type": "object",
+        "properties": {
+          "men": {
+            "description": "Tableau homme",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SizeGuideEntryDto"
+            }
+          },
+          "women": {
+            "description": "Tableau femme",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SizeGuideEntryDto"
+            }
+          },
+          "kids": {
+            "description": "Tableau enfant",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SizeGuideEntryDto"
+            }
+          }
+        }
+      },
+      "SizeGuideResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Guide des pointures — Homme, Femme, Enfant"
+          },
+          "slug": {
+            "type": "string",
+            "example": "guide-pointures-brunyshop"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "table": {
+            "$ref": "#/components/schemas/SizeGuideTableDto"
+          },
+          "version": {
+            "type": "string",
+            "example": "v1"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "table",
+          "version",
+          "publishedAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateSizeGuideDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "Guide des pointures 2027"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "table": {
+            "$ref": "#/components/schemas/SizeGuideTableDto"
+          }
+        }
+      },
+      "CartItemInputDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifiant de la variante"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Quantité souhaitée (1 à 100 par ligne)"
+          },
+          "previousUnitPrice": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Prix unitaire mémorisé côté client. Information seule : jamais utilisé dans un calcul, uniquement pour signaler un écart de prix."
+          }
+        },
+        "required": ["variantId", "quantity"]
+      },
+      "ValidateCartDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Lignes du panier (1 à 50)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartItemInputDto"
+            }
+          },
+          "couponCode": {
+            "type": "string",
+            "description": "Code promo à appliquer (optionnel)",
+            "maxLength": 64
+          }
+        },
+        "required": ["items"]
+      },
+      "CartIssueDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "PRICE_CHANGED",
+              "PROMO_APPLIED",
+              "PROMO_EXPIRED",
+              "INSUFFICIENT_STOCK",
+              "OUT_OF_STOCK",
+              "PRODUCT_ARCHIVED",
+              "PRODUCT_NOT_FOUND",
+              "VARIANT_NOT_FOUND",
+              "QUANTITY_EXCEEDED",
+              "COUPON_INVALID",
+              "COUPON_MIN_AMOUNT_NOT_REACHED"
+            ],
+            "description": "Code de l'écart"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message en français prêt à afficher"
+          },
+          "variantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Variante concernée"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Produit concerné"
+          },
+          "couponCode": {
+            "type": "string",
+            "description": "Code promo concerné"
+          },
+          "requestedQuantity": {
+            "type": "number",
+            "description": "Quantité demandée par le client"
+          },
+          "availableQuantity": {
+            "type": "number",
+            "description": "Stock disponible réellement"
+          },
+          "maxQuantity": {
+            "type": "number",
+            "description": "Quantité maximale autorisée par ligne"
+          },
+          "previousPrice": {
+            "type": "number",
+            "description": "Prix unitaire mémorisé côté client"
+          },
+          "currentPrice": {
+            "type": "number",
+            "description": "Prix unitaire recalculé côté serveur"
+          },
+          "minAmount": {
+            "type": "number",
+            "description": "Montant minimum requis par le coupon"
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Sous-total utilisé pour évaluer le coupon"
+          }
+        },
+        "required": ["code", "message"]
+      },
+      "CartItemValidationDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "variantSku": {
+            "type": "string"
+          },
+          "size": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantité retenue (limitée au stock disponible)"
+          },
+          "availableStock": {
+            "type": "number",
+            "description": "Stock disponible = stock - stock réservé"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Prix unitaire recalculé côté serveur (XAF)"
+          },
+          "lineTotal": {
+            "type": "number",
+            "description": "unitPrice × quantity (XAF)"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartIssueDto"
+            }
+          }
+        },
+        "required": [
+          "variantId",
+          "productId",
+          "productName",
+          "variantSku",
+          "size",
+          "color",
+          "quantity",
+          "availableStock",
+          "unitPrice",
+          "lineTotal",
+          "issues"
+        ]
+      },
+      "CartValidationMetaDto": {
+        "type": "object",
+        "properties": {
+          "validatedAt": {
+            "type": "string",
+            "example": "2025-01-15T10:30:00.000Z"
+          },
+          "itemCount": {
+            "type": "number",
+            "description": "Nombre de lignes retournées"
+          },
+          "totalQuantity": {
+            "type": "number",
+            "description": "Somme des quantités retenues"
+          }
+        },
+        "required": ["validatedAt", "itemCount", "totalQuantity"]
+      },
+      "CartValidationResponseDto": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "false dès qu’au moins une issue bloquante est présente"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartItemValidationDto"
+            }
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Sous-total recalculé (XAF)"
+          },
+          "discount": {
+            "type": "number",
+            "description": "Remise coupon (XAF)"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total à payer hors livraison (XAF), jamais négatif"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartIssueDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/CartValidationMetaDto"
+          }
+        },
+        "required": ["valid", "items", "subtotal", "discount", "total", "issues", "meta"]
+      },
+      "CreateOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "description": "Identifiant de la variante choisie"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Quantité commandée"
+          }
+        },
+        "required": ["variantId", "quantity"]
+      },
+      "AddressSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "recipientName": {
+            "type": "string",
+            "description": "Nom du destinataire",
+            "maxLength": 150
+          },
+          "phone": {
+            "type": "string",
+            "description": "Téléphone du destinataire (+237XXXXXXXXX)"
+          },
+          "city": {
+            "type": "string",
+            "description": "Ville de livraison",
+            "maxLength": 100
+          },
+          "district": {
+            "type": "string",
+            "description": "Quartier de livraison",
+            "maxLength": 100
+          },
+          "line": {
+            "type": "string",
+            "description": "Adresse ou rue",
+            "maxLength": 200
+          },
+          "landmark": {
+            "type": "string",
+            "description": "Point de repère",
+            "maxLength": 200
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Instructions de livraison",
+            "maxLength": 300
+          }
+        },
+        "required": ["recipientName", "phone", "city", "district", "line"]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Lignes de la commande (1 à 50)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateOrderItemDto"
+            }
+          },
+          "couponCode": {
+            "type": "string",
+            "description": "Code promo à appliquer",
+            "maxLength": 64
+          },
+          "guestName": {
+            "type": "string",
+            "description": "Nom du client invité",
+            "maxLength": 150
+          },
+          "guestPhone": {
+            "type": "string",
+            "description": "Téléphone du client invité (+237XXXXXXXXX)"
+          },
+          "address": {
+            "$ref": "#/components/schemas/AddressSnapshotDto"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": ["COD", "MOBILE_MONEY", "CARD"],
+            "description": "Moyen de paiement. Seul COD est disponible dans le MVP."
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "description": "Clé d’idempotence contre les doubles soumissions"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Jeton Cloudflare Turnstile"
+          }
+        },
+        "required": ["items", "address", "paymentMethod"]
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "example": "BRN-2611-7K3F"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING_CONFIRMATION"]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": ["PENDING"]
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": ["COD", "MOBILE_MONEY", "CARD"]
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Sous-total (XAF)"
+          },
+          "discount": {
+            "type": "number",
+            "description": "Remise (XAF)"
+          },
+          "shippingFee": {
+            "type": "number",
+            "description": "Frais de livraison (XAF)"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total à payer (XAF)"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-11T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "paymentStatus",
+          "paymentMethod",
+          "subtotal",
+          "discount",
+          "shippingFee",
+          "total",
+          "createdAt"
+        ]
+      },
+      "PresignUploadDto": {
+        "type": "object",
+        "properties": {
+          "productSlug": {
+            "type": "string",
+            "example": "sneakers-urbanstep-air"
+          },
+          "variantColor": {
+            "type": "string",
+            "example": "noir"
+          },
+          "contentType": {
+            "type": "string",
+            "enum": ["image/jpeg", "image/png", "image/webp"],
+            "example": "image/jpeg"
+          },
+          "declaredSize": {
+            "type": "number",
+            "example": 102400,
+            "description": "Taille annoncée en octets"
+          }
+        },
+        "required": ["productSlug", "contentType", "declaredSize"]
+      },
+      "PresignResponseDto": {
+        "type": "object",
+        "properties": {
+          "uploadUrl": {
+            "type": "string",
+            "description": "URL signée pour PUT direct vers le stockage"
+          },
+          "key": {
+            "type": "string",
+            "description": "Clé de stockage à confirmer"
+          },
+          "publicUrl": {
+            "type": "string",
+            "description": "URL publique prévisionnelle"
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 300
+          },
+          "method": {
+            "type": "string",
+            "enum": ["PUT"]
+          },
+          "headers": {
+            "type": "object",
+            "example": {
+              "Content-Type": "image/jpeg"
+            }
+          }
+        },
+        "required": ["uploadUrl", "key", "publicUrl", "expiresIn", "method", "headers"]
+      },
+      "ConfirmUploadDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "products/sneakers-urbanstep-air/noir/6f1c...e2.webp",
+            "description": "Clé retournée par /admin/media/presign"
+          },
+          "productSlug": {
+            "type": "string",
+            "example": "sneakers-urbanstep-air"
+          },
+          "variantColor": {
+            "type": "string",
+            "example": "noir"
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0
+          },
+          "alt": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Vue de profil"
+          }
+        },
+        "required": ["key", "productSlug"]
+      },
+      "MediaImageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL publique de la version WebP"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "description": "URL publique de la vignette WebP"
+          },
+          "alt": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "number"
+          },
+          "variantColor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "url", "thumbnailUrl", "alt", "position", "variantColor"]
+      },
+      "ReorderImageItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0,
+            "example": 0
+          }
+        },
+        "required": ["id", "position"]
+      },
+      "ReorderImagesDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReorderImageItemDto"
+            }
+          }
+        },
+        "required": ["productId", "order"]
+      },
+      "ReorderResponseDto": {
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "number",
+            "example": 4
+          }
+        },
+        "required": ["updated"]
+      },
+      "PublicConfigDto": {
+        "type": "object",
+        "properties": {
+          "turnstileEnabled": {
+            "type": "boolean",
+            "description": "Indique si le CAPTCHA est actif côté serveur",
+            "example": true
+          },
+          "turnstileSiteKey": {
+            "type": "object",
+            "nullable": true,
+            "description": "Clé publique Cloudflare Turnstile. Aucun secret n’est exposé.",
+            "example": "1x00000000000000000000BB"
+          }
+        },
+        "required": ["turnstileEnabled", "turnstileSiteKey"]
+      },
+      "ContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Awa Mbarga",
+            "maxLength": 150
+          },
+          "email": {
+            "type": "string",
+            "example": "awa@example.cm",
+            "maxLength": 254
+          },
+          "phone": {
+            "type": "string",
+            "example": "+237699000001"
+          },
+          "subject": {
+            "type": "string",
+            "enum": ["order", "product", "return", "delivery", "other"],
+            "description": "Sujet de la demande"
+          },
+          "orderReference": {
+            "type": "string",
+            "example": "BRN-2611-7K3F"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 5000
+          },
+          "consent": {
+            "type": "boolean",
+            "example": true,
+            "description": "Consentement pour répondre à la demande"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Jeton Cloudflare Turnstile obtenu par le widget invisible"
+          }
+        },
+        "required": ["name", "email", "subject", "message", "consent"]
+      }
+    }
+  }
+}

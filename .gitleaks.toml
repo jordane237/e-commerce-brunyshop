@@ -1,0 +1,97 @@
+# Gitleaks configuration — détection de secrets accidentellement versionnés
+#
+# Usage : gitleaks detect --config .gitleaks.toml
+# Exécuté dans CI (job security -> gitleaks).
+#
+# Allowlists :
+#   - node_modules/          : dépendances tierces
+#   - .pnpm-store/           : cache pnpm
+#   - pnpm-lock.yaml         : lockfile généré
+#   - .env.example           : template avec placeholders
+#   - openapi.json           : spec exportée
+#   - fixtures/              : données de test
+#   - CHANGEME_*             : placeholders officiels
+#   - Logs / reports de test
+
+[pipeline]
+  assume = true
+  trustNewlines = false
+  failOnMetadata = true
+  retryCount = 3
+
+[extend]
+  allowSecrets = true
+
+[[rules]]
+  id = "generic-api-key"
+  description = "API keys / tokens"
+  regex = '''(?i)(api[_-]?key|apikey|secret|passwd|password|token|private[_-]?key|bearer)["\'\\s:=]+([\w\W]{6,})'''
+  tags = ["credentials", "api", "secret"]
+
+[[rules]]
+  id = "private-key"
+  description = "Private keys (PEM)"
+  regex = '''(?i)---(BEGIN|end)[ \s]*(?i)(RSA |DSA |EC |OPENSSH )?(PRIVATE KEY)---'''
+  tags = ["credentials", "private-key", "crypto"]
+
+[[rules]]
+  id = "github-token"
+  description = "GitHub tokens (classic/oauth)"
+  regex = '''(?i)(gh[pa]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{72,})'''
+  tags = ["credentials", "github"]
+
+[[rules]]
+  id = "aws-credentials"
+  description = "AWS access keys"
+  regex = '''(?i)(AKIA[0-9A-Z]{16})'''
+  tags = ["credentials", "aws"]
+
+[[rules]]
+  id = "slack-webhook"
+  description = "Slack webhook URLs"
+  regex = '''(https://hooks.slack.com/services/T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24})'''
+  tags = ["credentials", "slack"]
+
+[[rules]]
+  id = "database-url"
+  description = "Database connection strings"
+  regex = '''(postgres(?:~\w+)?://\w+:(?:\w+)@\w+[.:\w+/-]+(\w+))'''
+  tags = ["credentials", "database"]
+
+# Allowlists
+
+[allowlist]
+  # Dossiers générés / tiers
+  [[allowlist.path]]
+    regex = '(^|/|\\.)node_modules/'
+
+  [[allowlist.path]]
+    regex = '(^|/)\\.pnpm-store/'
+
+  [[allowlist.path]]
+    regex = '(^|/|\\.)pnpm-lock\\.yaml$'
+
+  [[allowlist.path]]
+    regex = '(^|/\\.)env\\.example$'
+
+  [[allowlist.path]]
+    regex = '(^|/|\\.)openapi\\.json$'
+
+  # Fixtures et données de test
+  [[allowlist.path]]
+    regex = '(^|/|\\.)fixtures/'
+
+  [[allowlist.path]]
+    regex = '(^|/|\\.)test[/-]fixtures/'
+
+  # Placeholders officiels du projet
+  [[allowlist.path]]
+    regex = '''(?i)^(.*[_-]?(CHANGEME|TODO|PLACEHOLDER|EXEMPLE|EXAMPLE))'''
+
+  # Templates de secrets
+  [[allowlist.path]]
+    regex = '''(?i)^(.*[_-]?(CHANGE_ME|REPLACE_ME|EXAMPLE))'''
+
+  # Exceptions courantes (logs, reports de test)
+  [[allowlist.path]]
+    regex = '''(?i)(^\.log|test-results|playwright-report)$'''
