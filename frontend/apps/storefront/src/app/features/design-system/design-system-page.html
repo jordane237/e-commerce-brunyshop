@@ -333,14 +333,8 @@
     </div>
 
     <div class="ds-card ds-card--wide">
-      <bruny-size-selector
-        [sizes]="['40', '41', '42', '43', '44']"
-        [selected]="size()"
-        [lowStock]="['42']"
-        [unavailable]="['43']"
-        (selectedSize)="size.set($event)"
-      />
-      <p class="ds-note">Sélection courante : {{ size() }}</p>
+      <bruny-size-selector [items]="sizeItems()" [selected]="size()" (select)="size.set($event)" />
+      <p class="ds-note">Sélection courante : {{ size()?.size ?? 'aucune' }}</p>
     </div>
   </section>
 

@@ -54,12 +54,25 @@ Thumbs.db
 
 # Session tooling (not project content)
 .freebuff/
+.agents/
+skills-lock.json
 
 # Confidential specs (local only)
 Cahier_des_charges_BRUNY_SHOPPING.docx
 
 # generated code (prisma client, rebuilt by `pnpm build`)
 backend/src/generated
+
+# CAT-05 local media (never commit uploaded images)
+/backend/storage/
+/backend/uploads/
+/uploads/
+/media/
+*.upload
+*.tmp
+
+# TypeScript incremental cache
+*.tsbuildinfo
 
 # Frontend build/test caches
 frontend/.angular/

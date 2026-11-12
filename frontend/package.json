@@ -53,6 +53,7 @@
     "@angular/ssr": "^22.2.2",
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "express": "^4.21.2",
+    "ngx-turnstile": "1.0.0",
     "rxjs": "^7.8.2",
     "zone.js": "^0.16.3"
   }

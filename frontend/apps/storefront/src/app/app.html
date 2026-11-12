@@ -12,4 +12,12 @@
 <footer class="site-footer">
   BRUNY SHOPPING · Chaussures sélectionnées au Cameroun · Prix en FCFA
 </footer>
-<bruny-toast [message]="errorMessage()" />
+@if (toast.current(); as currentToast) {
+<bruny-toast
+  [message]="currentToast.message"
+  [variant]="currentToast.variant"
+  [title]="currentToast.title ?? ''"
+  [duration]="currentToast.duration"
+  (closed)="toast.dismissCurrent()"
+/>
+}

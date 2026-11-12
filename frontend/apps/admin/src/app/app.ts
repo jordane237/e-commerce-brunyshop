@@ -1,8 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { SessionService } from '@bruny/data-access';
+import { AuthService, SessionService, ToastService } from '@bruny/core';
 import { ToastComponent } from '@bruny/ui';
-import { errorMessage } from './core/http';
 
 @Component({
   imports: [RouterLink, RouterOutlet, ToastComponent],
@@ -12,16 +11,14 @@ import { errorMessage } from './core/http';
 })
 export class App {
   readonly session = inject(SessionService);
-  readonly errorMessage = errorMessage;
+  readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
   logout(): void {
-    this.session.logout().subscribe({
+    this.auth.logout().subscribe({
       next: () => void this.router.navigateByUrl('/connexion'),
-      error: () => {
-        this.session.clear();
-        void this.router.navigateByUrl('/connexion');
-      },
+      error: () => void this.router.navigateByUrl('/connexion'),
     });
   }
 }
