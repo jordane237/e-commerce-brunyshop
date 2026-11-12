@@ -1,6 +1,6 @@
 # Vérification finale Sprint 2
 
-Exécutée le 12 novembre 2026 sur `review/sprint-2-final-audit` (`4cb7818`).
+Exécutée le 12 novembre 2026 sur `working` (`cd1acf9`), après merge de `review/sprint-2-final-audit`.
 
 | # | Check | Statut | Preuve |
 |---|---|---|---|
@@ -37,6 +37,6 @@ Suites en échec, toutes dans `libs/ui` :
 Ces échecs sont préexistants et liés à un décalage entre l'API des composants et leurs tests (ex. `shape` vs `variant` sur le skeleton). Ils ne bloquent pas les builds.
 
 ## Synthèse
-- Checks exécutés et verts : install, Prisma/migrations, lint backend/frontend, builds backend/shop/admin, tests unitaires backend, e2e backend, OpenAPI, cœur TEC-12.
+- Checks exécutés et verts sur `working` : install, Prisma/migrations, lint backend/frontend, builds backend/shop/admin, tests unitaires backend (242), e2e backend (202), OpenAPI, cœur TEC-12 (44).
 - Checks non exécutés manuellement : démarrages HTTP, SSR curl, smoke test API.
-- `pnpm -C frontend test` reste rouge à cause des 5 suites UI listées ci-dessus.
+- `pnpm -C frontend test` reste rouge à cause des 5 suites UI listées ci-dessus (41 tests).

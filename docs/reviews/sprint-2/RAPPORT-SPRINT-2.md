@@ -53,10 +53,10 @@ Voir FRONTEND-BACKEND-CONSUMPTION.md.
 - Ajouter un test IDOR explicite (AUT-05).
 - Confirmer le CAPTCHA sur commande/contact (AUT-11).
 
-## 7. État final du dépôt et recommandation de merge
-- Branche de revue : `review/sprint-2-final-audit` (`4cb7818`), propre et poussée
-- `working` : `2c87b1d`, en retard de 25 commits ; il ne contient pas encore le Sprint 2
-- Le merge de la revue sur `working` est donc nécessaire pour livrer le Sprint 2
+## 7. État final du dépôt
+- `working` : `cd1acf9`, propre et poussé
+- `review/sprint-2-final-audit` : `cd1acf9`, mergée en fast-forward dans `working`
+- Les 18 tickets Sprint 2 sont intégrés dans `working`
 - Backup : `origin/backup/sprint-2-before-review-20261111-144049` (`2c87b1d`)
-- Tag proposé : `sprint-2-v1.0.0` après merge sur `working`
-- Recommandation : ⚠️ Sprint 2 validé avec réserves (aucune non-conformité bloquante), merge sur `working` à valider
+- Tag proposé après validation PO : `sprint-2-v1.0.0`
+- Recommandation : ⚠️ Sprint 2 mergé et validé avec réserves (aucune non-conformité bloquante), 5 suites UI encore rouges
