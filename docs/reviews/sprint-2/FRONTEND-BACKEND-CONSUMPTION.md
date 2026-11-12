@@ -30,6 +30,12 @@
 | GET /api/v1/admin/notifications/dead-letters | NTF-01 | — (généré) | — | Aucun | ❌ (futur) |
 | GET /api/v1/audit-logs | AUT-08 | — | — | Aucun | ❌ (futur) |
 
+## Bilan
+
+- ✅ Consommés : 12
+- ⚠️ Partiels : 1 (`POST /cart/validate`)
+- ❌ Non consommés : 14 (justifiés : admin, checkout et pages prévus au Sprint 3)
+
 ## Cas particuliers
 
 - Les endpoints admin CRUD, média, size-guides, commandes, notifications et audit ne sont pas encore consommés par le frontend. C'est attendu pour le Sprint 2 côté storefront/admin minimal ; les pages d'administration complètes sont prévues pour le Sprint 3 (DSG-06).

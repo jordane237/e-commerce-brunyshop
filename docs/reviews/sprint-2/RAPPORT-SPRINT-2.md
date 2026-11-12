@@ -7,7 +7,9 @@
 - Non conformes : 0
 - Corrections appliquées : 0 (réserves reportées)
 - Fichiers nettoyés : 0 (dépôt déjà propre)
-- Endpoints consommés : 12 ; partiels : 1 ; non consommés (justifiés) : 15
+- Endpoints consommés : 12 ; partiels : 1 ; non consommés (justifiés) : 14
+- Tests backend : 242 unitaires + 202 e2e verts
+- Tests frontend : 5 suites UI en échec (41 tests), builds verts
 
 ## 2. Tableau récapitulatif par ticket
 | Ticket | Statut |
@@ -51,8 +53,10 @@ Voir FRONTEND-BACKEND-CONSUMPTION.md.
 - Ajouter un test IDOR explicite (AUT-05).
 - Confirmer le CAPTCHA sur commande/contact (AUT-11).
 
-## 7. Recommandation de merge
-- Branche de revue : `review/sprint-2-final-audit`
-- Backup : `origin/backup/sprint-2-before-review-20261111-144049`
+## 7. État final du dépôt et recommandation de merge
+- Branche de revue : `review/sprint-2-final-audit` (`4cb7818`), propre et poussée
+- `working` : `2c87b1d`, en retard de 25 commits ; il ne contient pas encore le Sprint 2
+- Le merge de la revue sur `working` est donc nécessaire pour livrer le Sprint 2
+- Backup : `origin/backup/sprint-2-before-review-20261111-144049` (`2c87b1d`)
 - Tag proposé : `sprint-2-v1.0.0` après merge sur `working`
-- Recommandation : ⚠️ Sprint 2 validé avec réserves (aucune non-conformité bloquante)
+- Recommandation : ⚠️ Sprint 2 validé avec réserves (aucune non-conformité bloquante), merge sur `working` à valider
