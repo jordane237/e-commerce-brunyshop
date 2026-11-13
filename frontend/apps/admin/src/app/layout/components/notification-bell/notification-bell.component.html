@@ -1,0 +1,23 @@
+<div class="bell">
+  <button
+    class="bell__trigger"
+    type="button"
+    [attr.aria-label]="label()"
+    aria-haspopup="true"
+    [attr.aria-expanded]="open()"
+    aria-controls="admin-notifications"
+    (click)="toggle()"
+  >
+    <bruny-icon name="bell" [size]="20" />
+    @if (unreadCount() > 0) {
+      <span class="bell__count" aria-live="polite">{{ unreadCount() }}</span>
+    }
+  </button>
+
+  @if (open()) {
+    <div id="admin-notifications" class="bell__panel">
+      <p class="bell__title">Notifications</p>
+      <p class="bell__empty" role="status">Aucune nouvelle notification</p>
+    </div>
+  }
+</div>
