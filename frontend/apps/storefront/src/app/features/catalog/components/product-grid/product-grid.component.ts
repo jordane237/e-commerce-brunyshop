@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CatalogProduct } from '@bruny/data-access';
 import { ProductCardComponent, SkeletonComponent } from '@bruny/ui';
 
@@ -14,6 +14,7 @@ import { ProductCardComponent, SkeletonComponent } from '@bruny/ui';
 export class ProductGridComponent {
   readonly products = input.required<CatalogProduct[]>();
   readonly loading = input(false);
+  readonly add = output<CatalogProduct>();
 
   readonly placeholders = [1, 2, 3, 4, 5, 6, 7, 8];
 }

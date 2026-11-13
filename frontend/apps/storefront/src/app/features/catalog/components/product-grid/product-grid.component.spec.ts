@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CatalogProduct } from '@bruny/data-access';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ProductGridComponent } from './product-grid.component';
 
 const product: CatalogProduct = {
@@ -51,5 +51,16 @@ describe('ProductGridComponent', () => {
     expect(element.querySelector('ul[role="list"]')).not.toBeNull();
     expect(element.querySelectorAll('li')).toHaveLength(1);
     expect(element.querySelector('bruny-product-card')).not.toBeNull();
+  });
+
+  it('forwards the add action with the product', async () => {
+    const fixture = await create(false, [product]);
+    const add = vi.fn();
+    fixture.componentInstance.add.subscribe(add);
+
+    (fixture.nativeElement.querySelector('.bs-button') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(add).toHaveBeenCalledWith(product);
   });
 });

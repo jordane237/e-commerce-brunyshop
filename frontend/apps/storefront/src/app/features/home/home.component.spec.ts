@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CatalogApi, CatalogCategory, ProductPage } from '@bruny/data-access';
 import { HomeComponent } from './home.component';
+import { CartStore } from '../../core/cart/cart.store';
 
 const category: CatalogCategory = {
   id: '1',
@@ -39,7 +40,11 @@ describe('HomeComponent', () => {
   it('loads every section through HomeDataService', async () => {
     const fixture = TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [provideRouter([]), { provide: CatalogApi, useValue: apiStub() }],
+      providers: [
+        provideRouter([]),
+        { provide: CatalogApi, useValue: apiStub() },
+        { provide: CartStore, useValue: { addProduct: vi.fn() } },
+      ],
     }).createComponent(HomeComponent);
 
     fixture.detectChanges();
@@ -63,7 +68,11 @@ describe('HomeComponent', () => {
 
     const fixture = TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [provideRouter([]), { provide: CatalogApi, useValue: failing }],
+      providers: [
+        provideRouter([]),
+        { provide: CatalogApi, useValue: failing },
+        { provide: CartStore, useValue: { addProduct: vi.fn() } },
+      ],
     }).createComponent(HomeComponent);
 
     fixture.detectChanges();

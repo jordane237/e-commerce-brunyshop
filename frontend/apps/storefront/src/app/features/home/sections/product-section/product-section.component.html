@@ -30,7 +30,7 @@
       <ul class="section__grid" role="list">
         @for (product of products(); track product.id) {
           <li>
-            <bruny-product-card [product]="product" />
+            <bruny-product-card [product]="product" [showAdd]="true" (add)="add.emit(product)" />
           </li>
         }
       </ul>

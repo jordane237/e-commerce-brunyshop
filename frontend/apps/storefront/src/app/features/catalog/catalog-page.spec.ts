@@ -5,6 +5,7 @@ import { CatalogApi, CatalogFacets, CatalogProduct, ProductPage } from '@bruny/d
 import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { SeoService } from '../../core/seo.service';
+import { CartStore } from '../../core/cart/cart.store';
 import { CATALOG_PAGE_SIZE } from './catalog-query';
 import { CatalogStore } from './catalog.store';
 import { CatalogPage } from './catalog-page';
@@ -63,6 +64,7 @@ async function setup(initialUrl = '/boutique') {
       ]),
       { provide: CatalogApi, useValue: { list, categories: () => of([]) } },
       { provide: SeoService, useValue: { set: vi.fn() } },
+      { provide: CartStore, useValue: { addProduct: vi.fn() } },
     ],
   });
 

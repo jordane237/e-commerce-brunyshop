@@ -23,6 +23,7 @@
   [error]="data.newProductsError()"
   emptyMessage="Aucune nouveauté pour le moment."
   (retry)="data.loadNewProducts()"
+  (add)="onAdd($event)"
 />
 
 <bruny-reassurance-band />
@@ -34,6 +35,7 @@
   [error]="data.bestSellersError()"
   emptyMessage="Aucune meilleure vente pour le moment."
   (retry)="data.loadBestSellers()"
+  (add)="onAdd($event)"
 />
 
 <bruny-product-section
@@ -43,6 +45,7 @@
   [error]="data.promotionsError()"
   emptyMessage="Aucune promotion pour le moment."
   (retry)="data.loadPromotions()"
+  (add)="onAdd($event)"
 />
 
 <bruny-facebook-cta />

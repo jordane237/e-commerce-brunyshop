@@ -6,6 +6,8 @@ import { HeroBannerComponent } from './sections/hero-banner/hero-banner.componen
 import { ProductSectionComponent } from './sections/product-section/product-section.component';
 import { ReassuranceBandComponent } from './sections/reassurance-band/reassurance-band.component';
 import { HomeDataService } from './services/home-data.service';
+import type { CatalogProduct } from '@bruny/data-access';
+import { CartStore } from '../../core/cart/cart.store';
 
 @Component({
   selector: 'bruny-home',
@@ -23,6 +25,7 @@ import { HomeDataService } from './services/home-data.service';
 })
 export class HomeComponent implements OnInit {
   readonly data = inject(HomeDataService);
+  private readonly cart = inject(CartStore);
   private readonly seo = inject(SeoService);
 
   /** Erreur globale : les quatre sections ont échoué (CA #4). */
@@ -41,5 +44,9 @@ export class HomeComponent implements OnInit {
       '/',
     );
     this.data.reloadAll();
+  }
+
+  onAdd(product: CatalogProduct): void {
+    this.cart.addProduct(product);
   }
 }

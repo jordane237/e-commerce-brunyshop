@@ -46,7 +46,7 @@
       } @else if (store.isEmpty()) {
       <bruny-empty-state [suggestions]="suggestions()" (reset)="onReset()" />
       } @else {
-      <bruny-product-grid [products]="store.products()" />
+      <bruny-product-grid [products]="store.products()" (add)="onAdd($event)" />
       <bruny-catalog-pagination
         [page]="store.filters().page"
         [pages]="store.totalPages()"

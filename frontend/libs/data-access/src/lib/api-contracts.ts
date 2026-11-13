@@ -11,6 +11,11 @@ export type ResetPasswordDto = components['schemas']['ResetPasswordDto'];
 export type TwoFactorVerifyDto = components['schemas']['TwoFactorVerifyDto'];
 export type CreateProductDto = components['schemas']['CreateProductDto'];
 export type CreateProductVariantDto = components['schemas']['CreateProductVariantDto'];
+export type ValidateCartDto = components['schemas']['ValidateCartDto'];
+export type CartItemInputDto = components['schemas']['CartItemInputDto'];
+export type CartIssueDto = components['schemas']['CartIssueDto'];
+export type CartItemValidationDto = components['schemas']['CartItemValidationDto'];
+export type CartValidationResponseDto = components['schemas']['CartValidationResponseDto'];
 
 /** Schémas OpenAPI disponibles (utile pour dériver un type ponctuel). */
 export type ApiSchemas = components['schemas'];

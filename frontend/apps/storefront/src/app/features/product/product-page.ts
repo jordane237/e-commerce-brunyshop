@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogApi, CatalogProductDetail } from '@bruny/data-access';
-import { CartStore } from '@bruny/data-access';
+import { CartStore } from '../../core/cart/cart.store';
 import { PriceTagComponent, SizeSelectorComponent, type SizeSelectorItem } from '@bruny/ui';
 import { NgOptimizedImage } from '@angular/common';
 import { SeoService } from '../../core/seo.service';
@@ -216,12 +216,18 @@ export class ProductPage implements OnInit {
     const size = this.selectedSize();
     const variant = product?.variants.find((item) => item.size === size && item.isAvailable);
     if (!product || !variant) return;
-    this.cart.add(product, {
-      id: variant.id,
+    this.cart.addLine({
+      variantId: variant.id,
+      productId: product.id,
+      productSlug: product.slug,
+      productName: product.name,
+      variantSku: variant.sku,
       size: variant.size,
       color: variant.color,
-      unitPrice: variant.effectivePrice,
-      availableStock: variant.availableStock,
+      quantity: 1,
+      unitPriceAtAdd: variant.effectivePrice,
+      imageUrl: product.images[0]?.url ?? null,
+      imageAlt: product.images[0]?.alt ?? product.name,
     });
     this.added.set(true);
   }

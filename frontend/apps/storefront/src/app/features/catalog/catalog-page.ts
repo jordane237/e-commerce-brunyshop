@@ -30,6 +30,8 @@ import { FilterDrawerComponent } from './components/filter-drawer/filter-drawer.
 import { FilterSidebarComponent } from './components/filter-sidebar/filter-sidebar.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
 import { ProductGridComponent } from './components/product-grid/product-grid.component';
+import type { CatalogProduct } from '@bruny/data-access';
+import { CartStore } from '../../core/cart/cart.store';
 
 /**
  * Page boutique (CAT-08).
@@ -56,6 +58,7 @@ import { ProductGridComponent } from './components/product-grid/product-grid.com
 })
 export class CatalogPage {
   readonly store = inject(CatalogStore);
+  private readonly cart = inject(CartStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
@@ -151,6 +154,10 @@ export class CatalogPage {
 
   retry(): void {
     this.store.retry();
+  }
+
+  onAdd(product: CatalogProduct): void {
+    this.cart.addProduct(product);
   }
 
   private updateFilters(patch: Partial<CatalogFilters>): void {

@@ -24,6 +24,7 @@ export class ProductSectionComponent {
   readonly emptyMessage = input('Aucun produit pour le moment.');
   readonly viewMoreLink = input<string | null>('/boutique');
   readonly retry = output<void>();
+  readonly add = output<CatalogProduct>();
 
   readonly sectionId = computed(
     () =>
