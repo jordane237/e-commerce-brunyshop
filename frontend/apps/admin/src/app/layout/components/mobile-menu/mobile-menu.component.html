@@ -1,0 +1,29 @@
+@if (open()) {
+  <div class="mobile-menu" (click)="onBackdrop($event)">
+    <section
+      #dialog
+      class="mobile-menu__panel"
+      id="admin-mobile-menu"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-mobile-menu-title"
+    >
+      <header class="mobile-menu__head">
+        <h2 id="admin-mobile-menu-title">Menu</h2>
+        <button
+          #closeButton
+          class="mobile-menu__close"
+          type="button"
+          aria-label="Fermer le menu"
+          (click)="close()"
+        >
+          <span aria-hidden="true">✕</span>
+        </button>
+      </header>
+
+      <div class="mobile-menu__body">
+        <bruny-admin-sidebar [showToggle]="false" [drawer]="true" (itemSelected)="close()" />
+      </div>
+    </section>
+  </div>
+}

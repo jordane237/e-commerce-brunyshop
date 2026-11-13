@@ -1,11 +1,15 @@
 import { Route } from '@angular/router';
 
 export const appRoutes: Route[] = [
-  { path: '', pathMatch: 'full', redirectTo: 'boutique' },
+  {
+    path: '',
+    pathMatch: 'full',
+    loadChildren: () => import('./features/home/home.routes').then((module) => module.homeRoutes),
+  },
   {
     path: 'boutique',
-    loadComponent: () =>
-      import('./features/catalog/catalog-page').then((module) => module.CatalogPage),
+    loadChildren: () =>
+      import('./features/catalog/catalog.routes').then((module) => module.catalogRoutes),
   },
   {
     path: 'produit/:slug',

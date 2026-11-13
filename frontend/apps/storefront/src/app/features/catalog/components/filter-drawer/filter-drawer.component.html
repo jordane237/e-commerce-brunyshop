@@ -1,0 +1,45 @@
+@if (open()) {
+  <div class="drawer" (click)="onBackdrop($event)">
+    <section
+      #dialog
+      class="drawer__panel"
+      id="catalog-filter-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="catalog-filter-title"
+    >
+      <header class="drawer__head">
+        <h2 id="catalog-filter-title">Filtres</h2>
+        <button
+          #closeButton
+          class="drawer__close"
+          type="button"
+          aria-label="Fermer les filtres"
+          (click)="close()"
+        >
+          <span class="drawer__close-icon" aria-hidden="true">✕</span>
+        </button>
+      </header>
+
+      <div class="drawer__body">
+        <bruny-filter-sidebar
+          idPrefix="drawer"
+          [filters]="filters()"
+          [facets]="facets()"
+          (filtersChange)="filtersChange.emit($event)"
+          (reset)="reset.emit()"
+        />
+      </div>
+
+      <footer class="drawer__foot">
+        <button class="drawer__apply" type="button" (click)="close()">
+          @if (total() === 1) {
+            Voir le résultat
+          } @else {
+            Voir les {{ total() }} résultats
+          }
+        </button>
+      </footer>
+    </section>
+  </div>
+}

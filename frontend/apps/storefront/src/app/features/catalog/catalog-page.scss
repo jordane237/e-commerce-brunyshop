@@ -1,0 +1,98 @@
+:host {
+  display: block;
+}
+
+.catalog {
+  padding-block: var(--bs-space-6) var(--bs-space-12);
+}
+
+.catalog__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--bs-space-6);
+}
+
+.catalog__sidebar {
+  display: none;
+}
+
+.catalog__results {
+  min-width: 0;
+}
+
+.catalog__error {
+  display: grid;
+  justify-items: center;
+  gap: var(--bs-space-2);
+  padding: var(--bs-space-12) var(--bs-space-4);
+  border: 1px solid var(--bs-color-border);
+  border-radius: var(--bs-radius-lg);
+  background: var(--bs-color-surface);
+  text-align: center;
+}
+.catalog__error h2 {
+  margin: 0;
+  font-size: var(--bs-font-size-xl);
+  color: var(--bs-color-text);
+}
+.catalog__error p {
+  margin: 0;
+  color: var(--bs-color-text-muted);
+}
+.catalog__retry,
+.catalog__inline-error button {
+  min-height: var(--bs-touch-target);
+  padding: 0 var(--bs-space-5);
+  border: 0;
+  border-radius: var(--bs-radius-md);
+  background: var(--bs-color-primary);
+  color: var(--bs-color-text-inverse);
+  font: inherit;
+  font-weight: var(--bs-font-weight-semibold);
+  cursor: pointer;
+}
+.catalog__retry:focus-visible,
+.catalog__inline-error button:focus-visible {
+  outline: none;
+  box-shadow: var(--bs-shadow-focus);
+}
+
+.catalog__inline-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bs-space-2);
+  margin-bottom: var(--bs-space-4);
+  padding: var(--bs-space-3) var(--bs-space-4);
+  border: 1px solid var(--bs-color-danger-strong);
+  border-radius: var(--bs-radius-md);
+  background: var(--bs-color-danger-soft);
+  color: var(--bs-color-danger-strong);
+  font-size: var(--bs-font-size-sm);
+}
+.catalog__inline-error p {
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .catalog {
+    padding-block: var(--bs-space-8) var(--bs-space-16);
+  }
+  .catalog__layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: var(--bs-space-8);
+    align-items: start;
+  }
+  .catalog__sidebar {
+    display: block;
+    position: sticky;
+    top: var(--bs-space-4);
+  }
+}
+
+@media (min-width: 1024px) {
+  .catalog__layout {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+}

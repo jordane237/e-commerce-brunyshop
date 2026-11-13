@@ -18,8 +18,10 @@ import {
   loadingInterceptor,
   requestIdInterceptor,
   SessionRestoreService,
+  SessionService,
 } from '@bruny/core';
 import { API_BASE_URL } from '@bruny/data-access';
+import { adminHomePath } from './features/shared/auth-home';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -37,7 +39,10 @@ export const appConfig: ApplicationConfig = {
     { provide: API_BASE_URL, useValue: '/api/v1' },
     { provide: AUTH_LOGIN_PATH, useValue: '/connexion' },
     { provide: AUTH_FORBIDDEN_PATH, useValue: '/acces-refuse' },
-    { provide: AUTH_HOME_PATH, useValue: '/produits' },
+    {
+      provide: AUTH_HOME_PATH,
+      useFactory: () => adminHomePath(inject(SessionService)),
+    },
     provideAppInitializer(() => inject(SessionRestoreService).restore()),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
   ],

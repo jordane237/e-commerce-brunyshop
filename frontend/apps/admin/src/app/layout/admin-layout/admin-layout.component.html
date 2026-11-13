@@ -1,0 +1,22 @@
+<a class="skip-link" href="#admin-content">Aller au contenu principal</a>
+
+<div class="admin-layout" [class.admin-layout--collapsed]="sidebarCollapsed()">
+  <aside class="admin-layout__sidebar" aria-label="Navigation principale">
+    <bruny-admin-sidebar [collapsed]="sidebarCollapsed()" (toggleCollapse)="toggleSidebar()" />
+  </aside>
+
+  <div class="admin-layout__main">
+    <div class="admin-layout__header">
+      <bruny-admin-header [menuOpen]="mobileMenuOpen()" (openMenu)="openMobileMenu()" />
+    </div>
+
+    <main id="admin-content" class="admin-layout__content" tabindex="-1">
+      <bruny-page-title />
+      <router-outlet />
+    </main>
+
+    <bruny-admin-bottom-nav />
+  </div>
+</div>
+
+<bruny-admin-mobile-menu [open]="mobileMenuOpen()" (closed)="closeMobileMenu()" />

@@ -31,6 +31,7 @@ export class ModalComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) title = '';
   @Input() id = 'bs-modal';
   @Input() size: 'sm' | 'md' | 'lg' = 'md';
+  @Input() placement: 'center' | 'right' = 'center';
   @Input() closeOnBackdrop = true;
   @Output() openChange = new EventEmitter<boolean>();
   @Output() closed = new EventEmitter<void>();

@@ -3,11 +3,13 @@
   min-height: 100vh;
 }
 .site-header {
-  height: 76px;
-  padding: 0 clamp(20px, 6vw, 88px);
+  min-height: 76px;
+  padding: 10px clamp(20px, 6vw, 88px);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   border-bottom: 1px solid #ececf0;
   background: #fff;
 }
@@ -18,11 +20,14 @@
   letter-spacing: 0.08em;
 }
 .brand span {
-  color: #c9a227;
+  // Or accessible sur fond clair (DSG-02, 4,83:1) — l'ancien #c9a227 échouait AA.
+  color: var(--bs-color-accent-text);
 }
 .site-header nav {
   display: flex;
-  gap: 28px;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-left: auto;
 }
 .site-header nav a {
   color: #1f2a44;
@@ -38,4 +43,12 @@
 }
 main {
   min-height: 70vh;
+}
+
+@media (max-width: 640px) {
+  .site-header nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
 }

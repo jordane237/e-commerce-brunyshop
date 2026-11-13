@@ -1,0 +1,130 @@
+<section class="container cart-page">
+  <header class="cart-page__header">
+    <p class="eyebrow">VOTRE SÉLECTION</p>
+    <h1>Mon panier</h1>
+    @if (!cart.isEmpty()) {
+    <p class="cart-page__count">
+      {{ cart.itemCount() }} article{{ cart.itemCount() > 1 ? 's' : '' }}
+    </p>
+    }
+  </header>
+
+  @if (cart.loading()) {
+  <p class="cart-page__loading" role="status" aria-live="polite">
+    Vérification des prix et du stock…
+  </p>
+  } @if (cart.hasIssues()) {
+  <section class="cart-page__issues" role="status" aria-live="polite">
+    <h2>Votre panier a changé</h2>
+    <ul>
+      @for (issue of cart.issues(); track issue.code + (issue.variantId ?? '')) {
+      <li>{{ issue.message }}</li>
+      }
+    </ul>
+    @if (!cart.isEmpty()) {
+    <button type="button" (click)="retry()">Vérifier à nouveau</button>
+    }
+  </section>
+  } @if (cart.isEmpty()) {
+  <div class="cart-page__empty">
+    <h2>Votre panier est vide</h2>
+    <p>Ajoutez un produit pour commencer votre commande.</p>
+    <a class="cart-page__primary" routerLink="/boutique">Découvrir la boutique</a>
+  </div>
+  } @else { @if (cart.error()) {
+  <div class="cart-page__error" role="alert">
+    <p>{{ cart.error() }}</p>
+    <button type="button" (click)="retry()">Réessayer</button>
+  </div>
+  }
+
+  <div class="cart-page__layout">
+    <div class="cart-page__lines" [attr.aria-busy]="cart.loading()">
+      @for (line of cart.lines(); track line.variantId) {
+      <article class="cart-line">
+        <div class="cart-line__media">
+          @if (line.imageUrl) {
+          <img
+            [src]="line.imageUrl"
+            [alt]="line.imageAlt ?? line.productName"
+            width="120"
+            height="120"
+          />
+          } @else {
+          <span class="cart-line__placeholder" aria-hidden="true"></span>
+          }
+        </div>
+
+        <div class="cart-line__info">
+          <a class="cart-line__name" [routerLink]="['/produit', line.productSlug]">
+            {{ line.productName }}
+          </a>
+          <p class="cart-line__variant">{{ line.color }} · Pointure {{ line.size }}</p>
+          <p class="cart-line__unit">{{ line.unitPriceAtAdd | fcfa }} / unité</p>
+        </div>
+
+        <div class="cart-line__quantity">
+          <span id="quantity-{{ line.variantId }}" class="cart-line__quantity-label">Quantité</span>
+          <div class="cart-line__stepper">
+            <button
+              type="button"
+              [disabled]="line.quantity <= 1"
+              [attr.aria-label]="'Diminuer la quantité de ' + line.productName"
+              (click)="setQuantity(line.variantId, line.quantity - 1)"
+            >
+              −
+            </button>
+            <output [attr.aria-labelledby]="'quantity-' + line.variantId" aria-live="polite"
+              >{{ line.quantity }}</output
+            >
+            <button
+              type="button"
+              [attr.aria-label]="'Augmenter la quantité de ' + line.productName"
+              (click)="setQuantity(line.variantId, line.quantity + 1)"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <div class="cart-line__total">
+          <strong>{{ cart.lineTotal(line.variantId) | fcfa }}</strong>
+          <button
+            class="cart-line__remove"
+            type="button"
+            [attr.aria-label]="'Retirer ' + line.productName"
+            (click)="remove(line.variantId)"
+          >
+            <bruny-icon name="trash" [size]="17" />
+            Supprimer
+          </button>
+        </div>
+      </article>
+      }
+    </div>
+
+    <aside class="cart-summary" aria-labelledby="cart-summary-title">
+      <h2 id="cart-summary-title">Récapitulatif</h2>
+      <dl>
+        <div>
+          <dt>Sous-total ({{ cart.itemCount() }} article{{ cart.itemCount() > 1 ? 's' : '' }})</dt>
+          <dd>{{ cart.subtotal() | fcfa }}</dd>
+        </div>
+        @if (cart.discount() > 0) {
+        <div class="cart-summary__discount">
+          <dt>Remise</dt>
+          <dd>-{{ cart.discount() | fcfa }}</dd>
+        </div>
+        }
+        <div class="cart-summary__total">
+          <dt>Total à payer</dt>
+          <dd>{{ cart.displayTotal() | fcfa }}</dd>
+        </div>
+      </dl>
+      <button class="cart-page__primary" type="button" disabled>Passer la commande</button>
+      <p class="cart-summary__note">Le paiement sera disponible prochainement.</p>
+      <a class="cart-summary__continue" routerLink="/boutique">Continuer mes achats</a>
+    </aside>
+  </div>
+  }
+</section>

@@ -1,0 +1,18 @@
+@if (loading()) {
+  <div class="grid" aria-busy="true" aria-label="Chargement des produits">
+    @for (placeholder of placeholders; track placeholder) {
+      <div class="grid__skeleton">
+        <bruny-skeleton height="280px" radius="lg" />
+        <bruny-skeleton variant="text" [lines]="3" height="0.85rem" />
+      </div>
+    }
+  </div>
+} @else {
+  <ul class="grid" role="list">
+    @for (product of products(); track product.id) {
+      <li class="grid__item">
+        <bruny-product-card [product]="product" [showAdd]="true" (add)="add.emit(product)" />
+      </li>
+    }
+  </ul>
+}
