@@ -1,0 +1,25 @@
+@if (chips().length > 0) {
+  <div class="active-filters">
+    <h2 class="active-filters__title">Filtres actifs</h2>
+    <ul class="active-filters__list" role="list">
+      @for (chip of chips(); track chip.key) {
+        <li class="active-filters__item">
+          <button
+            class="chip"
+            type="button"
+            [attr.aria-label]="'Supprimer le filtre ' + chip.label"
+            (click)="remove.emit(chip.key)"
+          >
+            <span>{{ chip.label }}</span>
+            <span class="chip__icon" aria-hidden="true">✕</span>
+          </button>
+        </li>
+      }
+    </ul>
+    @if (chips().length > 1) {
+      <button class="active-filters__reset" type="button" (click)="reset.emit()">
+        Réinitialiser tout
+      </button>
+    }
+  </div>
+}

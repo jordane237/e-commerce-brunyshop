@@ -1,0 +1,103 @@
+:host {
+  display: contents;
+}
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--bs-z-modal);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--bs-color-overlay);
+}
+
+.drawer__panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 90vh;
+  border-radius: var(--bs-radius-xl) var(--bs-radius-xl) 0 0;
+  background: var(--bs-color-surface);
+  box-shadow: var(--bs-shadow-lg);
+  animation: drawer-up var(--bs-duration-slow) var(--bs-easing-out);
+}
+
+.drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bs-space-3);
+  padding: var(--bs-space-4) var(--bs-space-5);
+  border-bottom: 1px solid var(--bs-color-border);
+}
+.drawer__head h2 {
+  margin: 0;
+  font-size: var(--bs-font-size-xl);
+}
+.drawer__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--bs-touch-target);
+  height: var(--bs-touch-target);
+  border: 1px solid var(--bs-color-border);
+  border-radius: var(--bs-radius-full);
+  background: var(--bs-color-surface);
+  color: var(--bs-color-text);
+  font-size: var(--bs-font-size-lg);
+  cursor: pointer;
+}
+.drawer__close:focus-visible {
+  outline: none;
+  box-shadow: var(--bs-shadow-focus);
+}
+
+.drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--bs-space-5);
+}
+
+.drawer__foot {
+  padding: var(--bs-space-4) var(--bs-space-5);
+  border-top: 1px solid var(--bs-color-border);
+  background: var(--bs-color-surface);
+}
+.drawer__apply {
+  width: 100%;
+  min-height: var(--bs-control-height-lg);
+  border: 0;
+  border-radius: var(--bs-radius-md);
+  background: var(--bs-color-primary);
+  color: var(--bs-color-text-inverse);
+  font: inherit;
+  font-weight: var(--bs-font-weight-bold);
+  cursor: pointer;
+}
+.drawer__apply:focus-visible {
+  outline: none;
+  box-shadow: var(--bs-shadow-focus);
+}
+
+@keyframes drawer-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer__panel {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .drawer {
+    display: none;
+  }
+}
