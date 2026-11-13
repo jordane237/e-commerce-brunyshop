@@ -8,8 +8,8 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'boutique',
-    loadComponent: () =>
-      import('./features/catalog/catalog-page').then((module) => module.CatalogPage),
+    loadChildren: () =>
+      import('./features/catalog/catalog.routes').then((module) => module.catalogRoutes),
   },
   {
     path: 'produit/:slug',
