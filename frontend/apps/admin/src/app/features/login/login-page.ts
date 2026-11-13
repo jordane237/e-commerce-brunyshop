@@ -2,8 +2,15 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicConfigService } from '@bruny/data-access';
-import { AuthChallenge, AuthService, readApiErrorMessage, TwoFactorSetup } from '@bruny/core';
+import {
+  AuthChallenge,
+  AuthService,
+  readApiErrorMessage,
+  SessionService,
+  TwoFactorSetup,
+} from '@bruny/core';
 import { CaptchaComponent } from '@bruny/ui';
+import { adminHomePath } from '../shared/auth-home';
 
 @Component({
   standalone: true,
@@ -201,6 +208,7 @@ import { CaptchaComponent } from '@bruny/ui';
 export class LoginPage implements OnInit {
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionService);
   private readonly publicConfig = inject(PublicConfigService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -297,9 +305,12 @@ export class LoginPage implements OnInit {
   }
 
   private completeLogin(): void {
-    const destination = this.route.snapshot.queryParamMap.get('returnUrl') || '/produits';
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    const fallback = adminHomePath(this.session);
+    const destination =
+      returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : fallback;
     this.busy.set(false);
-    void this.router.navigateByUrl(destination.startsWith('/') ? destination : '/produits');
+    void this.router.navigateByUrl(destination);
   }
 
   private resetCaptcha(): void {

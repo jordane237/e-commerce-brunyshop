@@ -28,7 +28,21 @@ export type IconName =
   | 'filter'
   | 'refresh'
   | 'user'
-  | 'lock';
+  | 'lock'
+  | 'bell'
+  | 'layout-dashboard'
+  | 'package'
+  | 'layers'
+  | 'shopping-bag'
+  | 'truck'
+  | 'navigation'
+  | 'users'
+  | 'user-cog'
+  | 'tag'
+  | 'star'
+  | 'settings'
+  | 'history'
+  | 'log-out';
 
 const ICONS: Record<IconName, readonly string[]> = {
   search: ['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z', 'm21 21-4.35-4.35'],
@@ -79,6 +93,41 @@ const ICONS: Record<IconName, readonly string[]> = {
   refresh: ['M21 12a9 9 0 1 1-2.6-6.4', 'M21 3v6h-6'],
   user: ['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z'],
   lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
+  bell: ['M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9', 'M10 21h4'],
+  'layout-dashboard': ['M3 3h8v7H3z', 'M13 3h8v5h-8z', 'M13 12h8v9h-8z', 'M3 14h8v7H3z'],
+  package: ['m21 8-9-5-9 5 9 5 9-5Z', 'M3 8v8l9 5 9-5V8', 'M12 13v8'],
+  layers: ['m12 2 9 5-9 5-9-5 9-5Z', 'm3 12 9 5 9-5', 'm3 17 9 5 9-5'],
+  'shopping-bag': ['M6 7h12l1 14H5L6 7Z', 'M9 7V5a3 3 0 0 1 6 0v2'],
+  truck: [
+    'M3 6h11v10H3z',
+    'M14 10h4l3 3v3h-7z',
+    'M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
+    'M18 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
+  ],
+  navigation: ['m3 11 19-9-9 19-2-8-8-2Z'],
+  users: [
+    'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
+    'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+    'M23 21v-2a4 4 0 0 0-3-3.9',
+    'M16 3.1a4 4 0 0 1 0 7.8',
+  ],
+  'user-cog': [
+    'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
+    'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+    'M19 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
+    'M19 11v1',
+    'M19 18v1',
+    'M17.5 12l.9.5',
+    'M20.1 16.5l-.9.5',
+  ],
+  tag: ['M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8Z', 'M7 7h.01'],
+  star: ['m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6Z'],
+  settings: [
+    'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+    'M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.8-1L14.5 3h-5l-.3 2.1a7 7 0 0 0-1.8 1l-2.3-1-2 3.4L5.1 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.8 1L9.5 21h5l.3-2.1a7 7 0 0 0 1.8-1l2.3 1 2-3.4-2-1.5c.1-.3.1-.7.1-1Z',
+  ],
+  history: ['M3 12a9 9 0 1 0 3-6.7L3 8', 'M3 3v5h5', 'M12 7v5l3 2'],
+  'log-out': ['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4', 'M16 17l5-5-5-5', 'M21 12H9'],
 };
 
 @Component({

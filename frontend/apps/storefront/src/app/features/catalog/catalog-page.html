@@ -1,0 +1,72 @@
+<section class="container catalog">
+  <bruny-catalog-header
+    [title]="title()"
+    [total]="store.total()"
+    [activeFilterCount]="store.activeFilterCount()"
+    [search]="searchDraft()"
+    [sort]="store.filters().sort"
+    [filtersOpen]="drawerOpen()"
+    (searchChange)="onSearch($event)"
+    (sortChange)="onSort($event)"
+    (openFilters)="openDrawer()"
+  />
+
+  <div class="catalog__layout">
+    <aside class="catalog__sidebar" aria-label="Filtres du catalogue">
+      <bruny-filter-sidebar
+        idPrefix="desktop"
+        [filters]="store.filters()"
+        [facets]="store.facets()"
+        (filtersChange)="onFiltersChange($event)"
+        (reset)="onReset()"
+      />
+    </aside>
+
+    <div class="catalog__results">
+      <bruny-active-filters-chips
+        [filters]="store.filters()"
+        [facets]="store.facets()"
+        (remove)="onRemoveFilter($event)"
+        (reset)="onReset()"
+      />
+
+      @if (store.error() && store.hasResults()) {
+      <div class="catalog__inline-error" role="alert">
+        <p>{{ store.error() }}</p>
+        <button type="button" (click)="retry()">Réessayer</button>
+      </div>
+      } @if (store.loading()) {
+      <bruny-product-grid [products]="[]" [loading]="true" />
+      } @else if (store.error() && !store.hasResults()) {
+      <section class="catalog__error" role="alert">
+        <h2>Impossible de charger les produits</h2>
+        <p>{{ store.error() }}</p>
+        <button class="catalog__retry" type="button" (click)="retry()">Réessayer</button>
+      </section>
+      } @else if (store.isEmpty()) {
+      <bruny-empty-state [suggestions]="suggestions()" (reset)="onReset()" />
+      } @else {
+      <bruny-product-grid [products]="store.products()" />
+      <bruny-catalog-pagination
+        [page]="store.filters().page"
+        [pages]="store.totalPages()"
+        [total]="store.total()"
+        [limit]="pageSize"
+        [loadingMore]="store.loadingMore()"
+        (pageChange)="onPageChange($event)"
+        (loadMore)="onLoadMore()"
+      />
+      }
+    </div>
+  </div>
+
+  <bruny-filter-drawer
+    [open]="drawerOpen()"
+    [filters]="store.filters()"
+    [facets]="store.facets()"
+    [total]="store.total()"
+    (closed)="closeDrawer()"
+    (filtersChange)="onFiltersChange($event)"
+    (reset)="onReset()"
+  />
+</section>

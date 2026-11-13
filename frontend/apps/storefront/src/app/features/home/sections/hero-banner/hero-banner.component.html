@@ -1,0 +1,32 @@
+<section class="hero" aria-labelledby="home-hero-title">
+  <img
+    class="hero__image"
+    ngSrc="/images/hero-home.png"
+    width="1200"
+    height="750"
+    priority
+    alt=""
+  />
+  <div class="hero__overlay">
+    <div class="container hero__content">
+      <p class="hero__eyebrow">Édition Douala &amp; Yaoundé 2025</p>
+      <h1 id="home-hero-title" class="hero__title">Bruny Shopping</h1>
+      <p class="hero__lead">Prix en FCFA · Livraison à Douala et Yaoundé.</p>
+      <div class="hero__actions">
+        <a class="hero__cta hero__cta--primary" routerLink="/boutique"> Découvrir la Collection </a>
+        <a
+          class="hero__cta hero__cta--whatsapp"
+          [href]="whatsappUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Nous contacter
+        </a>
+      </div>
+      <ul class="hero__reassurance">
+        <li>Paiement à la livraison</li>
+        <li>Livraison à Douala et Yaoundé</li>
+      </ul>
+    </div>
+  </div>
+</section>

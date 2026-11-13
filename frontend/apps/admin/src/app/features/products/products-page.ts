@@ -12,7 +12,6 @@ import { FcfaPipe } from '@bruny/util';
       <header class="page-header">
         <div>
           <p class="eyebrow">GESTION DU CATALOGUE</p>
-          <h1>Produits</h1>
           <p>Consultez les modèles publiés dans la boutique.</p>
         </div>
         <span class="count">{{ result()?.pagination?.total ?? 0 }} produits</span>
