@@ -1,0 +1,63 @@
+<app-auth-layout
+  eyebrow="ESPACE CLIENT"
+  title="Se connecter"
+  subtitle="Retrouvez vos commandes, vos adresses et vos favoris."
+  asideTitle="Vos commandes, vos adresses, vos avantages."
+>
+  @if (backendError(); as error) {
+    <div class="auth-error" role="alert">{{ error }}</div>
+  }
+
+  <form #loginForm [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+    <bruny-input
+      id="login-identifier"
+      name="identifier"
+      label="E-mail ou téléphone"
+      type="text"
+      inputMode="email"
+      autocomplete="username"
+      placeholder="vous@exemple.com ou 6 94 28 10 44"
+      formControlName="identifier"
+      [error]="identifierError() ?? ''"
+    />
+
+    <bruny-input
+      id="login-password"
+      name="password"
+      label="Mot de passe"
+      type="password"
+      inputMode="text"
+      autocomplete="current-password"
+      formControlName="password"
+      [error]="passwordError() ?? ''"
+    />
+
+    <a routerLink="/mot-de-passe-oublie" class="auth-form__forgot">Mot de passe oublié ?</a>
+
+    @if (captchaEnabled()) {
+      <bruny-captcha
+        [siteKey]="siteKey()"
+        [control]="form.controls.turnstileToken"
+        action="login"
+      />
+    }
+
+    <bruny-button
+      type="submit"
+      variant="primary"
+      size="lg"
+      [block]="true"
+      [loading]="submitting()"
+      [disabled]="submitting() || captchaUnavailable()"
+    >
+      {{ submitting() ? 'Connexion…' : 'Se connecter' }}
+    </bruny-button>
+  </form>
+
+  <p class="auth-switch">
+    Pas encore de compte ?
+    <a routerLink="/inscription" [queryParams]="redirectQuery()">Créer un compte</a>
+  </p>
+
+  <p class="auth-reassurance">Paiement à la livraison · Échange 7 jours</p>
+</app-auth-layout>

@@ -1,4 +1,5 @@
 export * from './lib/auth/auth.service';
+export * from './lib/constants/common-passwords';
 export * from './lib/auth/refresh-queue.service';
 export * from './lib/auth/session-restore.service';
 export * from './lib/guards/auth.guard';

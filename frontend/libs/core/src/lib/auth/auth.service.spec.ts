@@ -49,6 +49,33 @@ describe('AuthService (TEC-12)', () => {
     expect(session.accessToken()).toBe('token-1');
   });
 
+  it('envoie l’inscription sans ouvrir de session', () => {
+    auth
+      .register({
+        email: 'client@bruny.test',
+        password: 'Brune!2026',
+        firstName: 'Awa',
+        lastName: 'Nkeng',
+        termsAccepted: true,
+        termsVersion: '1.0',
+        turnstileToken: 'captcha-token',
+      })
+      .subscribe();
+
+    const request = http.expectOne('/api/v1/auth/register');
+    expect(request.request.withCredentials).toBe(true);
+    expect(request.request.headers.get('X-Skip-Error-Toast')).toBe('true');
+    expect(request.request.body).toMatchObject({
+      email: 'client@bruny.test',
+      termsAccepted: true,
+      termsVersion: '1.0',
+      turnstileToken: 'captcha-token',
+    });
+    request.flush({ id: 'user-2' });
+
+    expect(session.isAuthenticated()).toBe(false);
+  });
+
   it('ne crée pas de session sur un défi 2FA', () => {
     auth.login({ identifier: 'admin@bruny.test', password: 'secret' }).subscribe();
     http

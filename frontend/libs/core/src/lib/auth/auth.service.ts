@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, finalize, map, Observable, of, switchMap, tap } from 'rxjs';
 
-import type { LoginDto } from '@bruny/data-access';
+import type { LoginDto, RegisterDto } from '@bruny/data-access';
 import { API_BASE_URL } from '@bruny/data-access';
 import { SessionService, type SessionUser } from '../session/session.service';
 
@@ -45,6 +45,13 @@ export class AuthService {
           if ('accessToken' in response) this.accept(response);
         }),
       );
+  }
+
+  register(dto: RegisterDto): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/auth/register`, dto, {
+      withCredentials: true,
+      headers: SILENT_HEADERS,
+    });
   }
 
   setupTwoFactor(challengeToken: string): Observable<TwoFactorSetup> {
@@ -111,7 +118,11 @@ export class AuthService {
     return this.http
       .post<{
         ok: true;
-      }>(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true, headers: { 'X-Skip-Error-Toast': 'true' } })
+      }>(
+        `${this.baseUrl}/auth/logout`,
+        {},
+        { withCredentials: true, headers: { 'X-Skip-Error-Toast': 'true' } },
+      )
       .pipe(finalize(() => this.session.clearSession()));
   }
 
