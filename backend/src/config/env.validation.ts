@@ -78,6 +78,18 @@ export class EnvVariables {
   @IsString()
   public COOKIE_DOMAIN?: string;
 
+  // --- Alertes stock (STK-03) ------------------------------------------
+  // Interrupteur global des notifications d'alerte stock bas.
+  @IsOptional()
+  @IsIn(['true', 'false', '1', '0', 'yes', 'no'])
+  public STOCK_LOW_ALERT_ENABLED?: string;
+
+  // Seuil de secours si le Setting stock.low.defaultThreshold est absent.
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  public STOCK_LOW_THRESHOLD_DEFAULT?: number;
+
   // --- Catalogue (CAT-03) ----------------------------------------------
   // Product detail cache TTL in seconds (default 300 = 5 min).
   @IsOptional()

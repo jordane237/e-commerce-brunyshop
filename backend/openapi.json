@@ -1150,87 +1150,71 @@
         "tags": ["admin-size-guides"]
       }
     },
-    "/api/v1/cart/validate": {
-      "post": {
-        "description": "⚠️ Aucun prix fourni par le client n'est utilisé. Tous les prix sont recalculés côté serveur depuis la base (prix de la variante, promotion produit active, sinon prix de base). Le body ne transporte que variantId et quantity ; tout champ de prix non déclaré est rejeté en 400 VALIDATION_ERROR.",
-        "operationId": "CartController_validate_v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ValidateCartDto"
-              }
+    "/api/v1/admin/stock/alerts": {
+      "get": {
+        "description": "Liste paginée des variantes publiées dont le stock disponible (stock - réservé) est inférieur ou égal au seuil. Le seuil de la variante est utilisé par défaut ; le paramètre `threshold` permet de forcer un seuil global pour la consultation.",
+        "operationId": "StockAlertsController_list_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "threshold",
+            "required": false,
+            "in": "query",
+            "description": "Seuil appliqué à toutes les variantes (défaut : seuil de la variante).",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer sur un produit (vue A06).",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
             }
           }
-        },
+        ],
         "responses": {
           "200": {
-            "description": "Panier validé avec la liste des écarts (aucun prix client accepté)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CartValidationResponseDto"
-                }
-              }
-            }
+            "description": "Alertes paginées avec compteurs LOW/OUT."
           },
-          "400": {
-            "description": "Body invalide (champ non autorisé, quantité hors bornes, doublon de prix…)"
+          "401": {
+            "description": "Jeton absent ou invalide."
           },
-          "429": {
-            "description": "Trop de requêtes (30/min/IP)"
+          "403": {
+            "description": "Rôle insuffisant."
           }
         },
-        "summary": "Valider le panier : recalcul des prix, promotions, stock et écarts",
-        "tags": ["cart"]
-      }
-    },
-    "/api/v1/orders": {
-      "post": {
-        "description": "Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.",
-        "operationId": "OrdersController_create_v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateOrderDto"
-              }
-            }
+        "security": [
+          {
+            "access-token": []
           }
-        },
-        "responses": {
-          "201": {
-            "description": "Commande créée, stock décrémenté et mouvement de stock enregistré",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Body invalide, guest incomplet, coupon ou zone invalides"
-          },
-          "404": {
-            "description": "Variante ou produit introuvable"
-          },
-          "409": {
-            "description": "Stock insuffisant ou clé d’idempotence en conflit"
-          },
-          "429": {
-            "description": "Trop de requêtes (20/min/IP)"
-          },
-          "503": {
-            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
-          }
-        },
-        "summary": "Créer une commande et décrémenter le stock atomiquement",
-        "tags": ["orders"]
+        ],
+        "summary": "Lister les variantes en stock bas ou en rupture",
+        "tags": ["admin-stock"]
       }
     },
     "/api/v1/admin/notifications/dead-letters": {
@@ -1337,6 +1321,89 @@
         ],
         "summary": "Detail dune notification",
         "tags": ["notifications"]
+      }
+    },
+    "/api/v1/cart/validate": {
+      "post": {
+        "description": "⚠️ Aucun prix fourni par le client n'est utilisé. Tous les prix sont recalculés côté serveur depuis la base (prix de la variante, promotion produit active, sinon prix de base). Le body ne transporte que variantId et quantity ; tout champ de prix non déclaré est rejeté en 400 VALIDATION_ERROR.",
+        "operationId": "CartController_validate_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateCartDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Panier validé avec la liste des écarts (aucun prix client accepté)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartValidationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body invalide (champ non autorisé, quantité hors bornes, doublon de prix…)"
+          },
+          "429": {
+            "description": "Trop de requêtes (30/min/IP)"
+          }
+        },
+        "summary": "Valider le panier : recalcul des prix, promotions, stock et écarts",
+        "tags": ["cart"]
+      }
+    },
+    "/api/v1/orders": {
+      "post": {
+        "description": "Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.",
+        "operationId": "OrdersController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Commande créée, stock décrémenté et mouvement de stock enregistré",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body invalide, guest incomplet, coupon ou zone invalides"
+          },
+          "404": {
+            "description": "Variante ou produit introuvable"
+          },
+          "409": {
+            "description": "Stock insuffisant ou clé d’idempotence en conflit"
+          },
+          "429": {
+            "description": "Trop de requêtes (20/min/IP)"
+          },
+          "503": {
+            "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
+          }
+        },
+        "summary": "Créer une commande et décrémenter le stock atomiquement",
+        "tags": ["orders"]
       }
     },
     "/api/v1/admin/media/presign": {

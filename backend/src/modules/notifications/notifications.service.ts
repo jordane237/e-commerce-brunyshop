@@ -76,6 +76,54 @@ export class NotificationsService {
     return notification.id;
   }
 
+  async enqueueInApp(
+    userId: string,
+    recipient: string,
+    templateKey: string,
+    templateVersion: string,
+    data: Record<string, unknown>,
+    options?: { metadata?: Record<string, unknown> },
+  ): Promise<string> {
+    const rendered = renderTemplate(
+      templateKey,
+      templateVersion,
+      data as Parameters<typeof renderTemplate>[2],
+    );
+    const base = this.metadataWithTemplateData(
+      templateKey,
+      templateVersion,
+      options?.metadata,
+    ) as Record<string, unknown>;
+
+    // Une notification in-app est immédiatement disponible : elle ne passe
+    // pas par BullMQ. Le titre et le corps rendus sont conservés dans les
+    // métadonnées pour le futur centre de notifications admin.
+    const notification = await this.prisma.notification.create({
+      data: {
+        userId,
+        channel: 'IN_APP',
+        templateKey,
+        templateVersion,
+        recipient,
+        status: 'SENT',
+        attempts: 1,
+        sentAt: new Date(),
+        metadata: {
+          ...base,
+          title: rendered.subject,
+          body: rendered.text,
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    this.logger.debug(
+      { notificationId: notification.id, templateKey, templateVersion, userId },
+      'Notification in-app créée',
+    );
+
+    return notification.id;
+  }
+
   async enqueueSms(
     userId: string | null,
     recipient: string,

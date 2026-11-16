@@ -120,7 +120,16 @@ export class OrdersService {
     for (let attempt = 0; ; attempt += 1) {
       const reference = this.createReference();
       try {
-        const order = await this.persistOrder(dto, lines, actor, guest, reference);
+        const { order, stockVariantIds } = await this.persistOrder(
+          dto,
+          lines,
+          actor,
+          guest,
+          reference,
+        );
+        // Émission strictement post-commit : un rollback ne doit jamais
+        // produire d'alerte de stock bas.
+        await this.inventory.emitLowStockEvents(stockVariantIds);
         return this.toResponse(order);
       } catch (error: unknown) {
         const recovered = await this.recoverUniqueConflict(error, dto, actor);
@@ -147,9 +156,10 @@ export class OrdersService {
     actor: AuthenticatedUser | null,
     guest: { guestName: string; guestPhone: string } | null,
     reference: string,
-  ): Promise<Order> {
+  ): Promise<{ order: Order; stockVariantIds: string[] }> {
     return this.prisma.$transaction(
       async (tx) => {
+        const stockVariantIds: string[] = [];
         const at = new Date();
         const variants = await tx.productVariant.findMany({
           where: { id: { in: lines.map((line) => line.variantId) } },
@@ -285,6 +295,7 @@ export class OrdersService {
             actor?.id ?? null,
             StockMovementReason.PURCHASE,
           );
+          stockVariantIds.push(line.variantId);
         }
 
         if (appliedCouponId !== null) {
@@ -294,7 +305,7 @@ export class OrdersService {
           });
         }
 
-        return order;
+        return { order, stockVariantIds };
       },
       { maxWait: 5_000, timeout: 15_000 },
     );

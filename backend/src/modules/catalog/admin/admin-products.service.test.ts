@@ -314,6 +314,7 @@ function makeService({
     cacheMock as never,
     slugGen as never,
     skuGen as never,
+    { getStockLowThresholdDefault: vi.fn().mockResolvedValue(5) } as never,
   );
 
   return {

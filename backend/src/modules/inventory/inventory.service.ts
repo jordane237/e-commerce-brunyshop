@@ -2,12 +2,15 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { Prisma, type StockMovementReason } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/database/database.module';
 import { InventoryErrorCode } from './inventory.errors';
+import { StockLowEvent } from './events/stock-low.event';
 
 interface StockUpdateRow {
   stock: number;
@@ -26,7 +29,12 @@ export interface StockDecrementResult {
 // the last pair cannot both succeed.
 @Injectable()
 export class InventoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(InventoryService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventEmitter2,
+  ) {}
 
   async decrementStockAtomically(
     tx: Prisma.TransactionClient,
@@ -84,6 +92,77 @@ export class InventoryService {
     });
 
     return { newStock, newVersion };
+  }
+
+  /**
+   * Émet stock.low APRÈS le commit de la transaction de commande. La lecture
+   * du stock au moment de l'émission évite d'alerter si un réapprovisionnement
+   * concurrent a déjà remonté la variante au-dessus du seuil.
+   */
+  async emitLowStockEvents(variantIds: string[]): Promise<void> {
+    const uniqueIds = [...new Set(variantIds)];
+    if (uniqueIds.length === 0) return;
+
+    let variants: Array<{
+      id: string;
+      sku: string;
+      size: string;
+      color: string;
+      stock: number;
+      reservedStock: number;
+      lowStockThreshold: number;
+      product: { id: string; name: string; deletedAt: Date | null };
+    }>;
+    try {
+      variants = await this.prisma.productVariant.findMany({
+        where: { id: { in: uniqueIds } },
+        select: {
+          id: true,
+          sku: true,
+          size: true,
+          color: true,
+          stock: true,
+          reservedStock: true,
+          lowStockThreshold: true,
+          product: { select: { id: true, name: true, deletedAt: true } },
+        },
+      });
+    } catch (error: unknown) {
+      this.logger.error({ error }, 'Impossible de charger les variantes pour l’alerte stock');
+      return;
+    }
+
+    for (const variant of variants) {
+      if (variant.product.deletedAt !== null) continue;
+      const availableStock = Math.max(0, variant.stock - variant.reservedStock);
+      if (availableStock > variant.lowStockThreshold) continue;
+
+      try {
+        await this.events.emitAsync(
+          StockLowEvent.NAME,
+          new StockLowEvent({
+            variantId: variant.id,
+            productId: variant.product.id,
+            productName: variant.product.name,
+            sku: variant.sku,
+            size: variant.size,
+            color: variant.color,
+            currentStock: variant.stock,
+            reservedStock: variant.reservedStock,
+            availableStock,
+            threshold: variant.lowStockThreshold,
+            occurredAt: new Date().toISOString(),
+          }),
+        );
+      } catch (error: unknown) {
+        // L'événement est post-commit : une panne de notification ne doit
+        // jamais faire échouer une commande déjà enregistrée.
+        this.logger.error(
+          { variantId: variant.id, error },
+          'Échec du traitement de l’alerte stock bas',
+        );
+      }
+    }
   }
 
   async getAvailableStock(

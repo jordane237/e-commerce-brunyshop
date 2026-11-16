@@ -21,7 +21,7 @@ function transactionMock(): TransactionMock {
 }
 
 function serviceWith(prisma: Partial<PrismaService> = {}): InventoryService {
-  return new InventoryService(prisma as PrismaService);
+  return new InventoryService(prisma as PrismaService, { emitAsync: vi.fn() } as never);
 }
 
 describe('InventoryService decrementStockAtomically (STK-01)', () => {

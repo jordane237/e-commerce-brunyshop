@@ -29,6 +29,10 @@ export interface ApplicationConfig {
     sizeGuidesTtlSeconds: number;
     similarProductsLimit: number;
   };
+  stock: {
+    lowAlertEnabled: boolean;
+    lowThresholdDefault: number;
+  };
   storage: StorageSettings;
   auth: AuthConfig;
   turnstile: TurnstileSettings;
@@ -53,6 +57,12 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
     throttle: {
       ttlSeconds: Number(env['THROTTLE_TTL']),
       limit: Number(env['THROTTLE_LIMIT']),
+    },
+    stock: {
+      lowAlertEnabled: !['false', '0', 'no'].includes(
+        String(env['STOCK_LOW_ALERT_ENABLED'] ?? 'true').toLowerCase(),
+      ),
+      lowThresholdDefault: Number(env['STOCK_LOW_THRESHOLD_DEFAULT'] ?? 5),
     },
     catalog: {
       productDetailTtlSeconds: Number(env['CACHE_PRODUCT_DETAIL_TTL_SECONDS'] ?? 300),

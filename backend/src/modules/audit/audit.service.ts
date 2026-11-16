@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, type PrismaClient } from '../../generated/prisma/client';
 
 export interface AuditEvent {
-  userId: string;
+  // null = action système sans acteur humain (ex. alerte stock bas).
+  userId: string | null;
   action: string;
   entity: string;
   entityId: string;

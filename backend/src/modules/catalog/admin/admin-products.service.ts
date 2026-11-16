@@ -19,6 +19,7 @@ import {
 import { Prisma } from '../../../generated/prisma/client';
 import { PrismaService } from '../../../infrastructure/database/database.module';
 import { AuditLogService } from '../../audit/audit.service';
+import { SettingsService } from '../../settings/settings.service';
 import { CatalogCacheService } from '../cache/catalog-cache.service';
 import {
   adminProductInclude,
@@ -60,8 +61,6 @@ interface AuditEventInput {
   after?: Prisma.InputJsonValue;
 }
 
-const DEFAULT_LOW_STOCK_THRESHOLD = 5;
-
 // Les couleurs/pointures existantes sont en majuscules (seed TEC-07) : on
 // normalise toute saisie admin pour ne pas fragmenter les facettes publiques.
 function normalizeLabel(value: string): string {
@@ -85,10 +84,11 @@ export class AdminProductsService {
     private readonly cache: CatalogCacheService,
     private readonly slugGenerator: SlugGeneratorService,
     private readonly skuGenerator: SkuGeneratorService,
+    private readonly settings: SettingsService,
   ) {}
 
   async create(dto: CreateProductDto, actor: CatalogActor): Promise<AdminProductDetailDto> {
-    const variants = this.resolveCreateVariants(dto);
+    const variants = await this.resolveCreateVariants(dto);
     const status: ProductStatusValue = dto.status ?? 'DRAFT';
     const promoStart = dto.promoStart ? new Date(dto.promoStart) : null;
     const promoEnd = dto.promoEnd ? new Date(dto.promoEnd) : null;
@@ -363,6 +363,7 @@ export class AdminProductsService {
       }
     }
 
+    const defaultLowStockThreshold = await this.settings.getStockLowThresholdDefault();
     const creations = variants.filter((variant) => variant.id === undefined);
     const skus =
       creations.length > 0
@@ -391,7 +392,7 @@ export class AdminProductsService {
                 size: variant.size,
                 price: variant.price ?? null,
                 stock: variant.stock,
-                lowStockThreshold: variant.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD,
+                lowStockThreshold: variant.lowStockThreshold ?? defaultLowStockThreshold,
               },
             });
             continue;
@@ -406,6 +407,11 @@ export class AdminProductsService {
           }
           const stockChanged = variant.stock !== before.stock;
           const priceChanged = variant.price !== undefined && variant.price !== before.price;
+          const effectiveThreshold = variant.lowStockThreshold ?? before.lowStockThreshold;
+          // Réapprovisionnement : une variante repassée au-dessus de son seuil
+          // doit pouvoir déclencher une nouvelle alerte lors de la prochaine
+          // baisse. Le reset est atomique avec la mise à jour du stock.
+          const recovered = variant.stock > effectiveThreshold;
 
           await tx.productVariant.update({
             where: { id: variant.id },
@@ -417,6 +423,7 @@ export class AdminProductsService {
               ...(variant.lowStockThreshold !== undefined
                 ? { lowStockThreshold: variant.lowStockThreshold }
                 : {}),
+              ...(recovered ? { lowStockAlertSentAt: null } : {}),
               ...(stockChanged ? { version: { increment: 1 } } : {}),
             },
           });
@@ -608,7 +615,7 @@ export class AdminProductsService {
     });
   }
 
-  private resolveCreateVariants(dto: CreateProductDto): NormalizedVariant[] {
+  private async resolveCreateVariants(dto: CreateProductDto): Promise<NormalizedVariant[]> {
     const hasExplicit = dto.variants !== undefined;
     const hasCartesian = dto.colors !== undefined || dto.sizes !== undefined;
     if (hasExplicit && hasCartesian) {
@@ -632,12 +639,13 @@ export class AdminProductsService {
       });
     }
 
+    const defaultLowStockThreshold = await this.settings.getStockLowThresholdDefault();
     const variants = raw.map((variant) => ({
       color: normalizeLabel(variant.color),
       size: normalizeLabel(variant.size),
       price: variant.price ?? null,
       stock: variant.stock,
-      lowStockThreshold: variant.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD,
+      lowStockThreshold: variant.lowStockThreshold ?? defaultLowStockThreshold,
     }));
     this.assertUniqueLabels(variants);
     return variants;

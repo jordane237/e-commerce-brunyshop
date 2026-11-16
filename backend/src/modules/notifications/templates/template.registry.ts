@@ -18,6 +18,7 @@ import { OrderConfirmedV1 } from './fr/order.confirmed.v1';
 import { OrderShippedV1 } from './fr/order.shipped.v1';
 import { OrderDeliveredV1 } from './fr/order.delivered.v1';
 import { PasswordResetV1 } from './fr/password.reset.v1';
+import { StockLowV1 } from './fr/stock.low.v1';
 
 export const TEMPLATES: Record<string, Record<string, NotificationTemplate>> = {
   'auth.register.welcome': { v1: AuthRegisterWelcomeV1 },
@@ -26,6 +27,7 @@ export const TEMPLATES: Record<string, Record<string, NotificationTemplate>> = {
   'order.shipped': { v1: OrderShippedV1 },
   'order.delivered': { v1: OrderDeliveredV1 },
   'password.reset': { v1: PasswordResetV1 },
+  'stock.low': { v1: StockLowV1 },
 };
 
 export type TemplateKey = keyof typeof TEMPLATES;

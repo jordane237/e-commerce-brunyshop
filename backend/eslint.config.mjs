@@ -7,8 +7,8 @@ import tseslint from 'typescript-eslint';
 // On bloque l'atteinte des fichiers d'un module frère, tout en gardant :
 //   - le code shared/infra (src/common, src/config, src/infrastructure,
 //     src/generated) qui vit hors de src/modules et reste libre d'import ;
-//   - la composition NestJS existante catalog -> audit (imports: [AuditModule]),
-//     seule dépendance cross-module réelle, sans quoi le lint casserait.
+//   - les compositions NestJS existantes catalog -> audit/settings et
+//     inventory -> audit/notifications, sans quoi le lint casserait.
 // Les motifs littéraux `../<module>/**` et `../../<module>/**` ne peuvent pas
 // attraper `../../common/...` car `common` n'est pas un nom de module.
 const MODULES = [
@@ -109,7 +109,8 @@ export default tseslint.config(
       ],
     },
   },
-  // Exception : catalog dépend légitimement de audit (AuditModule exporté).
+  // Exception : catalog dépend légitimement de audit (AuditModule exporté)
+  // et de settings (seuil global de stock bas à la création).
   // Override posé APRÈS la règle générale pour prévaloir sur elle.
   {
     files: ['src/modules/catalog/**/*.ts'],
@@ -117,7 +118,27 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          patterns: [{ group: crossModulePatterns(['audit']), message: CROSS_MODULE_MESSAGE }],
+          patterns: [
+            { group: crossModulePatterns(['audit', 'settings']), message: CROSS_MODULE_MESSAGE },
+          ],
+        },
+      ],
+    },
+  },
+  // Exception : inventory émet l'alerte stock bas vers audit et notifications
+  // via leurs modules NestJS exportés.
+  {
+    files: ['src/modules/inventory/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: crossModulePatterns(['audit', 'notifications']),
+              message: CROSS_MODULE_MESSAGE,
+            },
+          ],
         },
       ],
     },

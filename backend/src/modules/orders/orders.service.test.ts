@@ -109,7 +109,10 @@ function setup(options: { valid?: boolean; issue?: unknown } = {}) {
         : VALID_CART,
     ),
   };
-  const inventory = { decrementStockAtomically: vi.fn().mockResolvedValue({}) };
+  const inventory = {
+    decrementStockAtomically: vi.fn().mockResolvedValue({}),
+    emitLowStockEvents: vi.fn().mockResolvedValue(undefined),
+  };
 
   const service = new OrdersService(
     prisma as unknown as PrismaService,
@@ -214,6 +217,7 @@ describe('OrdersService (STK-01)', () => {
       ACTOR.id,
       'PURCHASE',
     );
+    expect(inventory.emitLowStockEvents).toHaveBeenCalledWith(['variant-1']);
     expect(response).toMatchObject({ reference: 'BRN-2611-ABCD', total: 31500 });
   });
 

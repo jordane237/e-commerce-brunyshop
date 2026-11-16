@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { AuditModule } from '../audit/audit.module';
+import { SettingsModule } from '../settings/settings.module';
 import { CatalogCacheService } from './cache/catalog-cache.service';
 import { AdminProductsController } from './admin/admin-products.controller';
 import { AdminProductsService } from './admin/admin-products.service';
@@ -16,7 +17,7 @@ import { SizeGuidesService } from './size-guides/size-guides.service';
 
 @Module({
   // CacheModule is not @Global: it must be imported to inject RedisService.
-  imports: [DatabaseModule, AuditModule, CacheModule],
+  imports: [DatabaseModule, AuditModule, CacheModule, SettingsModule],
   controllers: [
     CatalogController,
     AdminProductsController,

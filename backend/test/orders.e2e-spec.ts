@@ -13,6 +13,8 @@ import { PrismaService } from '../src/infrastructure/database/database.module';
 
 if (existsSync('../.env')) process.loadEnvFile('../.env');
 process.env['TURNSTILE_ENABLED'] = 'false';
+// STK-01 ne teste pas les alertes STK-03 : évite notifications et audit hors sujet.
+process.env['STOCK_LOW_ALERT_ENABLED'] = 'false';
 if (process.env['REDIS_URL']) {
   const redisUrl = new URL(process.env['REDIS_URL']);
   redisUrl.pathname = '/1';
