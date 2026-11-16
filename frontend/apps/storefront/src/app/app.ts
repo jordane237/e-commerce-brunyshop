@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { ToastService } from '@bruny/core';
 import { ToastComponent } from '@bruny/ui';
+import { FooterComponent } from './layout/components/footer/footer.component';
 import { MiniCartComponent } from './layout/components/mini-cart/mini-cart.component';
 
 @Component({
-  imports: [RouterLink, RouterOutlet, ToastComponent, MiniCartComponent],
+  imports: [RouterLink, RouterOutlet, ToastComponent, MiniCartComponent, FooterComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-root',
   templateUrl: './app.html',

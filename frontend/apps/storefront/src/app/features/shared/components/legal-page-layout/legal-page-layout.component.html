@@ -1,0 +1,57 @@
+<article class="legal-page">
+  <div class="legal-page__container">
+    @if (breadcrumb().length > 0) {
+      <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <ol class="breadcrumb__list">
+          @for (item of breadcrumb(); track item.label) {
+            <li class="breadcrumb__item">
+              @if (item.path && !$last) {
+                <a class="breadcrumb__link" [routerLink]="item.path">{{ item.label }}</a>
+              } @else {
+                <span [attr.aria-current]="$last ? 'page' : null">{{ item.label }}</span>
+              }
+            </li>
+          }
+        </ol>
+      </nav>
+    }
+
+    <header class="legal-page__header">
+      @if (eyebrow()) {
+        <p class="legal-page__eyebrow">{{ eyebrow() }}</p>
+      }
+      <h1 class="legal-page__title">{{ title() }}</h1>
+      @if (lastUpdated()) {
+        <p class="legal-page__meta">
+          Dernière mise à jour :
+          <time [attr.datetime]="lastUpdatedIso()">{{ lastUpdated() }}</time>
+          @if (version()) {
+            · Version {{ version() }}
+          }
+        </p>
+      }
+      @if (intro()) {
+        <p class="legal-page__intro">{{ intro() }}</p>
+      }
+    </header>
+
+    <div class="legal-page__layout" [class.legal-page__layout--single]="toc().length === 0">
+      @if (toc().length > 0) {
+        <aside class="legal-page__toc">
+          <bruny-table-of-contents [sections]="toc()" />
+        </aside>
+      }
+      <div class="legal-page__content prose">
+        <ng-content />
+      </div>
+    </div>
+
+    <footer class="legal-page__footer">
+      <p>
+        Une question ? Écrivez-nous à
+        <a [href]="'mailto:' + supportEmail()">{{ supportEmail() }}</a
+        >.
+      </p>
+    </footer>
+  </div>
+</article>

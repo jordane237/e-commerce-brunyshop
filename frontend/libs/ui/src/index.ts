@@ -1,3 +1,4 @@
+export * from './lib/accordion/accordion.component';
 export * from './lib/badge/badge.component';
 export * from './lib/button/button.component';
 export * from './lib/captcha/captcha.component';
@@ -16,5 +17,6 @@ export * from './lib/size-selector/size-selector.component';
 export * from './lib/skeleton/skeleton.component';
 export * from './lib/spinner/spinner.component';
 export * from './lib/table/table.component';
+export * from './lib/table-of-contents/table-of-contents.component';
 export * from './lib/toast/toast.component';
 export * from './lib/toggle/toggle.component';

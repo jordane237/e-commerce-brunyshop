@@ -9,9 +9,7 @@
   <bruny-mini-cart />
 </header>
 <main><router-outlet /></main>
-<footer class="site-footer">
-  BRUNY SHOPPING · Chaussures sélectionnées au Cameroun · Prix en FCFA
-</footer>
+<bruny-footer />
 @if (toast.current(); as currentToast) {
 <bruny-toast
   [message]="currentToast.message"

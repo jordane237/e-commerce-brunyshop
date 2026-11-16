@@ -1,0 +1,16 @@
+<nav class="toc" aria-label="Sommaire de la page">
+  <h2 class="toc__title">Sommaire</h2>
+  <ol class="toc__list">
+    @for (section of sections(); track section.id) {
+      <li class="toc__item" [class.toc__item--sub]="section.level === 3">
+        <a
+          class="toc__link"
+          [href]="'#' + section.id"
+          [attr.aria-current]="activeSection() === section.id ? 'true' : null"
+          (click)="onSectionClick(section.id, $event)"
+          >{{ section.title }}</a
+        >
+      </li>
+    }
+  </ol>
+</nav>

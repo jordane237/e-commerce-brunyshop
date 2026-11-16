@@ -1,0 +1,10 @@
+:host {
+  display: block;
+}
+
+.legal-cross-links {
+  margin-top: var(--bs-space-8);
+  padding-top: var(--bs-space-4);
+  border-top: var(--bs-border-width) solid var(--bs-color-border);
+  font-size: var(--bs-font-size-sm);
+}

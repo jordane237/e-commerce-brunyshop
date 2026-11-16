@@ -1,0 +1,109 @@
+:host {
+  display: block;
+}
+
+.about-hero {
+  margin: 0 0 var(--bs-space-8);
+}
+
+.about-hero img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--bs-radius-lg);
+  background: var(--bs-color-surface-muted);
+}
+
+.about-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bs-space-4);
+  margin-top: var(--bs-space-4);
+}
+
+.about-card {
+  padding: var(--bs-space-5);
+  border: var(--bs-border-width) solid var(--bs-color-border);
+  border-radius: var(--bs-radius-lg);
+  background: var(--bs-color-surface-muted);
+}
+
+.about-card h3 {
+  margin-top: 0;
+}
+
+.about-card p {
+  margin-bottom: 0;
+}
+
+.about-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bs-space-4);
+  margin-top: var(--bs-space-4);
+  padding-left: 0;
+  list-style: none;
+  counter-reset: about-step;
+}
+
+.about-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bs-space-1);
+  padding: var(--bs-space-5);
+  border-top: 3px solid var(--bs-color-accent);
+  background: var(--bs-color-surface-muted);
+  border-radius: var(--bs-radius-md);
+  counter-increment: about-step;
+}
+
+.about-steps li::before {
+  content: 'Étape ' counter(about-step);
+  color: var(--bs-color-accent-text);
+  font-size: var(--bs-font-size-xs);
+  font-weight: var(--bs-font-weight-bold);
+  letter-spacing: var(--bs-letter-spacing-wide);
+  text-transform: uppercase;
+}
+
+.about-commitments {
+  margin-top: var(--bs-space-4);
+}
+
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bs-space-3);
+  margin-top: var(--bs-space-8);
+}
+
+.about-action {
+  display: inline-flex;
+  min-height: var(--bs-touch-target);
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--bs-space-6);
+  border: var(--bs-border-width-strong) solid var(--bs-color-primary);
+  border-radius: var(--bs-radius-full);
+  color: var(--bs-color-primary);
+  font-weight: var(--bs-font-weight-semibold);
+  text-decoration: none;
+}
+
+.about-action--primary {
+  background: var(--bs-color-primary);
+  color: var(--bs-color-text-inverse);
+}
+
+.about-action:focus-visible {
+  outline: 2px solid var(--bs-color-border-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .about-cards,
+  .about-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

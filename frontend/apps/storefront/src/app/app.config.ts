@@ -21,6 +21,7 @@ import {
   SessionRestoreService,
 } from '@bruny/core';
 import { API_BASE_URL } from '@bruny/data-access';
+import { APP_CONFIG, DEFAULT_APP_CONFIG } from './core/app-config';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -38,6 +39,7 @@ export const appConfig: ApplicationConfig = {
       ]),
     ),
     { provide: API_BASE_URL, useValue: '/api/v1' },
+    { provide: APP_CONFIG, useValue: DEFAULT_APP_CONFIG },
     { provide: AUTH_LOGIN_PATH, useValue: '/connexion' },
     { provide: AUTH_FORBIDDEN_PATH, useValue: '/403' },
     { provide: AUTH_HOME_PATH, useValue: '/compte' },

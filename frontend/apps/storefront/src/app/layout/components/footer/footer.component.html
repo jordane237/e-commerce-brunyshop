@@ -1,0 +1,44 @@
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div class="site-footer__brand">
+      <p class="site-footer__wordmark">BRUNY <span>SHOPPING</span></p>
+      <p class="site-footer__tagline">
+        Chaussures sélectionnées au Cameroun. Prix en FCFA, paiement à la livraison.
+      </p>
+      <a class="site-footer__email" [href]="'mailto:' + supportEmail">{{ supportEmail }}</a>
+    </div>
+
+    <nav class="site-footer__nav" aria-label="Boutique">
+      <h2 class="site-footer__title">Boutique</h2>
+      <ul>
+        <li><a routerLink="/boutique">Tous les produits</a></li>
+        <li><a routerLink="/panier">Mon panier</a></li>
+      </ul>
+    </nav>
+
+    <nav class="site-footer__nav" aria-label="Aide">
+      <h2 class="site-footer__title">Aide</h2>
+      <ul>
+        <li><a routerLink="/faq">Questions fréquentes</a></li>
+        <li><a routerLink="/livraison">Livraison</a></li>
+        <li><a routerLink="/retours">Retours et échanges</a></li>
+        <li><a routerLink="/guide-des-tailles">Guide des tailles</a></li>
+      </ul>
+    </nav>
+
+    <nav class="site-footer__nav" aria-label="Informations légales">
+      <h2 class="site-footer__title">Informations</h2>
+      <ul>
+        <li><a routerLink="/a-propos">À propos</a></li>
+        <li><a routerLink="/cgv">Conditions générales de vente</a></li>
+        <li><a routerLink="/politique-confidentialite">Politique de confidentialité</a></li>
+        <li><a routerLink="/mentions-legales">Mentions légales</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="site-footer__bottom">
+    <p>© {{ year }} BRUNY SHOPPING. Tous droits réservés.</p>
+    <p>Prix en FCFA · Paiement à la livraison</p>
+  </div>
+</footer>

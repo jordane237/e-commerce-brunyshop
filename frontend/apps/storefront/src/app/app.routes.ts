@@ -51,5 +51,66 @@ export const appRoutes: Route[] = [
         (module) => module.DesignSystemPage,
       ),
   },
+  {
+    path: 'a-propos',
+    loadComponent: () =>
+      import('./features/info/about/about.component').then((module) => module.AboutComponent),
+    data: { title: 'À propos' },
+  },
+  {
+    path: 'faq',
+    loadComponent: () =>
+      import('./features/info/faq/faq.component').then((module) => module.FaqComponent),
+    data: { title: 'Questions fréquentes' },
+  },
+  {
+    path: 'livraison',
+    loadComponent: () =>
+      import('./features/info/delivery/delivery.component').then(
+        (module) => module.DeliveryComponent,
+      ),
+    data: { title: 'Livraison' },
+  },
+  {
+    path: 'retours',
+    loadComponent: () =>
+      import('./features/info/returns/returns.component').then((module) => module.ReturnsComponent),
+    data: { title: 'Retours et échanges' },
+  },
+  {
+    path: 'guide-des-tailles',
+    loadComponent: () =>
+      import('./features/info/size-guide/size-guide.component').then(
+        (module) => module.SizeGuideComponent,
+      ),
+    data: { title: 'Guide des tailles' },
+  },
+  {
+    path: 'cgv',
+    loadComponent: () =>
+      import('./features/legal/cgv/cgv.component').then((module) => module.CgvComponent),
+    data: { title: 'Conditions générales de vente' },
+  },
+  {
+    path: 'politique-confidentialite',
+    loadComponent: () =>
+      import('./features/legal/privacy/privacy.component').then(
+        (module) => module.PrivacyComponent,
+      ),
+    data: { title: 'Politique de confidentialité' },
+  },
+  {
+    path: 'confidentialite',
+    redirectTo: 'politique-confidentialite',
+    pathMatch: 'full',
+  },
+  {
+    path: 'mentions-legales',
+    loadComponent: () =>
+      import('./features/legal/legal-notice/legal-notice.component').then(
+        (module) => module.LegalNoticeComponent,
+      ),
+    data: { title: 'Mentions légales' },
+  },
   { path: '**', redirectTo: 'boutique' },
 ];

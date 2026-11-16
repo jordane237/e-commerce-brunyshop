@@ -1,0 +1,102 @@
+<bruny-legal-page-layout
+  title="Livraison"
+  eyebrow="Informations"
+  [intro]="intro"
+  [toc]="toc"
+  [breadcrumb]="breadcrumb"
+>
+  <section id="zones" aria-labelledby="zones-title">
+    <h2 id="zones-title">Zones, délais et frais</h2>
+    <div class="table-scroll" role="region" aria-labelledby="zones-title" tabindex="0">
+      <table>
+        <caption>
+          Zones, délais et frais
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Zone</th>
+            <th scope="col">Délai indicatif</th>
+            <th scope="col">Frais de livraison</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (zone of zones; track zone.name) {
+            <tr>
+              <th scope="row">{{ zone.name }}</th>
+              <td>{{ zone.delay }}</td>
+              <td>{{ zone.fee }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="zone-cards" aria-label="Zones, délais et frais">
+      @for (zone of zones; track zone.name) {
+        <li class="zone-card">
+          <h3>{{ zone.name }}</h3>
+          <dl>
+            <dt>Délai indicatif</dt>
+            <dd>{{ zone.delay }}</dd>
+            <dt>Frais de livraison</dt>
+            <dd>{{ zone.fee }}</dd>
+          </dl>
+        </li>
+      }
+    </ul>
+
+    <p class="zone-note">
+      Les délais sont indicatifs et courent à partir de la confirmation de votre commande.
+    </p>
+  </section>
+
+  <section id="deroulement" aria-labelledby="deroulement-title">
+    <h2 id="deroulement-title">Comment se passe la livraison</h2>
+    <ol class="delivery-steps">
+      <li>Vous passez commande et choisissez votre zone.</li>
+      <li>Nous vous appelons pour confirmer.</li>
+      <li>Nous préparons et vérifions votre commande.</li>
+      <li>Le coursier vous livre ; vous vérifiez le colis et payez.</li>
+    </ol>
+  </section>
+
+  <section id="paiement" aria-labelledby="paiement-title">
+    <div class="callout">
+      <h2 id="paiement-title">Paiement à la livraison</h2>
+      <p>
+        Vous réglez en espèces ou par Mobile Money au moment de la réception, après vérification de
+        votre commande. Aucun paiement n’est demandé avant la remise.
+      </p>
+    </div>
+  </section>
+
+  <section id="suivi" aria-labelledby="suivi-title">
+    <h2 id="suivi-title">Suivre ma commande</h2>
+    <p>
+      Munissez-vous de la référence reçue par SMS ou e-mail. Elle permet de consulter le statut de
+      la commande et l’estimation de livraison. Pour toute question, écrivez-nous avec cette
+      référence : nous répondons plus vite.
+    </p>
+    <p>
+      <a [href]="'mailto:support@brunyshop.cm?subject=' + 'Suivi de ma commande'">
+        Demander le suivi de ma commande
+      </a>
+    </p>
+  </section>
+
+  <section id="hors-zone" aria-labelledby="hors-zone-title">
+    <h2 id="hors-zone-title">Ma ville n’est pas listée</h2>
+    <p>Écrivez-nous : nous étudions les demandes de nouvelles zones.</p>
+    <a
+      class="delivery-action"
+      [href]="'mailto:support@brunyshop.cm?subject=' + 'Livraison dans ma ville'"
+    >
+      Nous contacter
+    </a>
+  </section>
+
+  <section id="faq-livraison" aria-labelledby="faq-livraison-title">
+    <h2 id="faq-livraison-title">Questions sur la livraison</h2>
+    <bruny-accordion [items]="faq" />
+  </section>
+</bruny-legal-page-layout>

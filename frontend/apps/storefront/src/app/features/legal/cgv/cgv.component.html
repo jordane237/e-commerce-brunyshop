@@ -1,0 +1,129 @@
+<bruny-legal-page-layout
+  title="Conditions générales de vente"
+  eyebrow="Légal"
+  [intro]="intro"
+  [lastUpdated]="legal.lastUpdated"
+  [lastUpdatedIso]="legal.lastUpdatedIso"
+  [version]="legal.version"
+  [toc]="toc"
+  [breadcrumb]="breadcrumb"
+>
+  <section id="objet" aria-labelledby="objet-title">
+    <h2 id="objet-title">Article 1 — Objet</h2>
+    <p>
+      Les présentes conditions régissent les ventes conclues sur le site BRUNY SHOPPING entre
+      {{ legal.companyName }} et tout client particulier. Toute commande implique leur acceptation
+      sans réserve.
+    </p>
+  </section>
+
+  <section id="produits" aria-labelledby="produits-title">
+    <h2 id="produits-title">Article 2 — Produits</h2>
+    <p>
+      Les produits proposés sont ceux disponibles au moment de la commande. Les photographies sont
+      illustratives ; de légères variations de teinte peuvent exister. Les caractéristiques
+      essentielles (modèle, couleur, pointure, prix) sont indiquées sur la fiche produit.
+    </p>
+  </section>
+
+  <section id="commande" aria-labelledby="commande-title">
+    <h2 id="commande-title">Article 3 — Commande</h2>
+    <p>
+      Le client sélectionne ses articles, renseigne son adresse et sa zone de livraison, puis valide
+      sa commande. La commande est confirmée par téléphone ou WhatsApp avant préparation. BRUNY
+      SHOPPING peut refuser une commande en cas de litige antérieur, de suspicion de fraude ou
+      d’indisponibilité.
+    </p>
+  </section>
+
+  <section id="prix" aria-labelledby="prix-title">
+    <h2 id="prix-title">Article 4 — Prix</h2>
+    <p>
+      Les prix sont exprimés en francs CFA (FCFA), toutes taxes comprises. Les frais de livraison
+      sont indiqués avant validation. BRUNY SHOPPING peut modifier ses prix à tout moment ; le prix
+      applicable est celui affiché au moment de la commande.
+    </p>
+  </section>
+
+  <section id="paiement" aria-labelledby="paiement-title">
+    <h2 id="paiement-title">Article 5 — Paiement</h2>
+    <p>
+      Le paiement se fait à la livraison, en espèces ou par Mobile Money, après vérification du
+      colis. Aucun paiement n’est exigé avant la remise.
+    </p>
+  </section>
+
+  <section id="livraison" aria-labelledby="livraison-title">
+    <h2 id="livraison-title">Article 6 — Livraison</h2>
+    <p>
+      Les zones, délais et frais sont indiqués sur la page
+      <a routerLink="/livraison">Livraison</a>. Les délais sont indicatifs. Le client doit fournir
+      une adresse exacte et un point de repère fiable. En cas d’adresse erronée ou d’absence, une
+      nouvelle présentation peut être facturée.
+    </p>
+  </section>
+
+  <section id="retour" aria-labelledby="retour-title">
+    <h2 id="retour-title">Article 7 — Droit de retour</h2>
+    <p>
+      Le client dispose de 7 jours à compter de la réception pour demander un retour ou un échange,
+      sous réserve que le produit soit non porté à l’extérieur, dans son emballage d’origine avec
+      étiquettes, et sur présentation de la référence de commande. Les articles d’hygiène et
+      personnalisés ne sont pas repris. La procédure est détaillée sur la page
+      <a routerLink="/retours">Retours et échanges</a>.
+    </p>
+  </section>
+
+  <section id="remboursement" aria-labelledby="remboursement-title">
+    <h2 id="remboursement-title">Article 8 — Remboursement</h2>
+    <p>
+      Après réception et contrôle du produit retourné, le remboursement est effectué sous 7 jours
+      ouvrés selon le moyen de paiement utilisé. Les frais de livraison initiaux restent à la charge
+      du client, sauf erreur de BRUNY SHOPPING.
+    </p>
+  </section>
+
+  <section id="garanties" aria-labelledby="garanties-title">
+    <h2 id="garanties-title">Article 9 — Garanties et responsabilité</h2>
+    <p>
+      Les produits bénéficient des garanties légales applicables. BRUNY SHOPPING ne saurait être
+      tenue responsable des dommages résultant d’un usage anormal du produit ou d’une adresse de
+      livraison inexacte.
+    </p>
+  </section>
+
+  <section id="donnees" aria-labelledby="donnees-title">
+    <h2 id="donnees-title">Article 10 — Données personnelles</h2>
+    <p>
+      Les données collectées sont traitées conformément à la
+      <a routerLink="/politique-confidentialite">politique de confidentialité</a>. Le client dispose
+      de droits d’accès, de rectification et de suppression dans les conditions décrites.
+    </p>
+  </section>
+
+  <section id="droit" aria-labelledby="droit-title">
+    <h2 id="droit-title">Article 11 — Droit applicable et litiges</h2>
+    <p>
+      Les présentes conditions sont soumises au droit camerounais. En cas de litige, les parties
+      privilégient une solution amiable. À défaut, le litige sera porté devant les juridictions
+      compétentes de {{ legal.city }}.
+    </p>
+  </section>
+
+  <section id="version" aria-labelledby="version-title">
+    <h2 id="version-title">Article 12 — Version</h2>
+    <p>
+      Version {{ legal.version }}, en vigueur au {{ legal.lastUpdated }}. La version acceptée lors
+      de l’inscription est conservée avec le compte.
+    </p>
+  </section>
+
+  <nav class="legal-cross-links" aria-label="Voir aussi">
+    <p>
+      Voir aussi :
+      <a routerLink="/mentions-legales">Mentions légales</a>
+      ·
+      <a routerLink="/politique-confidentialite">Politique de confidentialité</a>
+    </p>
+  </nav>
+</bruny-legal-page-layout>
