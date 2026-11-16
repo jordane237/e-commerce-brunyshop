@@ -63,7 +63,9 @@ function validResponse(payload: ValidatePayload) {
   };
 }
 
-test('conserve le panier invité après rechargement et le revalide', async ({ page }) => {
+test('conserve le panier invité, ouvre le mini-panier après ajout et le revalide', async ({
+  page,
+}) => {
   await page.route('**/api/v1/cart/validate', async (route) => {
     const payload = route.request().postDataJSON() as ValidatePayload;
     await route.fulfill({
@@ -74,13 +76,31 @@ test('conserve le panier invité après rechargement et le revalide', async ({ p
   });
 
   await page.goto('/boutique');
-  await page.waitForLoadState('networkidle');
   const addButton = page.locator('bruny-product-card .bs-button').first();
-  await expect(addButton).toBeVisible();
+  await expect(addButton).toBeVisible({ timeout: 15_000 });
   await addButton.click();
 
-  await expect(page.getByText('Produit ajouté au panier.')).toBeVisible();
+  const dialog = page.getByRole('dialog', { name: 'Mon panier' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('.bruny-drawer__close')).toBeFocused();
+  await expect(dialog.locator('.mini-cart__line-info a')).not.toBeEmpty();
+  await expect(dialog.getByRole('button', { name: 'Passer la commande' })).toBeDisabled();
+  expect(
+    await page.evaluate(() =>
+      document.documentElement.classList.contains('cdk-global-scrollblock'),
+    ),
+  ).toBe(true);
   await expect(page.locator('.mini-cart__badge')).toHaveText('1');
+  await expect(page.getByText('Produit ajouté au panier.')).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(addButton).toBeFocused();
+  expect(
+    await page.evaluate(() =>
+      document.documentElement.classList.contains('cdk-global-scrollblock'),
+    ),
+  ).toBe(false);
 
   const stored = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
   expect(stored).not.toBeNull();
@@ -90,14 +110,48 @@ test('conserve le panier invité après rechargement et le revalide', async ({ p
   await expect(page.locator('.mini-cart__badge')).toHaveText('1');
 
   await page.locator('.mini-cart__trigger').click();
-  const dialog = page.getByRole('dialog', { name: 'Mon panier' });
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('.mini-cart__line-info a')).not.toBeEmpty();
-  await dialog.getByRole('link', { name: 'Voir le panier' }).click();
 
+  const continueShopping = dialog.getByRole('button', { name: 'Continuer mes achats' });
+  await continueShopping.focus();
+  await page.keyboard.press('Tab');
+  await expect(dialog.locator('.bruny-drawer__close')).toBeFocused();
+
+  await dialog.getByRole('link', { name: 'Voir le panier' }).click();
   await expect(page).toHaveURL(/\/panier$/);
   await expect(page.getByRole('heading', { name: 'Mon panier' })).toBeVisible();
   await expect(page.locator('.cart-line')).toHaveCount(1);
+});
+
+test('ferme le mini-panier au backdrop puis continue vers la boutique', async ({ page }) => {
+  await seedCart(page);
+  await page.route('**/api/v1/cart/validate', async (route) => {
+    const payload = route.request().postDataJSON() as ValidatePayload;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(validResponse(payload)),
+    });
+  });
+
+  await page.goto('/panier');
+  const trigger = page.locator('.mini-cart__trigger');
+  const dialog = page.getByRole('dialog', { name: 'Mon panier' });
+
+  await trigger.click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('.bruny-drawer__close')).toBeFocused();
+
+  await page.mouse.click(10, 300);
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+
+  await trigger.click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Continuer mes achats' }).click();
+  await expect(page).toHaveURL(/\/boutique$/);
+  await expect(dialog).toHaveCount(0);
 });
 
 test('affiche le changement de prix dans une bannière persistante', async ({ page }) => {

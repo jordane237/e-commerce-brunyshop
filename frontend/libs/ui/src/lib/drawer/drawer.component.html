@@ -1,0 +1,31 @@
+<ng-template #drawerTemplate>
+  <aside
+    class="bruny-drawer"
+    [class.bruny-drawer--left]="side() === 'left'"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+  >
+    <header class="bruny-drawer__header">
+      <h2 class="bruny-drawer__title" [id]="titleId">{{ title() }}</h2>
+      <button
+        class="bruny-drawer__close"
+        type="button"
+        [attr.aria-label]="closeLabel()"
+        (click)="close()"
+      >
+        <bruny-icon name="close" [size]="20" />
+      </button>
+    </header>
+
+    <div class="bruny-drawer__body">
+      <ng-content select="[drawer-body]" />
+    </div>
+
+    <footer class="bruny-drawer__footer">
+      <ng-content select="[drawer-footer]" />
+    </footer>
+  </aside>
+</ng-template>

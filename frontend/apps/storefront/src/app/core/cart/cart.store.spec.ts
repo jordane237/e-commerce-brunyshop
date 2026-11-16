@@ -140,6 +140,27 @@ describe('CartStore — lignes et quantités', () => {
     });
   });
 
+  it('signals a successful add and resets the signal when cleared', () => {
+    const { store } = setup();
+    expect(store.lastAddedAt()).toBeNull();
+
+    store.addLine(line());
+    const addedAt = store.lastAddedAt();
+    expect(addedAt).not.toBeNull();
+    expect(Number.isNaN(Date.parse(addedAt ?? ''))).toBe(false);
+
+    store.clear();
+    expect(store.lastAddedAt()).toBeNull();
+  });
+
+  it('does not signal an add when the quantity is invalid', () => {
+    const { store } = setup();
+
+    store.addLine(line({ quantity: 0 }));
+
+    expect(store.lastAddedAt()).toBeNull();
+  });
+
   it('merges an existing variant without duplicate and caps at 100', () => {
     const { store } = setup();
     store.addLine(line({ quantity: 99 }));

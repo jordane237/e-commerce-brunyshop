@@ -2,6 +2,7 @@ export * from './lib/badge/badge.component';
 export * from './lib/button/button.component';
 export * from './lib/captcha/captcha.component';
 export * from './lib/checkbox/checkbox.component';
+export * from './lib/drawer/drawer.component';
 export * from './lib/icon/icon.component';
 export * from './lib/input/input.component';
 export * from './lib/modal/modal.component';

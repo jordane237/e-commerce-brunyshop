@@ -40,6 +40,7 @@ export class CartStore {
   private readonly loadingState = signal(false);
   private readonly errorState = signal<string | null>(null);
   private readonly lastValidatedState = signal<string | null>(null);
+  private readonly lastAddedState = signal<string | null>(null);
   private validationRequest = 0;
 
   readonly lines = this.lineState.asReadonly();
@@ -47,6 +48,8 @@ export class CartStore {
   readonly loading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
   readonly lastValidatedAt = this.lastValidatedState.asReadonly();
+  /** Horodatage du dernier ajout réussi, utilisé pour ouvrir le mini-panier. */
+  readonly lastAddedAt = this.lastAddedState.asReadonly();
 
   readonly itemCount = computed(() =>
     this.lineState().reduce((total, line) => total + line.quantity, 0),
@@ -106,6 +109,7 @@ export class CartStore {
           item.variantId === line.variantId ? { ...item, quantity } : item,
         ),
       );
+      this.markAdded();
       this.toast.success('Quantité mise à jour.');
       return;
     }
@@ -117,6 +121,7 @@ export class CartStore {
 
     const newLine: CartLine = { ...line, addedAt: new Date().toISOString() };
     this.replaceLines([...this.lineState(), newLine]);
+    this.markAdded();
     this.toast.success('Produit ajouté au panier.');
   }
 
@@ -171,6 +176,7 @@ export class CartStore {
     this.replaceLines([]);
     this.validationState.set(null);
     this.lastValidatedState.set(null);
+    this.lastAddedState.set(null);
     this.errorState.set(null);
   }
 
@@ -225,6 +231,10 @@ export class CartStore {
     if (validated !== undefined) return validated.lineTotal;
     const line = this.lineState().find((item) => item.variantId === variantId);
     return line === undefined ? 0 : line.unitPriceAtAdd * line.quantity;
+  }
+
+  private markAdded(): void {
+    this.lastAddedState.set(new Date().toISOString());
   }
 
   private replaceLines(lines: CartLine[]): void {
