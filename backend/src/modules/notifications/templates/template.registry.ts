@@ -19,6 +19,8 @@ import { OrderShippedV1 } from './fr/order.shipped.v1';
 import { OrderDeliveredV1 } from './fr/order.delivered.v1';
 import { PasswordResetV1 } from './fr/password.reset.v1';
 import { StockLowV1 } from './fr/stock.low.v1';
+import { ContactMessageV1 } from './fr/contact.message.v1';
+import { ContactConfirmationV1 } from './fr/contact.confirmation.v1';
 
 export const TEMPLATES: Record<string, Record<string, NotificationTemplate>> = {
   'auth.register.welcome': { v1: AuthRegisterWelcomeV1 },
@@ -28,6 +30,8 @@ export const TEMPLATES: Record<string, Record<string, NotificationTemplate>> = {
   'order.delivered': { v1: OrderDeliveredV1 },
   'password.reset': { v1: PasswordResetV1 },
   'stock.low': { v1: StockLowV1 },
+  'contact.message': { v1: ContactMessageV1 },
+  'contact.confirmation': { v1: ContactConfirmationV1 },
 };
 
 export type TemplateKey = keyof typeof TEMPLATES;
@@ -61,10 +65,22 @@ export function renderTemplate(
 ): { subject: string; html: string; text: string } {
   const template = resolveTemplate(key, version);
   return {
-    subject: interpolate(template.subject, data),
-    html: interpolate(template.html, data),
+    // A header value must never carry CR/LF from interpolated data.
+    subject: interpolate(template.subject, data).replace(/[\r\n]+/g, ' '),
+    // HTML bodies contain untrusted values (names, messages, addresses).
+    // Escape them here so a visitor cannot inject markup into an e-mail.
+    html: interpolate(template.html, data, { escapeHtml: true }),
     text: interpolate(template.text, data),
   };
+}
+
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -72,12 +88,17 @@ export function renderTemplate(
  * Les variables absentes de `data` sont remplacées par [MISSING_var] plutôt
  * que laissées en clair, pour que le rendu soit toujours explicite.
  */
-export function interpolate(template: string, data: TemplateData): string {
+export function interpolate(
+  template: string,
+  data: TemplateData,
+  options?: { escapeHtml?: boolean },
+): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_match, name) => {
     const value = data[name];
     if (value === null || value === undefined) {
       return `[MISSING_${name}]`;
     }
-    return String(value);
+    const text = String(value);
+    return options?.escapeHtml === true ? escapeHtml(text) : text;
   });
 }

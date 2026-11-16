@@ -17,6 +17,7 @@ const MODULES = [
   'auth',
   'cart',
   'catalog',
+  'contact',
   'health',
   'inventory',
   'media',
@@ -120,6 +121,25 @@ export default tseslint.config(
         {
           patterns: [
             { group: crossModulePatterns(['audit', 'settings']), message: CROSS_MODULE_MESSAGE },
+          ],
+        },
+      ],
+    },
+  },
+  // Exception : contact persiste un message puis émet la notification support
+  // et la confirmation visiteur, et trace l'action dans l'audit, via leurs
+  // modules NestJS exportés.
+  {
+    files: ['src/modules/contact/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: crossModulePatterns(['audit', 'notifications']),
+              message: CROSS_MODULE_MESSAGE,
+            },
           ],
         },
       ],

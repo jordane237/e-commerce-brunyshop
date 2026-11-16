@@ -52,6 +52,12 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'contact',
+    loadComponent: () =>
+      import('./features/contact/contact.component').then((module) => module.ContactComponent),
+    data: { title: 'Contact' },
+  },
+  {
     path: 'a-propos',
     loadComponent: () =>
       import('./features/info/about/about.component').then((module) => module.AboutComponent),

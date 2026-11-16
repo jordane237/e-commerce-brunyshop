@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
+import { APP_CONFIG } from '../../../core/app-config';
 
 @Component({
   selector: 'bruny-footer',
@@ -10,6 +12,7 @@ import { RouterLink } from '@angular/router';
   styleUrl: './footer.component.scss',
 })
 export class FooterComponent {
-  readonly supportEmail = 'support@brunyshop.cm';
+  private readonly config = inject(APP_CONFIG);
+  readonly supportEmail = this.config.supportEmail;
   readonly year = new Date().getFullYear();
 }

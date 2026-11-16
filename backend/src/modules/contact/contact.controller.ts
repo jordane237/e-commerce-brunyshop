@@ -13,6 +13,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { TurnstileGuard } from '../../security/turnstile/turnstile.guard';
 import { ContactService, type ContactResponse } from './contact.service';
 import { ContactDto } from './dto/contact.dto';
+import { ContactResponseDto } from './dto/contact-response.dto';
 
 @ApiTags('contact')
 @Controller('contact')
@@ -27,9 +28,12 @@ export class ContactController {
   @ApiOperation({
     summary: 'Envoyer un message au support',
     description:
-      'Formulaire public protégé par Cloudflare Turnstile. Le message est persisté pour traitement par le support.',
+      'Formulaire public protégé par Cloudflare Turnstile. Le message est persisté, notifié au support et confirmé au visiteur.',
   })
-  @ApiCreatedResponse({ description: 'Message reçu' })
+  @ApiCreatedResponse({
+    type: ContactResponseDto,
+    description: 'Message reçu et mis en file de notification',
+  })
   @ApiBadRequestResponse({ description: 'CAPTCHA requis/invalide ou body invalide' })
   @ApiResponse({ status: 503, description: 'CAPTCHA_UNAVAILABLE (service indisponible)' })
   @ApiResponse({ status: 429, description: 'Trop de requêtes (5/min/IP)' })

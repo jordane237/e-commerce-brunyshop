@@ -370,40 +370,20 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/cart/validate': {
+  '/api/v1/admin/stock/alerts': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get?: never;
-    put?: never;
     /**
-     * Valider le panier : recalcul des prix, promotions, stock et écarts
-     * @description ⚠️ Aucun prix fourni par le client n'est utilisé. Tous les prix sont recalculés côté serveur depuis la base (prix de la variante, promotion produit active, sinon prix de base). Le body ne transporte que variantId et quantity ; tout champ de prix non déclaré est rejeté en 400 VALIDATION_ERROR.
+     * Lister les variantes en stock bas ou en rupture
+     * @description Liste paginée des variantes publiées dont le stock disponible (stock - réservé) est inférieur ou égal au seuil. Le seuil de la variante est utilisé par défaut ; le paramètre `threshold` permet de forcer un seuil global pour la consultation.
      */
-    post: operations['CartController_validate_v1'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/orders': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
+    get: operations['StockAlertsController_list_v1'];
     put?: never;
-    /**
-     * Créer une commande et décrémenter le stock atomiquement
-     * @description Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.
-     */
-    post: operations['OrdersController_create_v1'];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -438,6 +418,46 @@ export interface paths {
     get: operations['NotificationsController_getNotification_v1'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/cart/validate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Valider le panier : recalcul des prix, promotions, stock et écarts
+     * @description ⚠️ Aucun prix fourni par le client n'est utilisé. Tous les prix sont recalculés côté serveur depuis la base (prix de la variante, promotion produit active, sinon prix de base). Le body ne transporte que variantId et quantity ; tout champ de prix non déclaré est rejeté en 400 VALIDATION_ERROR.
+     */
+    post: operations['CartController_validate_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/orders': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Créer une commande et décrémenter le stock atomiquement
+     * @description Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.
+     */
+    post: operations['OrdersController_create_v1'];
     delete?: never;
     options?: never;
     head?: never;
@@ -552,7 +572,7 @@ export interface paths {
     put?: never;
     /**
      * Envoyer un message au support
-     * @description Formulaire public protégé par Cloudflare Turnstile. Le message est persisté pour traitement par le support.
+     * @description Formulaire public protégé par Cloudflare Turnstile. Le message est persisté, notifié au support et confirmé au visiteur.
      */
     post: operations['ContactController_submit_v1'];
     delete?: never;
@@ -1436,6 +1456,14 @@ export interface components {
       consent: boolean;
       /** @description Jeton Cloudflare Turnstile obtenu par le widget invisible */
       turnstileToken?: string;
+    };
+    ContactResponseDto: {
+      /** @description Identifiant de la demande de contact */
+      id: string;
+      /** Format: date-time */
+      receivedAt: string;
+      /** @example Votre message est envoyé. Nous répondons sous 24 h ouvrées. */
+      message: string;
     };
   };
   responses: never;
@@ -2350,6 +2378,118 @@ export interface operations {
       };
     };
   };
+  StockAlertsController_list_v1: {
+    parameters: {
+      query?: {
+        page?: number;
+        limit?: number;
+        /** @description Seuil appliqué à toutes les variantes (défaut : seuil de la variante). */
+        threshold?: number;
+        /** @description Filtrer sur un produit (vue A06). */
+        productId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Alertes paginées avec compteurs LOW/OUT. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent ou invalide. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  NotificationsController_listDeadLetters_v1: {
+    parameters: {
+      query: {
+        page: number;
+        limit: number;
+        queueName: string;
+        jobName: string;
+        from: string;
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Liste paginée des jobs en échec */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  NotificationsController_getNotification_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Detail de la notification */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   CartController_validate_v1: {
     parameters: {
       query?: never;
@@ -2440,79 +2580,6 @@ export interface operations {
       };
       /** @description CAPTCHA_UNAVAILABLE (service indisponible) */
       503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  NotificationsController_listDeadLetters_v1: {
-    parameters: {
-      query: {
-        page: number;
-        limit: number;
-        queueName: string;
-        jobName: string;
-        from: string;
-        to: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Liste paginée des jobs en échec */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN). */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  NotificationsController_getNotification_v1: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Detail de la notification */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Jeton absent, invalide ou expiré (UNAUTHORIZED, INVALID_TOKEN, TOKEN_EXPIRED). */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Rôle insuffisant, ADMIN ou SUPER_ADMIN requis (FORBIDDEN). */
-      403: {
         headers: {
           [name: string]: unknown;
         };
@@ -2763,12 +2830,14 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Message reçu */
+      /** @description Message reçu et mis en file de notification */
       201: {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['ContactResponseDto'];
+        };
       };
       /** @description CAPTCHA requis/invalide ou body invalide */
       400: {

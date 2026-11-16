@@ -28,6 +28,7 @@ describe('FooterComponent', () => {
       expect.arrayContaining([
         '/boutique',
         '/panier',
+        '/contact',
         '/faq',
         '/livraison',
         '/retours',

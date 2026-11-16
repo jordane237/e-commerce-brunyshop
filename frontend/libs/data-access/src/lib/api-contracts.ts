@@ -16,6 +16,8 @@ export type CartItemInputDto = components['schemas']['CartItemInputDto'];
 export type CartIssueDto = components['schemas']['CartIssueDto'];
 export type CartItemValidationDto = components['schemas']['CartItemValidationDto'];
 export type CartValidationResponseDto = components['schemas']['CartValidationResponseDto'];
+export type ContactDto = components['schemas']['ContactDto'];
+export type ContactResponseDto = components['schemas']['ContactResponseDto'];
 
 /** Schémas OpenAPI disponibles (utile pour dériver un type ponctuel). */
 export type ApiSchemas = components['schemas'];

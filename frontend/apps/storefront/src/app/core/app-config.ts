@@ -4,6 +4,10 @@ export interface AppConfig {
   readonly siteName: string;
   readonly siteUrl: string;
   readonly supportEmail: string;
+  readonly contactWhatsappUrl: string;
+  readonly contactPhone: string;
+  readonly contactPhoneDisplay: string;
+  readonly contactFacebookUrl: string;
   readonly defaultOgImage: string | null;
 }
 
@@ -17,6 +21,10 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   siteName: 'BRUNY SHOPPING',
   siteUrl: 'https://brunyshop.cm',
   supportEmail: 'support@brunyshop.cm',
+  contactWhatsappUrl: 'https://wa.me/237600000000',
+  contactPhone: '+237600000000',
+  contactPhoneDisplay: '+237 6 00 00 00 00',
+  contactFacebookUrl: 'https://www.facebook.com/BrunyShopping',
   defaultOgImage: null,
 };
 

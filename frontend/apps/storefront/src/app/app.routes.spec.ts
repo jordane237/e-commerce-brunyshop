@@ -30,6 +30,15 @@ describe('routes AUT-09', () => {
   });
 });
 
+describe('routes MKT-02', () => {
+  it('expose /contact en lazy loading', () => {
+    const contact = route('contact');
+
+    expect(contact?.loadComponent).toBeTypeOf('function');
+    expect(contact?.data?.['title']).toBe('Contact');
+  });
+});
+
 describe('routes MKT-01', () => {
   const mkt01Paths = [
     'a-propos',

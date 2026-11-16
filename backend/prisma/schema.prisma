@@ -114,6 +114,7 @@ model User {
   driverShipments Shipment[]
   backupCodes     BackupCode[]
   notifications   Notification[]
+  contactMessagesHandled ContactMessage[] @relation("ContactMessageHandler")
 }
 
 model Role {
@@ -694,8 +695,16 @@ model Setting {
 // AUT-11: public contact form. Anonymous submissions are persisted in this
 // dedicated model (privacy and support workflow) and a structured Pino event
 // records the submission.
+enum ContactMessageStatus {
+  NEW
+  READ
+  REPLIED
+  SPAM
+  CLOSED
+}
+
 model ContactMessage {
-  id             String   @id @default(uuid())
+  id             String               @id @default(uuid())
   name           String
   email          String
   phone          String?
@@ -703,11 +712,16 @@ model ContactMessage {
   orderReference String?
   message        String
   consent        Boolean
+  status         ContactMessageStatus @default(NEW)
   ip             String?
   userAgent      String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  handledAt      DateTime?
+  handledBy      String?
+  handler        User?                @relation("ContactMessageHandler", fields: [handledBy], references: [id], onDelete: SetNull)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@index([email])
   @@index([createdAt])
+  @@index([status])
 }

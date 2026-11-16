@@ -12,6 +12,7 @@ export type IconName =
   | 'menu'
   | 'cart'
   | 'whatsapp'
+  | 'facebook'
   | 'heart'
   | 'arrow-right'
   | 'plus'
@@ -64,6 +65,7 @@ const ICONS: Record<IconName, readonly string[]> = {
     'M21 11.5a8.5 8.5 0 0 1-12.8 7.4L3 21l2.1-5.2A8.5 8.5 0 1 1 21 11.5Z',
     'M8.5 9.5c.5 3 2.5 5 5.5 5.5',
   ],
+  facebook: ['M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3V2Z'],
   heart: [
     'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z',
   ],

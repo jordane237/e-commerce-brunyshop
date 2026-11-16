@@ -15,7 +15,8 @@
 | Identité légale | `apps/storefront/src/app/core/legal.ts` | Partielle : CNT-03 absent |
 | Guide des pointures | `backend/prisma/seeds/size-guides.seed.ts` (CAT-06) | À valider par le propriétaire (CNT-02) |
 | Zones et frais de livraison | `docs/design/DSG-05/P24-livraison.md`, seed P24 | Valeurs de référence, endpoint absent |
-| Turnstile | `docs/security/CAPTCHA.md` | Implémentation réelle côté backend |
+| Turnstile | `docs/security/CAPTCHA.md`, MKT-02 | Implémentation réelle côté backend et formulaire contact |
+| Page contact P22 | `docs/design/DSG-05/P22-contact.md`, `docs/features/MKT-02/` | Livrée ; coordonnées directes encore provisoires |
 
 Aucun texte n’a été inventé pour combler un manque : les informations d’identification
 inconnues restent des placeholders explicites.
@@ -34,6 +35,7 @@ inconnues restent des placeholders explicites.
 | CGV | P27 / CONTENUS §6 | ☐ À faire | ☐ À faire | Version 1.0, 10 novembre 2026 |
 | Confidentialité | P27 / CONTENUS §7 | ☐ À faire | ☐ À faire | Section Turnstile ajoutée depuis `docs/security/CAPTCHA.md` |
 | Mentions légales | P27 / CONTENUS §5 | ☐ À faire | ☐ À faire | 6 champs d’identité manquants |
+| Contact | P22 / MKT-02 | ☐ À faire | Sans objet | Formulaire livré ; WhatsApp et téléphone sont des placeholders |
 
 Les cases ne peuvent être cochées que par les personnes habilitées ; le dépôt ne contient
 aucune signature ni validation formelle à ce jour.
@@ -80,8 +82,13 @@ Avant production :
 
 ## 5. Contenus dynamiques non disponibles
 
-- **Contact P22** : la page n’existe pas. Tous les CTA utilisent
-  `mailto:support@brunyshop.cm` avec un sujet prérempli.
+- **Contact P22** : la page `/contact` et l’endpoint `POST /api/v1/contact` sont livrés.
+  Le header, le footer et le layout légal pointent vers la page. Certains CTA des pages
+  info conservent un `mailto:support@brunyshop.cm` avec sujet prérempli, car la page
+  contact ne préremplit pas encore le sujet depuis l’URL.
+- **Coordonnées directes** : le téléphone et le WhatsApp affichés sur `/contact` sont des
+  placeholders (`+237600000000`). Ils doivent être remplacés par les numéros réels avant
+  toute mise en production.
 - **Suivi de commande P13** : la page n’existe pas. Les pages Livraison et Retours
   invitent à écrire au support avec la référence.
 - **Zones de livraison** : `GET /delivery-zones` n’existe pas ; le tableau reprend les
@@ -100,8 +107,9 @@ Avant production :
   correspondance aurait un impact direct sur les échanges : la validation CNT-02 est
   bloquante avant production.
 - La section Turnstile décrit uniquement ce qui est réellement déployé : le widget est
-  actif sur la connexion administrateur ; les formulaires client seront protégés lors de
-  leur mise en service. Cette nuance est volontaire et ne doit pas être supprimée.
+  actif sur la connexion administrateur et sur le formulaire de contact public. Les autres
+  formulaires client ne sont pas encore protégés. Cette nuance est volontaire et ne doit
+  pas être supprimée.
 
 ---
 
@@ -113,7 +121,9 @@ Avant production :
 - [ ] Valider les tables de pointures (CNT-02).
 - [ ] Confirmer le délai de retour, les frais de retour et le traitement des soldes.
 - [ ] Confirmer les moyens de paiement à la livraison.
-- [ ] Remplacer les liens `mailto` par la page Contact lorsque P22 sera livrée.
+- [x] Livrer la page Contact P22 et l’endpoint public.
+- [ ] Remplacer le téléphone et le WhatsApp provisoires de `/contact` par les coordonnées validées.
+- [ ] Décider quels CTA `mailto` des pages info basculent vers `/contact`.
 - [ ] Remplacer le renvoi e-mail par la page de suivi lorsque P13 sera livrée.
 - [ ] Brancher `GET /delivery-zones` et retirer la mention « tarifs indicatifs ».
 - [ ] Mettre à jour `sitemap.xml` avec les URL produit générées côté serveur.

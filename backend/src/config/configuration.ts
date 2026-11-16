@@ -22,6 +22,7 @@ export interface ApplicationConfig {
   publicAppUrl: string;
   publicAdminUrl: string;
   corsOrigins: string[];
+  contactEmailTo: string;
   throttle: { ttlSeconds: number; limit: number };
   catalog: {
     productDetailTtlSeconds: number;
@@ -54,6 +55,7 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
     publicAppUrl: String(env['APP_PUBLIC_URL']),
     publicAdminUrl: String(env['ADMIN_PUBLIC_URL']),
     corsOrigins,
+    contactEmailTo: String(env['CONTACT_EMAIL_TO'] ?? 'support@brunyshop.cm').trim(),
     throttle: {
       ttlSeconds: Number(env['THROTTLE_TTL']),
       limit: Number(env['THROTTLE_LIMIT']),

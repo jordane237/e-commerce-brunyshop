@@ -5,6 +5,9 @@ if (existsSync('../.env')) process.loadEnvFile('../.env');
 process.env['TURNSTILE_ENABLED'] = 'true';
 process.env['TURNSTILE_SITE_KEY'] = '1x00000000000000000000BB';
 process.env['TURNSTILE_SECRET_KEY'] = '1x0000000000000000000000000000000AA';
+// Mode console déterministe : le worker email réussit sans dépendre de Mailpit.
+process.env['SMTP_HOST'] = '';
+process.env['SMTP_PORT'] = '';
 
 import { ValidationPipe, VersioningType, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,17 +16,21 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import type { Queue } from 'bullmq';
+
 import { startFakeTurnstile, type FakeTurnstile } from './support/fake-turnstile';
 
 const PREFIX = 'e2e-aut11-pass';
 const BASE_URL = '/api/v1';
 const PASSWORD = 'E2eAut11!Secure99';
 const TOKEN = 'XXXX.DUMMY.TOKEN.XXXX';
+const TEST_STARTED_AT = new Date();
 
 describe('CAPTCHA Turnstile — clés always passes (AUT-11)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let fakeTurnstile: FakeTurnstile;
+  let emailQueue: Queue<unknown> | undefined;
   let ipCounter = 0;
 
   function nextIp(): string {
@@ -35,6 +42,14 @@ describe('CAPTCHA Turnstile — clés always passes (AUT-11)', () => {
     const builder = request(app.getHttpServer())
       .post(`${BASE_URL}${path}`)
       .set('X-Forwarded-For', nextIp());
+    if (token !== undefined) builder.set('cf-turnstile-response', token);
+    return builder.send(body as object);
+  }
+
+  function postFrom(path: string, body: unknown, ip: string, token?: string) {
+    const builder = request(app.getHttpServer())
+      .post(`${BASE_URL}${path}`)
+      .set('X-Forwarded-For', ip);
     if (token !== undefined) builder.set('cf-turnstile-response', token);
     return builder.send(body as object);
   }
@@ -99,14 +114,44 @@ describe('CAPTCHA Turnstile — clés always passes (AUT-11)', () => {
 
     app = instance;
     prisma = app.get(PrismaService);
+    const { getQueueToken } = await import('@nestjs/bullmq');
+    const { NOTIFICATIONS_EMAIL_QUEUE } = await import(
+      '../src/modules/notifications/queue.constants'
+    );
+    emailQueue = app.get<Queue<unknown>>(getQueueToken(NOTIFICATIONS_EMAIL_QUEUE));
+    await emailQueue.obliterate({ force: true });
     await prisma.contactMessage.deleteMany({ where: { email: { startsWith: PREFIX } } });
     await prisma.user.deleteMany({ where: { email: { startsWith: PREFIX } } });
   });
 
+  async function waitForContactNotifications(): Promise<void> {
+    const deadline = Date.now() + 5_000;
+    while (Date.now() < deadline) {
+      const pending = await prisma.notification.count({
+        where: {
+          templateKey: { in: ['contact.message', 'contact.confirmation'] },
+          createdAt: { gte: TEST_STARTED_AT },
+          status: 'PENDING',
+        },
+      });
+      if (pending === 0) return;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    throw new Error('Les notifications de contact ne sont pas terminées.');
+  }
+
   afterAll(async () => {
     if (prisma !== undefined) {
+      await waitForContactNotifications();
+      if (emailQueue !== undefined) await emailQueue.obliterate({ force: true });
       await prisma.contactMessage.deleteMany({ where: { email: { startsWith: PREFIX } } });
       await prisma.user.deleteMany({ where: { email: { startsWith: PREFIX } } });
+      await prisma.notification.deleteMany({
+        where: {
+          templateKey: { in: ['contact.message', 'contact.confirmation'] },
+          createdAt: { gte: TEST_STARTED_AT },
+        },
+      });
     }
     if (app !== undefined) await app.close();
     if (fakeTurnstile !== undefined) await fakeTurnstile.close();
@@ -178,6 +223,26 @@ describe('CAPTCHA Turnstile — clés always passes (AUT-11)', () => {
     });
     expect(stored.email).toBe(email);
     expect(stored.subject).toBe('order');
+    expect(stored.status).toBe('NEW');
+
+    const audited = await prisma.auditLog.findFirst({
+      where: { entity: 'ContactMessage', entityId: response.body.id },
+    });
+    expect(audited?.action).toBe('CONTACT_SUBMITTED');
+    expect(JSON.stringify(audited?.after)).not.toContain(email);
+
+    const notifications = await prisma.notification.findMany({
+      where: {
+        templateKey: { in: ['contact.message', 'contact.confirmation'] },
+        metadata: { path: ['metadata', 'contactId'], equals: response.body.id },
+      },
+      orderBy: { templateKey: 'asc' },
+    });
+    expect(notifications.map((item) => item.templateKey)).toEqual([
+      'contact.confirmation',
+      'contact.message',
+    ]);
+    expect(notifications.every((item) => item.channel === 'EMAIL')).toBe(true);
   });
 
   it('accepte le jeton dans le header cf-turnstile-response', async () => {
@@ -191,6 +256,37 @@ describe('CAPTCHA Turnstile — clés always passes (AUT-11)', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.code).toBe('CAPTCHA_REQUIRED');
+  });
+
+  it('ignore silencieusement une soumission honeypot sans la persister', async () => {
+    const email = `${PREFIX}-honey@aut11.test`;
+    const response = await post(
+      '/contact',
+      { ...contact(email), _honey: 'https://spam.example' },
+      TOKEN,
+    );
+
+    expect(response.status).toBe(201);
+    expect(response.body.id).toEqual(expect.any(String));
+    expect(await prisma.contactMessage.count({ where: { email } })).toBe(0);
+  });
+
+  it('limite à 5 envois par minute et par IP', async () => {
+    const ip = `10.251.${Math.floor(Math.random() * 250) + 1}.${Math.floor(Math.random() * 250) + 1}`;
+    for (let index = 0; index < 5; index += 1) {
+      await postFrom('/contact', contact(`${PREFIX}-rate-${index}@aut11.test`), ip, TOKEN).expect(
+        201,
+      );
+    }
+
+    const blocked = await postFrom(
+      '/contact',
+      contact(`${PREFIX}-rate-blocked@aut11.test`),
+      ip,
+      TOKEN,
+    );
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.code).toBe('RATE_LIMITED');
   });
 
   it('répond 503 CAPTCHA_UNAVAILABLE quand siteverify est indisponible', async () => {

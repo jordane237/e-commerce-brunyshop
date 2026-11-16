@@ -2,6 +2,7 @@
 // The application refuses to start when a required variable is missing or invalid.
 import { plainToInstance } from 'class-transformer';
 import {
+  IsEmail,
   IsEnum,
   IsIn,
   IsInt,
@@ -50,6 +51,12 @@ export class EnvVariables {
 
   @IsString()
   public ADMIN_PUBLIC_URL!: string;
+
+  // Support mailbox receiving MKT-02 contact notifications. Optional in
+  // development/test so the application can boot with the documented fallback.
+  @IsOptional()
+  @IsEmail()
+  public CONTACT_EMAIL_TO?: string;
 
   @IsInt()
   @Min(1)

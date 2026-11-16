@@ -1,7 +1,9 @@
 # P22 — Contact
 
 > DSG-05 · groupe Information · route `/contact`
-> Endpoint à créer : `POST /contact` ; fallback `mailto:support@brunyshop.cm`.
+> Statut : **implémentée le 16 novembre 2026** (MKT-02).
+> Endpoint livré : `POST /api/v1/contact` ; fallback `mailto:support@brunyshop.cm`.
+> Détail technique et limites : [`docs/features/MKT-02/`](../../features/MKT-02/ANALYSE-DESIGN.md).
 
 ---
 
@@ -56,36 +58,44 @@ Offrir un canal de contact simple et rassurant, sans promesse de réponse instan
 | Composant | Source | Variante | État |
 | --- | --- | --- | --- |
 | `Input` | TEC-10 | text, email, tel | normal, error |
-| `Textarea` | NOUVEAU (DSG-04) | 5 lignes | normal, error |
+| `ContactTextarea` | local P22 | 5 lignes + compteur | normal, error |
 | `Select` | TEC-10 | sujets | normal, error |
 | `Checkbox` | TEC-10 | consentement | — |
-| `Button` | TEC-10 | primary, whatsapp | loading |
-| `Alert` | NOUVEAU | success, danger, info | — |
-| `Breadcrumb` | NOUVEAU | — | — |
+| `Button` | TEC-10 | primary, secondary | loading, disabled |
+| `Captcha` | AUT-11 | Turnstile | chargé, indisponible |
+| `Icon` | Design System | alert, whatsapp, phone, facebook | décoratif |
+| `LegalPageLayout` | MKT-01 | éditorial | fil d’Ariane intégré |
+
+Les composants génériques `Alert` et `Breadcrumb` n’ont pas été créés : l’alerte
+reste locale à la page et le fil d’Ariane est fourni par `LegalPageLayout`.
 
 ---
 
 ## 4. États obligatoires
 
-- **Chargement** : bouton `loading` après envoi, formulaire désactivé.
-- **Vide** : formulaire vierge, aucun message d'erreur avant interaction.
-- **Erreur** : validation par champ, envoi échoué, réseau, rate limit.
+- **Chargement** : bouton `loading`, double envoi bloqué.
+- **Vide** : formulaire vierge, aucun message d’erreur avant interaction.
+- **Erreur** : validation par champ, CAPTCHA, envoi échoué, réseau, rate limit.
 - **Succès** : formulaire remplacé par un panneau de confirmation avec référence de message.
 
-### Erreurs détaillées
+### Erreurs détaillées (messages livrés)
 
 | Cas | Message |
 | --- | --- |
 | Nom vide | « Indiquez votre nom. » |
-| E-mail invalide | « Saisissez un e-mail valide pour que nous puissions vous répondre. » |
+| Nom trop court / long | « Votre nom doit contenir au moins 2 caractères. » / « … 100 caractères. » |
+| E-mail vide / invalide | « Saisissez votre adresse e-mail. » / « Saisissez un e-mail valide, par exemple vous@exemple.com. » |
 | Téléphone invalide | « Saisissez un numéro camerounais à 9 chiffres après +237. » |
-| Sujet vide | « Choisissez un sujet. » |
+| Sujet vide | « Choisissez le sujet de votre demande. » |
 | Message vide | « Écrivez votre message. » |
-| Message trop court | « Votre message doit contenir au moins 20 caractères. » |
-| Consentement absent | « Acceptez que nous utilisions ces informations pour vous répondre. » |
-| Envoi échoué | « Votre message n'a pas pu être envoyé. Réessayez ou écrivez à support@brunyshop.cm. » |
-| Trop de messages | « Vous avez envoyé plusieurs messages récemment. Patientez quelques minutes. » |
-| Réseau | « Connexion interrompue. Vérifiez votre connexion puis réessayez. » |
+| Message trop court / long | « Décrivez votre demande en au moins 20 caractères. » / « … 2 000 caractères. » |
+| Référence invalide | « Utilisez le format BRN-2611-7K3F indiqué dans votre confirmation. » |
+| Consentement absent | « Acceptez d’être recontacté(e) au sujet de votre demande. » |
+| CAPTCHA requis / invalide | « La vérification de sécurité a échoué. Recommencez la vérification puis réessayez. » |
+| CAPTCHA indisponible | « La vérification de sécurité est momentanément indisponible. Réessayez dans un instant. » |
+| Envoi échoué | « Impossible d’envoyer votre message. Vérifiez votre connexion puis réessayez. » |
+| Trop de messages | « Trop de messages ont été envoyés. Patientez une minute avant de réessayer. » |
+| Réseau | Même message d’envoi échoué ; les valeurs restent saisies. |
 
 ---
 
@@ -128,13 +138,14 @@ Offrir un canal de contact simple et rassurant, sans promesse de réponse instan
 
 ## 6. Interactions & comportements
 
-- Sujet « Une commande » → champ conditionnel « Référence de commande » (facultatif, format `BRN-…`).
-- Le formulaire conserve les valeurs en cas d'échec.
-- Après succès, le formulaire est remplacé ; aucun double envoi.
-- Liens e-mail en `mailto:` ; WhatsApp uniquement si `WHATSAPP_SUPPORT_NUMBER` est configuré, sinon masqué.
-- CAPTCHA : aucun widget en MVP ; l'emplacement est prévu dans le DOM (`#contact-captcha`) pour un ajout ultérieur.
-- Anti-spam backend : rate limit par IP + honeypot invisible.
-- Aucune pièce jointe.
+- Le champ « Référence de commande » est toujours visible et facultatif, quel que soit le sujet. Il est validé au format `BRN-AAAA-XXXX` et normalisé en majuscules.
+- Le formulaire conserve les valeurs en cas d’échec ; le CAPTCHA est réinitialisé.
+- Après succès, le formulaire est remplacé ; aucun double envoi. « Envoyer un autre message » vide le formulaire et replace le focus sur le nom.
+- Contacts directs : e-mail `mailto:`, téléphone `tel:`, WhatsApp et Facebook dans un nouvel onglet avec `rel="noopener noreferrer"`.
+- Le numéro WhatsApp et le téléphone affiché sont des **placeholders** (`+237600000000`) tant que les coordonnées réelles ne sont pas fournies. Ils restent visibles, mais ne doivent pas être publiés en l’état.
+- CAPTCHA : widget Cloudflare Turnstile actif (AUT-11), chargé uniquement côté navigateur. En SSR, aucun script tiers n’est exécuté.
+- Anti-spam backend : CAPTCHA + rate limit 5/min/IP + honeypot invisible. Un honeypot rempli reçoit une réponse 201 factice sans persistance ni e-mail.
+- Aucune pièce jointe, aucune carte, aucun bloc FAQ sur la page : la FAQ reste accessible depuis le header et le footer.
 
 ---
 
@@ -144,10 +155,13 @@ Offrir un canal de contact simple et rassurant, sans promesse de réponse instan
 - Labels liés, `autocomplete` (`name`, `email`, `tel`).
 - Sujet : `Select` avec label, pas de valeur vide ambiguë.
 - Erreurs : `aria-invalid`, `aria-describedby`, résumé `role="alert"`, focus sur le premier champ en erreur.
-- Confirmation : `role="status"`, focus sur le titre.
-- Champs obligatoires indiqués par `*` + `aria-required`.
+- Confirmation : focus programmatique sur le titre `tabindex="-1"` ; la zone est annoncée par la structure de la page.
+- Champs obligatoires indiqués par `*` ; les composants exposent leurs erreurs via `aria-invalid` et `aria-describedby`.
+- Compteur de caractères en `aria-live="polite"`.
+- Honeypot masqué aux technologies d’assistance (`aria-hidden="true"`, `tabindex="-1"`).
 - Cibles ≥ 44 px, focus visible, contraste AA.
 - Zoom 200 % : colonnes empilées.
+- CAPTCHA : le composant `bruny-captcha` gère son état et son alternative en cas d’échec de chargement.
 
 ---
 
@@ -155,23 +169,32 @@ Offrir un canal de contact simple et rassurant, sans promesse de réponse instan
 
 | Donnée | Endpoint | Fallback |
 | --- | --- | --- |
-| Envoi | `POST /contact` **à créer** | `mailto:support@brunyshop.cm` |
+| Envoi | `POST /api/v1/contact` | `mailto:support@brunyshop.cm` |
+| Configuration CAPTCHA | `GET /api/v1/config` | Widget absent si Turnstile est désactivé |
 | Sujets | statiques | — |
 
-Payload : `{ name, email, phone?, subject, orderReference?, message, consent, captchaToken? }`.
-Réponse : `201 { id, receivedAt }`.
+Payload : `{ name, email, phone?, subject, orderReference?, message, consent, turnstileToken?, _honey? }`.
+Réponse : `201 { id, receivedAt, message }`.
+
+Le jeton Turnstile est accepté dans le body (`turnstileToken`) ou dans l’en-tête
+`cf-turnstile-response`. Les erreurs sont normalisées (`CAPTCHA_REQUIRED`,
+`CAPTCHA_INVALID`, `CAPTCHA_UNAVAILABLE`, `VALIDATION_ERROR`, `RATE_LIMITED`).
 
 ---
 
 ## 9. Écarts / points à valider
 
-| Constat | Décision |
+| Constat | Décision livrée |
 | --- | --- |
-| Aucune page contact dans la planche | Conçue |
-| Aucun endpoint contact | Dépendance backend ; fallback mailto |
-| Numéro WhatsApp non fourni | Masqué tant qu'il n'est pas configuré |
-| CAPTCHA absent du dépôt | Emplacement prévu, inactif |
-| Délai « sous 24 h » | Engagement éditorial à confirmer par l'exploitation |
+| Aucune page contact dans la planche | Page `/contact` livrée, responsive et SSR |
+| Aucun endpoint contact | `POST /api/v1/contact` livré avec persistance et notifications |
+| Numéro WhatsApp non fourni | Placeholder `+237600000000` visible ; à remplacer avant production |
+| CAPTCHA absent du dépôt | Turnstile actif sur le formulaire, avec gestion des erreurs |
+| Délai « sous 24 h » | Microtexte « sous 24 h ouvrées » conservé ; engagement à confirmer par l’exploitation |
+| Champ référence conditionnel | Toujours visible et facultatif, pour éviter un changement de layout |
+| Composants `Alert` / `Breadcrumb` | Non créés ; alerte locale et fil d’Ariane du layout |
+| Bloc FAQ dans la page | Non repris ; la FAQ existante est liée depuis le header et le footer |
+| Tri des messages reçus | Statut `NEW/READ/REPLIED/SPAM/CLOSED` en base ; aucune interface d’administration livrée |
 
 ---
 
