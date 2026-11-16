@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { AccordionComponent, type AccordionItem, type TocSection } from '@bruny/ui';
+import { APP_CONFIG } from '../../../core/app-config';
 import { SeoService } from '../../../core/seo.service';
+import { faqPageSchema } from '../../../core/structured-data';
 import {
   LegalPageLayoutComponent,
   type BreadcrumbItem,
@@ -163,6 +165,7 @@ const FAQ_CATEGORIES: readonly FaqCategory[] = [
 })
 export class FaqComponent implements OnInit {
   private readonly seo = inject(SeoService);
+  private readonly config = inject(APP_CONFIG);
 
   readonly categories = FAQ_CATEGORIES;
 
@@ -181,11 +184,17 @@ export class FaqComponent implements OnInit {
     'Livraison, tailles, retours, commandes : les réponses aux questions que vous nous posez le plus souvent.';
 
   ngOnInit(): void {
+    const description =
+      'Réponses aux questions fréquentes BRUNY SHOPPING : commandes, livraison, tailles, retours, paiement et gestion du compte.';
     this.seo.setPageMeta({
       title: 'Questions fréquentes',
-      description:
-        'Réponses aux questions fréquentes BRUNY SHOPPING : commandes, livraison, tailles, retours, paiement et gestion du compte.',
+      description,
       canonicalPath: '/faq',
+      jsonLd: faqPageSchema(
+        this.config,
+        description,
+        this.categories.flatMap((category) => category.items),
+      ),
     });
   }
 }

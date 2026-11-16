@@ -24,10 +24,6 @@ function setHostValue(instance: object, key: string, value: unknown): void {
   record[key] = value;
 }
 
-function normalizeSpaces(value: string | null | undefined): string {
-  return (value ?? '').replace(/[\u00a0\u202f]/g, ' ');
-}
-
 describe('PriceTagComponent', () => {
   afterEach(() => {
     document.body.innerHTML = '';
@@ -49,10 +45,10 @@ describe('PriceTagComponent', () => {
     };
   }
 
-  it('renders the current price in FCFA', async () => {
+  it('renders the current price in FCFA with U+00A0', async () => {
     const { nativeElement } = await create();
-    expect(normalizeSpaces(nativeElement.querySelector('.bs-price__current')?.textContent)).toBe(
-      '24 500 FCFA',
+    expect(nativeElement.querySelector('.bs-price__current')?.textContent).toBe(
+      '24\u00a0500\u00a0FCFA',
     );
   });
 
@@ -60,7 +56,7 @@ describe('PriceTagComponent', () => {
     const { nativeElement } = await create();
     const compare = nativeElement.querySelector('.bs-price__compare') as HTMLElement;
 
-    expect(normalizeSpaces(compare.textContent)).toBe('32 000 FCFA');
+    expect(compare.textContent).toBe('32\u00a0000\u00a0FCFA');
   });
 
   it('hides the compare-at price when it is not higher', async () => {
@@ -82,8 +78,8 @@ describe('PriceTagComponent', () => {
     const { fixture, nativeElement } = await create();
     fixture.componentInstance.amount.set(24730);
     fixture.detectChanges();
-    expect(normalizeSpaces(nativeElement.querySelector('.bs-price__current')?.textContent)).toBe(
-      '24 730 FCFA',
+    expect(nativeElement.querySelector('.bs-price__current')?.textContent).toBe(
+      '24\u00a0730\u00a0FCFA',
     );
   });
 });

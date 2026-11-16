@@ -22,6 +22,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { AuthService, readApiError, ToastService } from '@bruny/core';
 import { PublicConfigService } from '@bruny/data-access';
+import { localPhoneValidator, toInternationalPhone, PHONE_ERROR_MESSAGE } from '@bruny/util';
 import {
   ButtonComponent,
   CaptchaComponent,
@@ -30,6 +31,7 @@ import {
   PasswordStrengthIndicatorComponent,
 } from '@bruny/ui';
 
+import { SeoService } from '../../../core/seo.service';
 import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.component';
 import {
   PASSWORD_MAX_LENGTH,
@@ -37,7 +39,6 @@ import {
   passwordPolicyValidator,
 } from '../validators/common-password.validator';
 import { matchValidator } from '../validators/match.validator';
-import { localPhoneValidator, toInternationalPhone } from '../validators/phone.validator';
 
 export const TERMS_VERSION = '1.0';
 
@@ -80,6 +81,7 @@ export class RegisterComponent {
   private readonly publicConfig = inject(PublicConfigService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly seo = inject(SeoService);
   private readonly formElement = viewChild<ElementRef<HTMLElement>>('registerForm');
   private readonly successTitle = viewChild<ElementRef<HTMLElement>>('successTitle');
 
@@ -134,6 +136,13 @@ export class RegisterComponent {
   });
 
   constructor() {
+    this.seo.setPageMeta({
+      title: 'Créer un compte',
+      description:
+        'Créez votre compte BRUNY SHOPPING pour commander plus vite, suivre vos livraisons et retrouver vos favoris.',
+      canonicalPath: '/inscription',
+      noIndex: true,
+    });
     this.applyChannelValidators('email');
     this.form.controls.password.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -340,8 +349,8 @@ export class RegisterComponent {
     if (control.hasError('email')) {
       return 'Saisissez un e-mail valide, par exemple vous@exemple.com.';
     }
-    if (control.hasError('localPhone')) {
-      return 'Saisissez un numéro camerounais à 9 chiffres après +237.';
+    if (control.hasError('phone')) {
+      return PHONE_ERROR_MESSAGE;
     }
     if (control.hasError('maxlength')) {
       if (field === 'firstName') return 'Le prénom ne doit pas dépasser 100 caractères.';

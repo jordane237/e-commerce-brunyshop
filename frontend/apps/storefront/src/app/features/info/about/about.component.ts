@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { TocSection } from '@bruny/ui';
+import { APP_CONFIG } from '../../../core/app-config';
 import { SeoService } from '../../../core/seo.service';
+import { aboutPageSchema } from '../../../core/structured-data';
 import {
   LegalPageLayoutComponent,
   type BreadcrumbItem,
@@ -17,6 +19,7 @@ import {
 })
 export class AboutComponent implements OnInit {
   private readonly seo = inject(SeoService);
+  private readonly config = inject(APP_CONFIG);
 
   readonly breadcrumb: readonly BreadcrumbItem[] = [
     { label: 'Accueil', path: '/' },
@@ -34,11 +37,13 @@ export class AboutComponent implements OnInit {
     'BRUNY SHOPPING sélectionne des chaussures pour le quotidien, à Douala et partout au Cameroun, avec un service simple : de vraies tailles, des prix clairs et un humain au bout du fil.';
 
   ngOnInit(): void {
+    const description =
+      'Découvrez BRUNY SHOPPING, votre boutique de chaussures au Cameroun : notre histoire, notre sélection, nos engagements et notre service.';
     this.seo.setPageMeta({
       title: 'À propos',
-      description:
-        'Découvrez BRUNY SHOPPING, votre boutique de chaussures au Cameroun : notre histoire, notre sélection, nos engagements et notre service.',
+      description,
       canonicalPath: '/a-propos',
+      jsonLd: aboutPageSchema(this.config, description),
     });
   }
 }

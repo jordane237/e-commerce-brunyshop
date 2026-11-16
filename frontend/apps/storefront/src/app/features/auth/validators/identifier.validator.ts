@@ -1,8 +1,11 @@
 import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import {
+  isCameroonLocalPhoneNumber,
+  isCameroonPhoneNumber,
+  normalizeCameroonPhone,
+} from '@bruny/util';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^\+237[0-9]{9}$/;
-const LOCAL_PHONE_RE = /^[0-9]{9}$/;
 
 /** Accepte un e-mail ou un numéro camerounais complet ou local (9 chiffres). */
 export const identifierValidator: ValidatorFn = (
@@ -11,7 +14,7 @@ export const identifierValidator: ValidatorFn = (
   const value = String(control.value ?? '').trim();
   if (value === '') return null;
 
-  if (EMAIL_RE.test(value) || PHONE_RE.test(value) || LOCAL_PHONE_RE.test(value)) {
+  if (EMAIL_RE.test(value) || isCameroonPhoneNumber(value) || isCameroonLocalPhoneNumber(value)) {
     return null;
   }
   return { identifier: true };
@@ -20,7 +23,9 @@ export const identifierValidator: ValidatorFn = (
 /** Normalise un numéro local vers le format backend `+237XXXXXXXXX`. */
 export function normalizeIdentifier(value: string): string {
   const trimmed = value.trim();
-  if (LOCAL_PHONE_RE.test(trimmed)) return `+237${trimmed}`;
+  if (isCameroonPhoneNumber(trimmed) || isCameroonLocalPhoneNumber(trimmed)) {
+    return normalizeCameroonPhone(trimmed);
+  }
   if (EMAIL_RE.test(trimmed)) return trimmed.toLowerCase();
   return trimmed;
 }

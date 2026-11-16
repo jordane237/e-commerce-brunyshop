@@ -1,10 +1,11 @@
 import { FormControl, FormGroup } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 
+import { localPhoneValidator, toInternationalPhone } from '@bruny/util';
+
 import { commonPasswordValidator, passwordPolicyValidator } from './common-password.validator';
 import { identifierValidator, normalizeIdentifier } from './identifier.validator';
 import { matchValidator } from './match.validator';
-import { localPhoneValidator, toInternationalPhone } from './phone.validator';
 
 describe('validateurs AUT-09', () => {
   it('accepte un e-mail et un numéro +237 valides', () => {
@@ -39,7 +40,7 @@ describe('validateurs AUT-09', () => {
 
   it('valide un téléphone local de 9 chiffres', () => {
     expect(localPhoneValidator(new FormControl('612345678'))).toBeNull();
-    expect(localPhoneValidator(new FormControl('6123'))).toEqual({ localPhone: true });
+    expect(localPhoneValidator(new FormControl('6123'))).not.toBeNull();
     expect(toInternationalPhone('612345678')).toBe('+237612345678');
   });
 

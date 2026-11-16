@@ -5,6 +5,8 @@ import { CartStore } from '../../core/cart/cart.store';
 import { PriceTagComponent, SizeSelectorComponent, type SizeSelectorItem } from '@bruny/ui';
 import { NgOptimizedImage } from '@angular/common';
 import { SeoService } from '../../core/seo.service';
+import { APP_CONFIG } from '../../core/app-config';
+import { productSchema } from '../../core/structured-data';
 
 @Component({
   standalone: true,
@@ -175,6 +177,7 @@ export class ProductPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly cart = inject(CartStore);
   private readonly seo = inject(SeoService);
+  private readonly config = inject(APP_CONFIG);
   readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   readonly product = signal<CatalogProductDetail | null>(null);
   readonly selectedSize = signal<string | null>(null);
@@ -196,7 +199,16 @@ export class ProductPage implements OnInit {
       this.api.get(slug).subscribe({
         next: (item) => {
           this.product.set(item);
-          this.seo.set(item.name, item.description, `/produit/${item.slug}`);
+          const path = `/produit/${item.slug}`;
+          this.seo.setPageMeta({
+            title: item.seoTitle ?? item.name,
+            description: item.seoDescription ?? item.description,
+            canonicalPath: path,
+            ogType: 'product',
+            ogImage: item.images[0]?.url,
+            ogImageAlt: item.images[0]?.alt ?? item.name,
+            jsonLd: productSchema(this.config, item, path),
+          });
           // Groupements calculés côté serveur : le stock exposé est le stock
           // disponible (stock - réservé), jamais le stock physique brut.
           this.availableSizes.set(

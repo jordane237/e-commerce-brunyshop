@@ -100,7 +100,7 @@ describe('ContactComponent (MKT-02)', () => {
     component.form.controls.message.setValue('court');
     component.form.controls.message.markAsTouched();
 
-    expect(component.phoneError()).toContain('9 chiffres après +237');
+    expect(component.phoneError()).toContain('numéro camerounais à 9 chiffres');
     expect(component.orderReferenceError()).toContain('BRN-2611-7K3F');
     expect(component.messageError()).toContain('au moins 20 caractères');
   });

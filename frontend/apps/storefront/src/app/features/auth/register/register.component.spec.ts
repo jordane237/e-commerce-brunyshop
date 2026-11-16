@@ -101,7 +101,7 @@ describe('RegisterComponent', () => {
     component.selectChannel('phone');
     component.form.controls.phone.setValue('123');
     component.form.controls.phone.markAsTouched();
-    expect(component.phoneError()).toContain('9 chiffres après +237');
+    expect(component.phoneError()).toContain('numéro camerounais à 9 chiffres');
   });
 
   it('validates password length, blacklist, variety and confirmation', () => {

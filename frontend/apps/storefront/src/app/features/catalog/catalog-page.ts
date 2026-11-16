@@ -32,6 +32,8 @@ import { PaginationComponent } from './components/pagination/pagination.componen
 import { ProductGridComponent } from './components/product-grid/product-grid.component';
 import type { CatalogProduct } from '@bruny/data-access';
 import { CartStore } from '../../core/cart/cart.store';
+import { APP_CONFIG } from '../../core/app-config';
+import { collectionPageSchema } from '../../core/structured-data';
 
 /**
  * Page boutique (CAT-08).
@@ -62,6 +64,7 @@ export class CatalogPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
+  private readonly config = inject(APP_CONFIG);
 
   readonly pageSize = CATALOG_PAGE_SIZE;
   readonly drawerOpen = signal(false);
@@ -104,13 +107,16 @@ export class CatalogPage {
 
     effect(() => {
       const name = this.title();
-      this.seo.set(
-        name,
+      const description =
         name === 'Boutique'
           ? 'Découvrez notre sélection de chaussures livrées partout au Cameroun.'
-          : `Découvrez la sélection ${name} de BRUNY SHOPPING, livrée partout au Cameroun.`,
-        '/boutique',
-      );
+          : `Découvrez la sélection ${name} de BRUNY SHOPPING, livrée partout au Cameroun.`;
+      this.seo.setPageMeta({
+        title: name,
+        description,
+        canonicalPath: '/boutique',
+        jsonLd: collectionPageSchema(this.config, name, description, '/boutique'),
+      });
     });
   }
 

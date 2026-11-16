@@ -24,6 +24,7 @@ import { AuthService, readApiError, SessionService, ToastService } from '@bruny/
 import { PublicConfigService } from '@bruny/data-access';
 import { ButtonComponent, CaptchaComponent, InputComponent } from '@bruny/ui';
 
+import { SeoService } from '../../../core/seo.service';
 import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.component';
 import { identifierValidator, normalizeIdentifier } from '../validators/identifier.validator';
 
@@ -58,6 +59,7 @@ export class LoginComponent {
   private readonly publicConfig = inject(PublicConfigService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly seo = inject(SeoService);
 
   private readonly formElement = viewChild<ElementRef<HTMLElement>>('loginForm');
 
@@ -84,6 +86,13 @@ export class LoginComponent {
   });
 
   constructor() {
+    this.seo.setPageMeta({
+      title: 'Connexion',
+      description:
+        'Connectez-vous à votre compte BRUNY SHOPPING pour suivre vos commandes, gérer vos adresses et retrouver vos favoris.',
+      canonicalPath: '/connexion',
+      noIndex: true,
+    });
     const prefilledIdentifier = this.route.snapshot.queryParamMap.get('identifier');
     if (prefilledIdentifier !== null && prefilledIdentifier.trim() !== '') {
       this.form.controls.identifier.setValue(prefilledIdentifier);

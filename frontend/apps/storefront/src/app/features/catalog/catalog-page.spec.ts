@@ -63,7 +63,7 @@ async function setup(initialUrl = '/boutique') {
         },
       ]),
       { provide: CatalogApi, useValue: { list, categories: () => of([]) } },
-      { provide: SeoService, useValue: { set: vi.fn() } },
+      { provide: SeoService, useValue: { setPageMeta: vi.fn() } },
       { provide: CartStore, useValue: { addProduct: vi.fn() } },
     ],
   });
@@ -118,7 +118,7 @@ describe('CatalogPage', () => {
       providers: [
         provideRouter([{ path: 'boutique', component: CatalogPage, providers: [CatalogStore] }]),
         { provide: CatalogApi, useValue: { list, categories: () => of([]) } },
-        { provide: SeoService, useValue: { set: vi.fn() } },
+        { provide: SeoService, useValue: { setPageMeta: vi.fn() } },
       ],
     });
     const harness = await RouterTestingHarness.create('/boutique');

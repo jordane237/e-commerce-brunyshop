@@ -18,13 +18,14 @@ import {
   FormGroup,
   NonNullableFormBuilder,
   ReactiveFormsModule,
-  ValidationErrors,
   Validators,
+  type ValidationErrors,
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { readApiError } from '@bruny/core';
 import { ContactApi, PublicConfigService, type ContactRequest } from '@bruny/data-access';
+import { localPhoneValidator, normalizeCameroonPhone, PHONE_ERROR_MESSAGE } from '@bruny/util';
 import {
   ButtonComponent,
   CaptchaComponent,
@@ -37,6 +38,7 @@ import {
 
 import { APP_CONFIG } from '../../core/app-config';
 import { SeoService } from '../../core/seo.service';
+import { contactPageSchema } from '../../core/structured-data';
 import {
   LegalPageLayoutComponent,
   type BreadcrumbItem,
@@ -56,15 +58,7 @@ type ContactForm = FormGroup<{
   honeypot: FormControl<string>;
 }>;
 
-const CAMEROON_PHONE = /^[26][0-9]{8}$/;
 const ORDER_REFERENCE = /^BRN-[0-9]{4}-[A-Z0-9]{4}$/i;
-
-function optionalCameroonPhone(control: AbstractControl): ValidationErrors | null {
-  const value = String(control.value ?? '').trim();
-  if (value === '') return null;
-  const digits = value.replace(/[\s.-]/g, '');
-  return CAMEROON_PHONE.test(digits) ? null : { cameroonPhone: true };
-}
 
 function optionalOrderReference(control: AbstractControl): ValidationErrors | null {
   const value = String(control.value ?? '').trim();
@@ -138,11 +132,13 @@ export class ContactComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    const description =
+      'Contactez BRUNY SHOPPING pour une commande, un produit, une livraison ou un retour. Réponse sous 24 h ouvrées, WhatsApp et téléphone disponibles.';
     this.seo.setPageMeta({
       title: 'Contact',
-      description:
-        'Contactez BRUNY SHOPPING pour une commande, un produit, une livraison ou un retour. Réponse sous 24 h ouvrées, WhatsApp et téléphone disponibles.',
+      description,
       canonicalPath: '/contact',
+      jsonLd: contactPageSchema(this.config, description),
     });
     this.loadCaptchaConfig();
   }
@@ -169,8 +165,8 @@ export class ContactComponent implements OnInit {
   phoneError(): string | null {
     const control = this.form.controls.phone;
     if (!this.showError(control)) return null;
-    if (control.hasError('cameroonPhone')) {
-      return 'Saisissez un numéro camerounais à 9 chiffres après +237.';
+    if (control.hasError('phone')) {
+      return PHONE_ERROR_MESSAGE;
     }
     return null;
   }
@@ -238,7 +234,7 @@ export class ContactComponent implements OnInit {
     }
 
     const value = this.form.getRawValue();
-    const phone = value.phone.replace(/[\s.-]/g, '');
+    const phone = normalizeCameroonPhone(value.phone);
     const orderReference = value.orderReference.trim().toUpperCase();
 
     const payload: ContactRequest = {
@@ -247,7 +243,7 @@ export class ContactComponent implements OnInit {
       subject: value.subject as ContactSubject,
       message: value.message.trim(),
       consent: true,
-      ...(phone !== '' ? { phone: `+237${phone}` } : {}),
+      ...(phone !== '' ? { phone } : {}),
       ...(orderReference !== '' ? { orderReference } : {}),
       ...(value.turnstileToken !== null ? { turnstileToken: value.turnstileToken } : {}),
       ...(value.honeypot !== '' ? { _honey: value.honeypot } : {}),
@@ -301,7 +297,7 @@ export class ContactComponent implements OnInit {
       email: this.fb.control('', {
         validators: [Validators.required, Validators.email, Validators.maxLength(254)],
       }),
-      phone: this.fb.control('', { validators: [optionalCameroonPhone] }),
+      phone: this.fb.control('', { validators: [localPhoneValidator] }),
       subject: this.fb.control<ContactSubject | ''>('', {
         validators: [Validators.required],
       }),
