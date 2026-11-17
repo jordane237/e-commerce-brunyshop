@@ -122,6 +122,45 @@ test('conserve le panier invité, ouvre le mini-panier après ajout et le revali
   await expect(page).toHaveURL(/\/panier$/);
   await expect(page.getByRole('heading', { name: 'Mon panier' })).toBeVisible();
   await expect(page.locator('.cart-line')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Passer la commande' })).toBeDisabled();
+  await expect(page.getByText('Le paiement sera disponible prochainement.')).toBeVisible();
+});
+
+test('affiche le récapitulatif, la réassurance et borne la quantité au stock', async ({ page }) => {
+  await seedCart(page);
+  await page.route('**/api/v1/cart/validate', async (route) => {
+    const payload = route.request().postDataJSON() as ValidatePayload;
+    const body = validResponse(payload);
+    body.items = body.items.map((item) => ({
+      ...item,
+      availableStock: 1,
+      quantity: 1,
+      lineTotal: 25000,
+    }));
+    body.subtotal = 25000;
+    body.total = 25000;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    });
+  });
+
+  await page.goto('/panier');
+
+  await expect(page.getByRole('heading', { name: 'Récapitulatif' })).toBeVisible();
+  await expect(page.locator('.cart-summary__row--total')).toContainText('25 000 FCFA');
+  const reassurance = page.locator('.cart-reassurance');
+  await expect(reassurance.getByText('Paiement à la livraison')).toBeVisible();
+  await expect(reassurance.getByText('Échange sous 7 jours')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Augmenter la quantité de Mocassin E2E' }),
+  ).toBeDisabled();
+  await expect(page.getByText('Quantité maximale disponible (1) atteinte.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Continuer mes achats' })).toHaveAttribute(
+    'href',
+    '/boutique',
+  );
 });
 
 test('ferme le mini-panier au backdrop puis continue vers la boutique', async ({ page }) => {
@@ -202,7 +241,8 @@ test('affiche le changement de prix dans une bannière persistante', async ({ pa
 
   await expect(page.getByRole('heading', { name: 'Votre panier a changé' })).toBeVisible();
   await expect(page.locator('.cart-page__issues')).toContainText('a changé');
-  await expect(page.locator('.cart-summary__total')).toContainText('25 000 FCFA');
+  await expect(page.locator('.cart-summary__row--total')).toContainText('25 000 FCFA');
+  await expect(page.locator('.cart-line__issue')).toContainText('a changé');
 
   const stored = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
   expect(stored).toContain('"unitPriceAtAdd":25000');

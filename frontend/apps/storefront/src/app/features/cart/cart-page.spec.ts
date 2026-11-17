@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 import { CartStore } from '../../core/cart/cart.store';
 import type { CartIssueDto } from '@bruny/data-access';
-import type { CartLine } from '../../core/cart/cart.model';
+import type { CartLine, CartValidationResult } from '../../core/cart/cart.model';
 import { CartPage } from './cart-page';
 
 const LINE: CartLine = {
@@ -27,6 +27,7 @@ function createCart(initial: CartLine[] = [LINE]) {
   const loading = signal(false);
   const error = signal<string | null>(null);
   const issues = signal<CartIssueDto[]>([]);
+  const validationResult = signal<CartValidationResult | null>(null);
   const itemCount = computed(() => lines().reduce((sum, line) => sum + line.quantity, 0));
   const isEmpty = computed(() => lines().length === 0);
   const displayTotal = computed(() =>
@@ -38,6 +39,7 @@ function createCart(initial: CartLine[] = [LINE]) {
     loading: loading.asReadonly(),
     error: error.asReadonly(),
     issues: issues.asReadonly(),
+    validationResult: validationResult.asReadonly(),
     itemCount,
     isEmpty,
     displayTotal,
@@ -53,7 +55,7 @@ function createCart(initial: CartLine[] = [LINE]) {
     validate: vi.fn(async () => null),
   };
 
-  return { store, lines, loading, error, issues, itemCount };
+  return { store, lines, loading, error, issues, validationResult, itemCount };
 }
 
 function createPage(cart = createCart()) {
@@ -81,7 +83,7 @@ describe('CartPage', () => {
     expect(element.textContent).toContain('Mocassin Cuir');
     expect(element.textContent).toContain('Noir · Pointure 42');
     expect(element.textContent?.replace(/\s/g, ' ')).toContain('50 000 FCFA');
-    expect(element.querySelector('output')?.textContent?.trim()).toBe('2');
+    expect((element.querySelector('.qty-selector__input') as HTMLInputElement)?.value).toBe('2');
   });
 
   it('updates the quantity from the stepper and removes a line', () => {
@@ -115,9 +117,7 @@ describe('CartPage', () => {
 
     expect(element.textContent).toContain('Votre panier est vide');
     expect(element.textContent).toContain('Ajoutez un produit pour commencer votre commande.');
-    expect(element.querySelector('a[href="/boutique"]')?.textContent).toContain(
-      'Découvrir la boutique',
-    );
+    expect(element.querySelector('bruny-button')?.textContent).toContain('Découvrir la boutique');
   });
 
   it('shows a persistent issue banner and retries validation', () => {
@@ -154,6 +154,43 @@ describe('CartPage', () => {
     expect(element.textContent).toContain('Votre panier a changé');
     expect(element.textContent).toContain('Rupture de stock');
     expect(element.textContent).toContain('Votre panier est vide');
+  });
+
+  it('affiche le récapitulatif et le bandeau de réassurance', () => {
+    const { fixture } = createPage();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.textContent).toContain('Récapitulatif');
+    expect(element.textContent).toContain('Paiement à la livraison');
+    expect(element.textContent).toContain('Échange sous 7 jours');
+    expect(element.querySelector('bruny-button button')?.textContent).toContain(
+      'Passer la commande',
+    );
+  });
+
+  it('désactive le CTA quand une issue bloque la commande', () => {
+    const cart = createCart();
+    cart.validationResult.set({
+      valid: false,
+      lines: [],
+      subtotal: 50000,
+      discount: 0,
+      total: 50000,
+      issues: [
+        {
+          code: 'INSUFFICIENT_STOCK',
+          message: 'Stock insuffisant.',
+          variantId: 'variant-1',
+        },
+      ],
+      validatedAt: '2026-11-17T10:00:00.000Z',
+    });
+    const { fixture } = createPage(cart);
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      'bruny-button button',
+    ) as HTMLButtonElement;
+
+    expect(button.disabled).toBe(true);
   });
 
   it('shows the API error and a retry action', () => {

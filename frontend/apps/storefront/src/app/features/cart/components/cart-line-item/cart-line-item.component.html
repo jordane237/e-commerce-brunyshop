@@ -1,0 +1,54 @@
+<article class="cart-line" role="listitem">
+  <a
+    [routerLink]="['/produit', line().productSlug]"
+    class="cart-line__image-link"
+    [attr.aria-label]="'Voir ' + line().productName"
+  >
+    @if (line().imageUrl) {
+      <img
+        [src]="line().imageUrl"
+        [alt]="line().imageAlt ?? line().productName"
+        width="80"
+        height="80"
+        class="cart-line__image"
+        loading="lazy"
+      />
+    } @else {
+      <span class="cart-line__placeholder" aria-hidden="true"></span>
+    }
+  </a>
+
+  <div class="cart-line__info">
+    <a [routerLink]="['/produit', line().productSlug]" class="cart-line__name">{{
+      line().productName
+    }}</a>
+    <p class="cart-line__variant">{{ line().color }} · Pointure {{ line().size }}</p>
+    <p class="cart-line__unit-price">Prix unitaire : {{ unitPrice() | fcfa }}</p>
+    @if (lineIssue()) {
+      <p class="cart-line__issue" role="alert">{{ lineIssue() }}</p>
+    }
+  </div>
+
+  <div class="cart-line__quantity">
+    <bruny-quantity-selector
+      [value]="quantity()"
+      (valueChange)="quantityChange.emit($event)"
+      [min]="1"
+      [max]="maxQuantity()"
+      [productName]="line().productName"
+    />
+  </div>
+
+  <div class="cart-line__total">
+    <p class="cart-line__line-total">{{ lineTotal() | fcfa }}</p>
+    <button
+      type="button"
+      class="cart-line__remove"
+      (click)="removed.emit(line().variantId)"
+      [attr.aria-label]="'Retirer ' + line().productName + ' du panier'"
+    >
+      <bruny-icon name="trash" [size]="17" aria-hidden="true" />
+      Supprimer
+    </button>
+  </div>
+</article>

@@ -19,7 +19,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'panier',
-    loadComponent: () => import('./features/cart/cart-page').then((module) => module.CartPage),
+    loadChildren: () => import('./features/cart/cart.routes').then((module) => module.cartRoutes),
   },
   {
     path: 'connexion',

@@ -6,6 +6,7 @@ export * from './lib/card-list/card-list.component';
 export * from './lib/confirm-dialog/confirm-dialog.component';
 export * from './lib/data-table/data-table.component';
 export * from './lib/empty-state/empty-state.component';
+export * from './lib/quantity-selector/quantity-selector.component';
 export * from './lib/status-badge/status-badge.component';
 export * from './lib/button/button.component';
 export * from './lib/captcha/captcha.component';
