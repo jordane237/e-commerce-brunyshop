@@ -14,12 +14,14 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Headers,
   HttpCode,
   HttpStatus,
   Ip,
   Param,
   ParseUUIDPipe,
+  Query,
   Patch,
   Post,
   Put,
@@ -52,6 +54,8 @@ import { DuplicateProductDto } from './dto/duplicate-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateVariantsDto } from './dto/update-variants.dto';
 import { AdminProductsService } from './admin-products.service';
+import { AdminProductsQueryDto } from './dto/admin-products-query.dto';
+import { PaginatedAdminProductsDto } from './dto/paginated-admin-products.dto';
 import type { CatalogActor } from './admin-products.service';
 
 @ApiTags('admin-products')
@@ -61,6 +65,15 @@ import type { CatalogActor } from './admin-products.service';
 @Throttle({ default: { limit: 60, ttl: 60_000 } })
 export class AdminProductsController {
   constructor(private readonly admin: AdminProductsService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Lister tous les produits (admin) avec filtres, tri, pagination' })
+  @ApiOkResponse({ description: 'Liste paginée.', type: PaginatedAdminProductsDto })
+  @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
+  @ApiUnauthorizedResponse({ description: 'Jeton absent, invalide ou expiré.' })
+  async list(@Query() query: AdminProductsQueryDto) {
+    return this.admin.list(query);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

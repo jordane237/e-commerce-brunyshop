@@ -768,6 +768,115 @@
       }
     },
     "/api/v1/admin/products": {
+      "get": {
+        "operationId": "AdminProductsController_list_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Recherche (nom, slug, SKU), insensible a la casse.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "Filtre par categorie.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "stock",
+            "required": false,
+            "in": "query",
+            "description": "in: en stock, low: stock faible, out: rupture.",
+            "schema": {
+              "type": "string",
+              "enum": ["in", "low", "out"]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "updatedAt",
+              "type": "string",
+              "enum": ["updatedAt", "name", "price", "stock"]
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste paginée.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAdminProductsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Lister tous les produits (admin) avec filtres, tri, pagination",
+        "tags": ["admin-products"]
+      },
       "post": {
         "description": "Crée un produit en brouillon avec ses variantes. Accepte un tableau explicite `variants[]` ou la génération automatique `colors[]+sizes[]` (produit cartésien, stock initial à 0, SKU générés automatiquement). Chaque création est auditée et invalide le cache public immédiatement.",
         "operationId": "AdminProductsController_create_v1",
@@ -2453,6 +2562,21 @@
           "variants",
           "similarProducts"
         ]
+      },
+      "PaginatedAdminProductsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "meta": {
+            "type": "object"
+          }
+        },
+        "required": ["items", "meta"]
       },
       "CreateProductImageDto": {
         "type": "object",

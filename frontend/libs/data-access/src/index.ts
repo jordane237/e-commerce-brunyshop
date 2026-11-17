@@ -1,5 +1,6 @@
 export * from './lib/api-contracts';
 export * from './lib/catalog-api';
+export * from './lib/admin-products-api';
 export * from './lib/cart-api';
 export * from './lib/contact-api';
 export * from './lib/public-config.service';

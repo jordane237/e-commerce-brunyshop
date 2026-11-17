@@ -36,6 +36,8 @@ import type {
 import type { DuplicateProductDto } from './dto/duplicate-product.dto';
 import type { UpdateProductDto } from './dto/update-product.dto';
 import type { UpdateVariantsDto } from './dto/update-variants.dto';
+import type { AdminProductsQueryDto } from './dto/admin-products-query.dto';
+import type { AdminProductListItemDto } from './dto/admin-product-list-item.dto';
 import { SkuGeneratorService, variantKey } from './sku/sku-generator.service';
 import { SlugGeneratorService } from './slug/slug-generator.service';
 
@@ -43,6 +45,25 @@ export interface CatalogActor {
   userId: string;
   ip?: string;
   userAgent?: string;
+}
+
+interface AdminProductListRow {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  basePrice: number;
+  promoPrice: number | null;
+  updatedAt: Date;
+  categoryId: string;
+  categoryName: string;
+  brandId: string;
+  brandName: string;
+  totalStock: number;
+  availableStock: number;
+  sku: string | null;
+  imageUrl: string | null;
+  imageAlt: string | null;
 }
 
 interface NormalizedVariant {
@@ -598,6 +619,133 @@ export class AdminProductsService {
   }
 
   // ---------------------------------------------------------------- helpers
+
+  async list(
+    query: AdminProductsQueryDto,
+  ): Promise<{
+    items: AdminProductListItemDto[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const offset = (page - 1) * limit;
+    const sort = query.sort ?? 'updatedAt';
+    const order = (query.order ?? 'desc').toUpperCase();
+    const lowThreshold = await this.settings.getStockLowThresholdDefault();
+
+    const search = query.search?.trim();
+    const searchFilter =
+      search === undefined || search === ''
+        ? Prisma.empty
+        : Prisma.sql`AND (p."name" ILIKE ${'%' + search + '%'} OR p."slug" ILIKE ${'%' + search + '%'} OR EXISTS (SELECT 1 FROM "ProductVariant" v WHERE v."productId" = p."id" AND v."sku" ILIKE ${'%' + search + '%'}))`;
+    const statusFilter =
+      query.status === undefined
+        ? Prisma.empty
+        : Prisma.sql`AND p."status" = ${query.status}::"ProductStatus"`;
+    const categoryFilter =
+      query.categoryId === undefined
+        ? Prisma.empty
+        : Prisma.sql`AND p."categoryId" = ${query.categoryId}`;
+    const stockFilter =
+      query.stock === 'in'
+        ? Prisma.sql`AND COALESCE(s."totalStock", 0) > 0`
+        : query.stock === 'out'
+          ? Prisma.sql`AND COALESCE(s."totalStock", 0) = 0`
+          : query.stock === 'low'
+            ? Prisma.sql`AND COALESCE(s."availableStock", 0) > 0 AND COALESCE(s."availableStock", 0) <= ${lowThreshold}`
+            : Prisma.empty;
+
+    const orderSql = order === 'ASC' ? Prisma.sql`ASC` : Prisma.sql`DESC`;
+    const orderBy =
+      sort === 'name'
+        ? Prisma.sql`p."name" ${orderSql}`
+        : sort === 'price'
+          ? Prisma.sql`p."basePrice" ${orderSql}`
+          : sort === 'stock'
+            ? Prisma.sql`COALESCE(s."totalStock", 0) ${orderSql}`
+            : Prisma.sql`p."updatedAt" ${orderSql}`;
+
+    const where = Prisma.sql`
+      p."deletedAt" IS NULL
+      ${searchFilter}
+      ${statusFilter}
+      ${categoryFilter}
+      ${stockFilter}
+    `;
+
+    const [rows, counts] = await Promise.all([
+      this.prisma.$queryRaw<AdminProductListRow[]>(Prisma.sql`
+        SELECT
+          p."id" AS "id",
+          p."name" AS "name",
+          p."slug" AS "slug",
+          p."status"::text AS "status",
+          p."basePrice" AS "basePrice",
+          p."promoPrice" AS "promoPrice",
+          p."updatedAt" AS "updatedAt",
+          c."id" AS "categoryId",
+          c."name" AS "categoryName",
+          b."id" AS "brandId",
+          b."name" AS "brandName",
+          COALESCE(s."totalStock", 0)::int AS "totalStock",
+          COALESCE(s."availableStock", 0)::int AS "availableStock",
+          (SELECT v."sku" FROM "ProductVariant" v WHERE v."productId" = p."id" ORDER BY v."createdAt" ASC LIMIT 1) AS "sku",
+          (SELECT i."url" FROM "ProductImage" i WHERE i."productId" = p."id" ORDER BY i."position" ASC, i."createdAt" ASC LIMIT 1) AS "imageUrl",
+          (SELECT i."alt" FROM "ProductImage" i WHERE i."productId" = p."id" ORDER BY i."position" ASC, i."createdAt" ASC LIMIT 1) AS "imageAlt"
+        FROM "Product" p
+        INNER JOIN "Category" c ON c."id" = p."categoryId"
+        INNER JOIN "Brand" b ON b."id" = p."brandId"
+        LEFT JOIN LATERAL (
+          SELECT
+            COALESCE(SUM(v."stock"), 0)::int AS "totalStock",
+            COALESCE(SUM(v."stock" - v."reservedStock"), 0)::int AS "availableStock"
+          FROM "ProductVariant" v
+          WHERE v."productId" = p."id"
+        ) s ON true
+        WHERE ${where}
+        ORDER BY ${orderBy}
+        LIMIT ${limit} OFFSET ${offset}
+      `),
+      this.prisma.$queryRaw<[{ total: bigint }]>(Prisma.sql`
+        SELECT COUNT(*)::bigint AS "total"
+        FROM "Product" p
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(SUM(v."stock"), 0)::int AS "totalStock",
+                 COALESCE(SUM(v."stock" - v."reservedStock"), 0)::int AS "availableStock"
+          FROM "ProductVariant" v
+          WHERE v."productId" = p."id"
+        ) s ON true
+        WHERE ${where}
+      `),
+    ]);
+
+    const total = Number(counts[0]?.total ?? 0);
+    const items: AdminProductListItemDto[] = rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      status: row.status as AdminProductListItemDto['status'],
+      basePrice: Number(row.basePrice),
+      promoPrice: row.promoPrice === null ? null : Number(row.promoPrice),
+      image: row.imageUrl ? { url: row.imageUrl, alt: row.imageAlt } : null,
+      category: { id: row.categoryId, name: row.categoryName },
+      brand: { id: row.brandId, name: row.brandName },
+      totalStock: Number(row.totalStock),
+      availableStock: Number(row.availableStock),
+      sku: row.sku,
+      updatedAt: new Date(row.updatedAt).toISOString(),
+    }));
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 
   private async findProductOrThrow(id: string): Promise<AdminProductRow> {
     const product = await this.prisma.product.findUnique({

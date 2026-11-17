@@ -5,8 +5,13 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeFrCm from '@angular/common/locales/fr-CM';
+import { LOCALE_ID } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+registerLocaleData(localeFrCm, 'fr-CM');
+
 import { appRoutes } from './app.routes';
 import {
   AUTH_FORBIDDEN_PATH,
@@ -37,6 +42,7 @@ export const appConfig: ApplicationConfig = {
       ]),
     ),
     { provide: API_BASE_URL, useValue: '/api/v1' },
+    { provide: LOCALE_ID, useValue: 'fr-CM' },
     { provide: AUTH_LOGIN_PATH, useValue: '/connexion' },
     { provide: AUTH_FORBIDDEN_PATH, useValue: '/acces-refuse' },
     {

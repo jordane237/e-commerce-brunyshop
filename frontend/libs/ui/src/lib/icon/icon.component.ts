@@ -2,6 +2,10 @@ import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@an
 
 export type IconName =
   | 'search'
+  | 'more-vertical'
+  | 'archive'
+  | 'copy'
+  | 'chevrons-up-down'
   | 'chevron-down'
   | 'chevron-up'
   | 'chevron-left'
@@ -47,6 +51,10 @@ export type IconName =
 
 const ICONS: Record<IconName, readonly string[]> = {
   search: ['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z', 'm21 21-4.35-4.35'],
+  'more-vertical': ['M12 5h.01', 'M12 12h.01', 'M12 19h.01'],
+  archive: ['M21 8v13H3V8', 'M1 3h22v5H1z', 'M10 12h4'],
+  copy: ['M9 9h11v11H9z', 'M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1'],
+  'chevrons-up-down': ['m7 15 5 5 5-5', 'm7 9 5-5 5 5'],
   'chevron-down': ['m6 9 6 6 6-6'],
   'chevron-up': ['m18 15-6-6-6 6'],
   'chevron-left': ['m15 18-6-6 6-6'],

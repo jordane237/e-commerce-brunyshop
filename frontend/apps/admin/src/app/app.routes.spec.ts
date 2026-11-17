@@ -8,7 +8,7 @@ import {
   AuthService,
   SessionService,
 } from '@bruny/core';
-import { CatalogApi, PublicConfigService } from '@bruny/data-access';
+import { AdminProductsApi, CatalogApi, PublicConfigService } from '@bruny/data-access';
 import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { appRoutes } from './app.routes';
@@ -46,6 +46,14 @@ async function setup(roles?: string[], url = '/produits') {
       },
       { provide: AuthService, useValue: { logout: vi.fn(() => of({ ok: true })) } },
       { provide: CatalogApi, useValue: catalogApi },
+      {
+        provide: AdminProductsApi,
+        useValue: {
+          list: () => of({ items: [], meta: { total: 0, page: 1, limit: 20, totalPages: 0 } }),
+          updateStatus: () => of({}),
+          archive: () => of(void 0),
+        },
+      },
       {
         provide: PublicConfigService,
         useValue: { getConfig: () => of({ turnstileEnabled: false, turnstileSiteKey: null }) },
