@@ -42,6 +42,7 @@ testem.log
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # System Files
 .DS_Store
