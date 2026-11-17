@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsUUID, Max, MaxLength, Min } from 'class-validator';
 
 export const MAX_ORDER_LINE_QUANTITY = 100;
 
 export class CreateOrderItemDto {
-  @ApiProperty({ description: 'Identifiant de la variante choisie' })
-  @IsString()
+  @ApiProperty({ description: 'Identifiant de la variante choisie', format: 'uuid' })
+  @IsUUID()
   @IsNotEmpty()
   @MaxLength(64)
   variantId!: string;
@@ -19,3 +19,8 @@ export class CreateOrderItemDto {
   // No price field is declared: `forbidNonWhitelisted` rejects any attempt to
   // send unitPrice, total, previousUnitPrice or another client-side amount.
 }
+
+export type CreateOrderItemShape = {
+  variantId: string;
+  quantity: number;
+};

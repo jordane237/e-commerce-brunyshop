@@ -19,6 +19,13 @@ import { CreateOrderItemDto } from './create-order-item.dto';
 
 const CAMEROON_PHONE = /^\+237[0-9]{9}$/;
 
+/**
+ * Corps de `POST /orders`.
+ *
+ * Aucun montant n'est accepté : `forbidNonWhitelisted` rejette `unitPrice`,
+ * `total`, `subtotal`, `shippingFee`, etc. (CA #2). La clé d'idempotence vit
+ * dans l'en-tête `Idempotency-Key`, pas dans le corps (CA #1).
+ */
 export class CreateOrderDto {
   @ApiProperty({ type: [CreateOrderItemDto], description: 'Lignes de la commande (1 à 50)' })
   @IsArray()
@@ -51,6 +58,14 @@ export class CreateOrderDto {
   @Type(() => AddressSnapshotDto)
   address!: AddressSnapshotDto;
 
+  @ApiPropertyOptional({
+    description: 'Zone de livraison choisie en P10. Si absente, la zone est résolue par la ville.',
+    format: 'uuid',
+  })
+  @IsOptional()
+  @IsUUID()
+  deliveryZoneId?: string;
+
   @ApiProperty({
     enum: PaymentMethod,
     description: 'Moyen de paiement. Seul COD est disponible dans le MVP.',
@@ -58,10 +73,11 @@ export class CreateOrderDto {
   @IsEnum(PaymentMethod)
   paymentMethod!: PaymentMethod;
 
-  @ApiPropertyOptional({ description: 'Clé d’idempotence contre les doubles soumissions' })
+  @ApiPropertyOptional({ description: 'Note du client pour la préparation', maxLength: 500 })
   @IsOptional()
-  @IsUUID()
-  idempotencyKey?: string;
+  @IsString()
+  @MaxLength(500)
+  notes?: string;
 
   // Optional so TurnstileGuard can return CAPTCHA_REQUIRED before validation.
   @ApiPropertyOptional({ description: 'Jeton Cloudflare Turnstile' })
@@ -69,4 +85,11 @@ export class CreateOrderDto {
   @IsString()
   @MaxLength(4096)
   turnstileToken?: string;
+
+  // Honeypot: a real browser leaves it empty. Any value fails validation.
+  @ApiPropertyOptional({ description: 'Champ piège anti-bot (doit rester vide)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(0)
+  _honey?: string;
 }

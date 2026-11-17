@@ -1362,9 +1362,21 @@
     },
     "/api/v1/orders": {
       "post": {
-        "description": "Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.",
+        "description": "Aucun prix fourni par le client n'est utilisé : tous les montants sont recalculés côté serveur (catalogue, coupon, zone de livraison). L'en-tête Idempotency-Key est obligatoire : un renvoi avec la même clé et le même corps retourne la même commande. CAPTCHA Turnstile obligatoire. Limites : 5 requêtes/min/IP et 10 commandes/heure/téléphone. Paiement MVP : COD uniquement.",
         "operationId": "OrdersController_create_v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "UUID v4 unique par tentative de commande",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "6f1c2b9e-3d4a-4c5b-9e8f-0a1b2c3d4e5f"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1387,16 +1399,16 @@
             }
           },
           "400": {
-            "description": "Body invalide, guest incomplet, coupon ou zone invalides"
+            "description": "Body invalide, Idempotency-Key absente ou mal formée, guest incomplet, coupon ou zone invalides, CAPTCHA invalide"
           },
           "404": {
             "description": "Variante ou produit introuvable"
           },
           "409": {
-            "description": "Stock insuffisant ou clé d’idempotence en conflit"
+            "description": "INSUFFICIENT_STOCK, OUT_OF_STOCK, IDEMPOTENCY_CONFLICT ou ORDER_REFERENCE_CONFLICT"
           },
           "429": {
-            "description": "Trop de requêtes (20/min/IP)"
+            "description": "RATE_LIMIT_EXCEEDED (5/min/IP) ou ORDER_RATE_LIMIT_EXCEEDED (10/h/téléphone)"
           },
           "503": {
             "description": "CAPTCHA_UNAVAILABLE (service indisponible)"
@@ -3281,7 +3293,8 @@
         "properties": {
           "variantId": {
             "type": "string",
-            "description": "Identifiant de la variante choisie"
+            "description": "Identifiant de la variante choisie",
+            "format": "uuid"
           },
           "quantity": {
             "type": "number",
@@ -3328,6 +3341,15 @@
             "type": "string",
             "description": "Instructions de livraison",
             "maxLength": 300
+          },
+          "slot": {
+            "type": "string",
+            "enum": ["morning", "afternoon", "evening"],
+            "description": "Créneau préféré (P10) : matin, après-midi ou soirée"
+          },
+          "callBeforeDelivery": {
+            "type": "boolean",
+            "description": "Appeler le client avant la livraison (P09)"
           }
         },
         "required": ["recipientName", "phone", "city", "district", "line"]
@@ -3359,18 +3381,28 @@
           "address": {
             "$ref": "#/components/schemas/AddressSnapshotDto"
           },
+          "deliveryZoneId": {
+            "type": "string",
+            "description": "Zone de livraison choisie en P10. Si absente, la zone est résolue par la ville.",
+            "format": "uuid"
+          },
           "paymentMethod": {
             "type": "string",
             "enum": ["COD", "MOBILE_MONEY", "CARD"],
             "description": "Moyen de paiement. Seul COD est disponible dans le MVP."
           },
-          "idempotencyKey": {
+          "notes": {
             "type": "string",
-            "description": "Clé d’idempotence contre les doubles soumissions"
+            "description": "Note du client pour la préparation",
+            "maxLength": 500
           },
           "turnstileToken": {
             "type": "string",
             "description": "Jeton Cloudflare Turnstile"
+          },
+          "_honey": {
+            "type": "string",
+            "description": "Champ piège anti-bot (doit rester vide)"
           }
         },
         "required": ["items", "address", "paymentMethod"]

@@ -85,6 +85,22 @@ export class EnvVariables {
   @IsString()
   public COOKIE_DOMAIN?: string;
 
+  // --- Commandes (ORD-01) ----------------------------------------------
+  // Prefix of the readable order reference, e.g. BRN → BRN-2611-7K3F.
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{2,6}$/, {
+    message: 'ORDER_REFERENCE_PREFIX doit contenir 2 à 6 lettres majuscules.',
+  })
+  public ORDER_REFERENCE_PREFIX?: string;
+
+  // Anti-abuse ceiling per phone number over a rolling hour (default 10).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  public ORDER_RATE_LIMIT_PER_HOUR?: number;
+
   // --- Alertes stock (STK-03) ------------------------------------------
   // Interrupteur global des notifications d'alerte stock bas.
   @IsOptional()

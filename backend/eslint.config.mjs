@@ -178,8 +178,9 @@ export default tseslint.config(
       ],
     },
   },
-  // Exception : orders compose les modules cart (recalcul des prix/validation)
-  // et inventory (décrément atomique) via leurs services NestJS exportés.
+  // Exception : orders compose les modules cart (recalcul des prix/validation),
+  // inventory (décrément atomique), audit (traçabilité ORDER_CREATED) et
+  // notifications (accusé de réception order.created) via leurs services exportés.
   {
     files: ['src/modules/orders/**/*.ts'],
     rules: {
@@ -188,7 +189,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: crossModulePatterns(['cart', 'inventory']),
+              group: crossModulePatterns(['cart', 'inventory', 'audit', 'notifications']),
               message: CROSS_MODULE_MESSAGE,
             },
           ],

@@ -2,6 +2,7 @@
 // E2E STK-03 : franchissement du seuil, anti-spam, réapprovisionnement,
 // notifications internes, audit système et endpoint admin.
 
+import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { ValidationPipe, VersioningType, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -31,9 +32,11 @@ const PREFIX = 'e2e-stk03';
 const PASSWORD = 'E2eStk03!2026';
 const ADMIN_EMAIL = `${PREFIX}-admin@brunyshop.test`;
 const CUSTOMER_EMAIL = `${PREFIX}-customer@brunyshop.test`;
-const GUEST_PHONE = '+237699300001';
 const BASE_URL = '/api/v1';
 const suffix = `${Date.now()}`;
+// Le compteur anti-abus ORD-01 vit une heure : une plage de numéros par
+// exécution garde la suite rejouable.
+const GUEST_PHONE = `+23769${suffix.slice(-7)}`;
 
 describe('STK-03 alertes de stock bas', () => {
   let app: INestApplication;
@@ -75,7 +78,7 @@ describe('STK-03 alertes de stock bas', () => {
     await prisma.order
       .deleteMany({
         where: {
-          OR: [{ reference: { startsWith: PREFIX } }, { guestPhone: { startsWith: '+23769930' } }],
+          OR: [{ reference: { startsWith: PREFIX } }, { guestPhone: { startsWith: GUEST_PHONE } }],
         },
       })
       .catch(() => undefined);
@@ -114,9 +117,17 @@ describe('STK-03 alertes de stock bas', () => {
     return user.id;
   }
 
+  let ipCounter = 0;
+  function nextIp(): string {
+    ipCounter += 1;
+    return `10.80.${(ipCounter >> 8) & 255}.${(ipCounter & 255) + 1}`;
+  }
+
   function createOrder(quantity: number) {
     return request(app.getHttpServer())
       .post(`${BASE_URL}/orders`)
+      .set('Idempotency-Key', randomUUID())
+      .set('X-Forwarded-For', nextIp())
       .send({
         items: [{ variantId, quantity }],
         guestName: 'Alerte Stock E2E',

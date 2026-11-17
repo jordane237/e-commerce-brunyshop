@@ -15,6 +15,8 @@ export interface NotificationTemplate {
 import { AuthRegisterWelcomeV1 } from './fr/auth.register.welcome.v1';
 import { AuthLoginNewDeviceV1 } from './fr/auth.login.new-device.v1';
 import { OrderConfirmedV1 } from './fr/order.confirmed.v1';
+import { OrderCreatedAdminV1 } from './fr/order.created.admin.v1';
+import { OrderCreatedV1 } from './fr/order.created.v1';
 import { OrderShippedV1 } from './fr/order.shipped.v1';
 import { OrderDeliveredV1 } from './fr/order.delivered.v1';
 import { PasswordResetV1 } from './fr/password.reset.v1';
@@ -26,6 +28,8 @@ export const TEMPLATES: Record<string, Record<string, NotificationTemplate>> = {
   'auth.register.welcome': { v1: AuthRegisterWelcomeV1 },
   'auth.login.new-device': { v1: AuthLoginNewDeviceV1 },
   'order.confirmed': { v1: OrderConfirmedV1 },
+  'order.created': { v1: OrderCreatedV1 },
+  'order.created.admin': { v1: OrderCreatedAdminV1 },
   'order.shipped': { v1: OrderShippedV1 },
   'order.delivered': { v1: OrderDeliveredV1 },
   'password.reset': { v1: PasswordResetV1 },

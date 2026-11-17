@@ -24,7 +24,6 @@ if (process.env['REDIS_URL']) {
 const PREFIX = 'e2e-stk01-orders';
 const BASE_URL = '/api/v1';
 const PASSWORD = 'E2eStk01!2026';
-const GUEST_PHONE = '+237699100001';
 const suffix = `${Date.now()}`;
 
 interface Fixture {
@@ -50,18 +49,29 @@ describe('POST /api/v1/orders (STK-01)', () => {
     return `10.${(ipCounter >> 16) & 255}.${(ipCounter >> 8) & 255}.${(ipCounter & 255) + 1}`;
   }
 
-  function createOrder(body: unknown, token?: string) {
+  // Chaque requête porte sa propre clé d'idempotence : les cas nominaux ne
+  // doivent jamais rejouer la commande d'un autre test (CA #1).
+  function createOrder(body: unknown, token?: string, idempotencyKey: string = randomUUID()) {
     const requestBuilder = request(app.getHttpServer())
       .post(`${BASE_URL}/orders`)
+      .set('Idempotency-Key', idempotencyKey)
       .set('X-Forwarded-For', nextIp());
     if (token !== undefined) requestBuilder.set('Authorization', `Bearer ${token}`);
     return requestBuilder.send(body as object);
   }
 
+  // Le compteur anti-abus est par numéro : un numéro par requête évite de
+  // franchir la limite horaire au fil de la suite (CA #5).
+  let phoneCounter = 0;
+  function nextPhone(): string {
+    phoneCounter += 1;
+    return `+237699100${String(phoneCounter).padStart(3, '0')}`;
+  }
+
   function address(overrides: Record<string, unknown> = {}) {
     return {
       recipientName: 'Awa E2E',
-      phone: '+237699100001',
+      phone: nextPhone(),
       city,
       district: 'Bonapriso',
       line: 'Rue 12',
@@ -73,7 +83,7 @@ describe('POST /api/v1/orders (STK-01)', () => {
     return {
       items: [{ variantId: fixture.variantId, quantity: 1 }],
       guestName: 'Client Invité',
-      guestPhone: GUEST_PHONE,
+      guestPhone: nextPhone(),
       address: address(),
       paymentMethod: 'COD',
       ...overrides,
@@ -360,9 +370,10 @@ describe('POST /api/v1/orders (STK-01)', () => {
   it('retourne la même commande pour une clé d’idempotence réutilisée', async () => {
     const fixture = await createFixture('idempotent', 2);
     const idempotencyKey = randomUUID();
+    const body = guestBody(fixture);
 
-    const first = await createOrder(guestBody(fixture, { idempotencyKey }));
-    const second = await createOrder(guestBody(fixture, { idempotencyKey }));
+    const first = await createOrder(body, undefined, idempotencyKey);
+    const second = await createOrder(body, undefined, idempotencyKey);
 
     expect(first.status).toBe(201);
     expect(second.status).toBe(201);
@@ -378,9 +389,11 @@ describe('POST /api/v1/orders (STK-01)', () => {
     const fixture = await createFixture('idempotent-owner', 2);
     const idempotencyKey = randomUUID();
 
-    await createOrder(guestBody(fixture, { idempotencyKey }));
+    await createOrder(guestBody(fixture), undefined, idempotencyKey);
     const response = await createOrder(
-      guestBody(fixture, { idempotencyKey, guestPhone: '+237699100099' }),
+      guestBody(fixture, { guestPhone: '+237699100099' }),
+      undefined,
+      idempotencyKey,
     );
 
     expect(response.status).toBe(409);

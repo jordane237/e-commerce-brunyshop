@@ -405,6 +405,9 @@ model Order {
   deletedAt      DateTime?
   // Anti double-submission guard.
   idempotencyKey String? @unique
+  // SHA-256 of the canonical request body, bound to idempotencyKey: the same
+  // key with a different payload is a conflict, not a replay (ORD-01).
+  idempotencyRequestHash String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

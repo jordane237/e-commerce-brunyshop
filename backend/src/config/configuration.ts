@@ -34,6 +34,10 @@ export interface ApplicationConfig {
     lowAlertEnabled: boolean;
     lowThresholdDefault: number;
   };
+  orders: {
+    referencePrefix: string;
+    rateLimitPerHour: number;
+  };
   storage: StorageSettings;
   auth: AuthConfig;
   turnstile: TurnstileSettings;
@@ -65,6 +69,12 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
         String(env['STOCK_LOW_ALERT_ENABLED'] ?? 'true').toLowerCase(),
       ),
       lowThresholdDefault: Number(env['STOCK_LOW_THRESHOLD_DEFAULT'] ?? 5),
+    },
+    orders: {
+      referencePrefix: String(env['ORDER_REFERENCE_PREFIX'] ?? 'BRN')
+        .trim()
+        .toUpperCase(),
+      rateLimitPerHour: Number(env['ORDER_RATE_LIMIT_PER_HOUR'] ?? 10),
     },
     catalog: {
       productDetailTtlSeconds: Number(env['CACHE_PRODUCT_DETAIL_TTL_SECONDS'] ?? 300),

@@ -23,8 +23,9 @@ if (process.env['REDIS_URL']) {
 
 const PREFIX = 'e2e-stk01-concurrency';
 const BASE_URL = '/api/v1';
-const GUEST_PHONE = '+237699200001';
 const suffix = `${Date.now()}`;
+// Le compteur anti-abus ORD-01 dure une heure : plage de numéros par exécution.
+const PHONE_PREFIX = `+23769${suffix.slice(-4)}`;
 
 interface Fixture {
   productId: string;
@@ -44,17 +45,26 @@ describe('STK-01 concurrence stock', () => {
     return `10.${(ipCounter >> 16) & 255}.${(ipCounter >> 8) & 255}.${(ipCounter & 255) + 1}`;
   }
 
-  function createOrder(body: unknown) {
+  function createOrder(payload: unknown, idempotencyKey: string = randomUUID()) {
     return request(app.getHttpServer())
       .post(`${BASE_URL}/orders`)
+      .set('Idempotency-Key', idempotencyKey)
       .set('X-Forwarded-For', nextIp())
-      .send(body as object);
+      .send(payload as object);
+  }
+
+  // Un numéro par requête : le compteur anti-abus ORD-01 limite 10 commandes
+  // par heure et par téléphone.
+  let phoneCounter = 0;
+  function nextPhone(): string {
+    phoneCounter += 1;
+    return `${PHONE_PREFIX}${String(phoneCounter).padStart(3, '0')}`;
   }
 
   function address() {
     return {
       recipientName: 'Concurrence E2E',
-      phone: GUEST_PHONE,
+      phone: nextPhone(),
       city,
       district: 'Bonapriso',
       line: 'Rue 12',
@@ -65,7 +75,7 @@ describe('STK-01 concurrence stock', () => {
     return {
       items,
       guestName: 'Concurrence E2E',
-      guestPhone: GUEST_PHONE,
+      guestPhone: nextPhone(),
       address: address(),
       paymentMethod: 'COD',
       ...extra,
@@ -106,7 +116,7 @@ describe('STK-01 concurrence stock', () => {
       .deleteMany({ where: { variant: { product: productWhere } } })
       .catch(() => undefined);
     await prisma.order
-      .deleteMany({ where: { guestPhone: { startsWith: '+237699200' } } })
+      .deleteMany({ where: { guestPhone: { startsWith: PHONE_PREFIX } } })
       .catch(() => undefined);
     await prisma.product.deleteMany({ where: productWhere }).catch(() => undefined);
     await prisma.deliveryZone
@@ -253,9 +263,12 @@ describe('STK-01 concurrence stock', () => {
   it('deux requêtes avec la même clé d’idempotence renvoient la même commande', async () => {
     const fixture = await createFixture('same-key', 2);
     const idempotencyKey = randomUUID();
-    const payload = body([{ variantId: fixture.variantId, quantity: 1 }], { idempotencyKey });
+    const payload = body([{ variantId: fixture.variantId, quantity: 1 }]);
 
-    const responses = await Promise.all([createOrder(payload), createOrder(payload)]);
+    const responses = await Promise.all([
+      createOrder(payload, idempotencyKey),
+      createOrder(payload, idempotencyKey),
+    ]);
 
     expect(responses.map((response) => response.status)).toEqual([201, 201]);
     expect(responses[0].body.id).toBe(responses[1].body.id);
@@ -268,9 +281,14 @@ describe('STK-01 concurrence stock', () => {
   });
 
   it('annule le premier décrément si un second article est en rupture', async () => {
-    // IDs choisis pour que le tri anti-deadlock traite `a-...` avant `z-...`.
-    const first = await createFixture('rollback-first', 1, `a-${suffix}-first`);
-    const second = await createFixture('rollback-second', 0, `z-${suffix}-second`);
+    // UUID ordonnés pour que le tri anti-deadlock traite la première ligne
+    // avant la seconde (le DTO ORD-01 impose des identifiants UUID).
+    const first = await createFixture('rollback-first', 1, '00000000-0000-4000-8000-000000000001');
+    const second = await createFixture(
+      'rollback-second',
+      0,
+      'ffffffff-ffff-4fff-8fff-ffffffffffff',
+    );
     const validation = app.get(CartValidationService);
     // Simule un stock devenu indisponible après le pré-check du panier.
     vi.spyOn(validation, 'validateCart').mockResolvedValueOnce({ valid: true } as never);

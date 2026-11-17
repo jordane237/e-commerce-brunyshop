@@ -1,10 +1,13 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { randomInt } from 'node:crypto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { createHash } from 'node:crypto';
 
 import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import {
@@ -14,6 +17,7 @@ import {
   StockMovementReason,
 } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/database/database.module';
+import { AuditLogService } from '../audit/audit.service';
 import { CartPricingService } from '../cart/cart-pricing.service';
 import { CartValidationService } from '../cart/cart-validation.service';
 import {
@@ -26,7 +30,15 @@ import { AddressSnapshotDto } from './dto/address-snapshot.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { MAX_ORDER_LINE_QUANTITY } from './dto/create-order-item.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
+import {
+  ORDER_CREATED_EVENT,
+  ORDER_AUDIT_ACTIONS,
+  OrderCreatedEvent,
+  type OrderCreatedItem,
+} from './events/order-created.event';
+import { OrderAttemptService } from './order-attempt.service';
 import { OrderErrorCode } from './orders.errors';
+import { OrderReferenceGenerator } from './reference/order-reference.generator';
 
 const variantSelection = {
   id: true,
@@ -72,6 +84,12 @@ interface CreateOrderMeta {
   userAgent?: string;
 }
 
+interface PersistedOrder {
+  order: Order;
+  stockVariantIds: string[];
+  items: OrderCreatedItem[];
+}
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -79,26 +97,31 @@ export class OrdersService {
     private readonly pricing: CartPricingService,
     private readonly cartValidation: CartValidationService,
     private readonly inventory: InventoryService,
+    private readonly references: OrderReferenceGenerator,
+    private readonly attempts: OrderAttemptService,
+    private readonly auditLog: AuditLogService,
+    private readonly events: EventEmitter2,
   ) {}
 
   async createOrder(
     dto: CreateOrderDto,
+    idempotencyKey: string,
     actor: AuthenticatedUser | null,
-    _meta?: CreateOrderMeta,
+    meta: CreateOrderMeta = {},
   ): Promise<OrderResponseDto> {
     this.assertPaymentMethod(dto.paymentMethod);
     const guest = this.resolveGuest(dto, actor);
+    const requestHash = this.hashRequest(dto);
 
-    // A existing key is returned without touching stock or creating a second
-    // payment. Ownership is checked so a leaked key cannot expose an order.
-    if (dto.idempotencyKey !== undefined) {
-      const existing = await this.prisma.order.findUnique({
-        where: { idempotencyKey: dto.idempotencyKey },
-      });
-      if (existing !== null) {
-        return this.reuseExistingOrder(existing, actor, dto);
-      }
+    // Replay: the same key always returns the same order, never a duplicate
+    // and never another customer's order (CA #1).
+    const existing = await this.prisma.order.findUnique({ where: { idempotencyKey } });
+    if (existing !== null) {
+      return this.replayOrder(existing, actor, dto, requestHash);
     }
+
+    const phone = guest?.guestPhone ?? actor?.phone ?? dto.address.phone;
+    await this.assertPhoneWithinLimit(phone, actor, meta);
 
     const validation = await this.cartValidation.validateCart(
       {
@@ -118,21 +141,30 @@ export class OrdersService {
 
     const lines = this.mergeLines(dto.items);
     for (let attempt = 0; ; attempt += 1) {
-      const reference = this.createReference();
+      const reference = await this.references.generate();
       try {
-        const { order, stockVariantIds } = await this.persistOrder(
+        const persisted = await this.persistOrder({
           dto,
           lines,
           actor,
           guest,
           reference,
-        );
-        // Émission strictement post-commit : un rollback ne doit jamais
-        // produire d'alerte de stock bas.
-        await this.inventory.emitLowStockEvents(stockVariantIds);
-        return this.toResponse(order);
+          idempotencyKey,
+          requestHash,
+          meta,
+        });
+        // Émission strictement post-commit : ni rollback, ni commande absente.
+        await this.inventory.emitLowStockEvents(persisted.stockVariantIds);
+        this.emitCreated(persisted.order, persisted.items, actor, guest);
+        return this.toResponse(persisted.order);
       } catch (error: unknown) {
-        const recovered = await this.recoverUniqueConflict(error, dto, actor);
+        const recovered = await this.recoverUniqueConflict(
+          error,
+          idempotencyKey,
+          dto,
+          actor,
+          requestHash,
+        );
         if (recovered !== null) {
           return this.toResponse(recovered);
         }
@@ -150,13 +182,18 @@ export class OrdersService {
     }
   }
 
-  private async persistOrder(
-    dto: CreateOrderDto,
-    lines: RequestedLine[],
-    actor: AuthenticatedUser | null,
-    guest: { guestName: string; guestPhone: string } | null,
-    reference: string,
-  ): Promise<{ order: Order; stockVariantIds: string[] }> {
+  private async persistOrder(input: {
+    dto: CreateOrderDto;
+    lines: RequestedLine[];
+    actor: AuthenticatedUser | null;
+    guest: { guestName: string; guestPhone: string } | null;
+    reference: string;
+    idempotencyKey: string;
+    requestHash: string;
+    meta: CreateOrderMeta;
+  }): Promise<PersistedOrder> {
+    const { dto, lines, actor, guest, reference, idempotencyKey, requestHash, meta } = input;
+
     return this.prisma.$transaction(
       async (tx) => {
         const stockVariantIds: string[] = [];
@@ -168,6 +205,7 @@ export class OrdersService {
         const variantsById = new Map(variants.map((variant) => [variant.id, variant]));
 
         const orderItems: Prisma.OrderItemCreateWithoutOrderInput[] = [];
+        const eventItems: OrderCreatedItem[] = [];
         let subtotal = 0;
 
         for (const line of lines) {
@@ -208,6 +246,13 @@ export class OrdersService {
             unitPrice: quote.unitPrice,
             quantity: line.quantity,
           });
+          eventItems.push({
+            productName: variant.product.name,
+            size: variant.size,
+            color: variant.color,
+            quantity: line.quantity,
+            unitPrice: quote.unitPrice,
+          });
         }
 
         const coupon = await this.findCoupon(tx, dto.couponCode);
@@ -240,7 +285,7 @@ export class OrdersService {
           }
         }
 
-        const zone = await this.findDeliveryZone(tx, dto.address.city);
+        const zone = await this.findDeliveryZone(tx, dto.address.city, dto.deliveryZoneId);
         const shippingFee = zone.fee;
         const total = Math.max(0, subtotal - discount) + shippingFee;
 
@@ -258,7 +303,16 @@ export class OrdersService {
             paymentMethod: dto.paymentMethod,
             paymentStatus: 'PENDING',
             addressSnapshot: this.freezeAddress(dto.address),
-            ...(dto.idempotencyKey !== undefined ? { idempotencyKey: dto.idempotencyKey } : {}),
+            ...(meta.ipAddress !== undefined || meta.userAgent !== undefined
+              ? {
+                  source: {
+                    ...(meta.ipAddress !== undefined ? { ipAddress: meta.ipAddress } : {}),
+                    ...(meta.userAgent !== undefined ? { userAgent: meta.userAgent } : {}),
+                  },
+                }
+              : {}),
+            idempotencyKey,
+            idempotencyRequestHash: requestHash,
             items: { create: orderItems },
             ...(appliedCouponId !== null
               ? { coupons: { create: [{ couponId: appliedCouponId }] } }
@@ -305,44 +359,124 @@ export class OrdersService {
           });
         }
 
-        return { order, stockVariantIds };
+        // Audit inside the transaction: a rolled-back order leaves no trace.
+        await this.auditLog.record(tx, {
+          userId: actor?.id ?? null,
+          action: ORDER_AUDIT_ACTIONS.ORDER_CREATED,
+          entity: 'Order',
+          entityId: order.id,
+          ...(meta.ipAddress !== undefined ? { ip: meta.ipAddress } : {}),
+          ...(meta.userAgent !== undefined ? { userAgent: meta.userAgent } : {}),
+          after: {
+            reference: order.reference,
+            status: order.status,
+            paymentMethod: order.paymentMethod,
+            paymentStatus: order.paymentStatus,
+            subtotal: order.subtotal,
+            discount: order.discount,
+            shippingFee: order.shippingFee,
+            total: order.total,
+            itemCount: orderItems.reduce((sum, item) => sum + item.quantity, 0),
+            zoneId: zone.id,
+          },
+        });
+
+        return { order, stockVariantIds, items: eventItems };
       },
       { maxWait: 5_000, timeout: 15_000 },
     );
   }
 
+  private async assertPhoneWithinLimit(
+    phone: string,
+    actor: AuthenticatedUser | null,
+    meta: CreateOrderMeta,
+  ): Promise<void> {
+    try {
+      await this.attempts.assertWithinLimit(phone);
+    } catch (error: unknown) {
+      if (error instanceof HttpException && error.getStatus() === HttpStatus.TOO_MANY_REQUESTS) {
+        await this.auditLog
+          .record(this.prisma, {
+            userId: actor?.id ?? null,
+            action: ORDER_AUDIT_ACTIONS.ORDER_RATE_LIMITED,
+            entity: 'Order',
+            entityId: 'rate-limit',
+            ...(meta.ipAddress !== undefined ? { ip: meta.ipAddress } : {}),
+            ...(meta.userAgent !== undefined ? { userAgent: meta.userAgent } : {}),
+            after: { phoneMasked: `***${phone.slice(-4)}` },
+          })
+          .catch(() => undefined);
+      }
+      throw error;
+    }
+  }
+
+  private emitCreated(
+    order: Order,
+    items: OrderCreatedItem[],
+    actor: AuthenticatedUser | null,
+    guest: { guestName: string; guestPhone: string } | null,
+  ): void {
+    this.events.emit(
+      ORDER_CREATED_EVENT,
+      new OrderCreatedEvent(
+        order.id,
+        order.reference,
+        actor?.id ?? null,
+        guest?.guestName ?? addressRecipientName(order.addressSnapshot),
+        guest?.guestPhone ?? actor?.phone ?? null,
+        actor?.email ?? null,
+        order.total,
+        items,
+      ),
+    );
+  }
+
   private async recoverUniqueConflict(
     error: unknown,
+    idempotencyKey: string,
     dto: CreateOrderDto,
     actor: AuthenticatedUser | null,
+    requestHash: string,
   ): Promise<Order | null> {
     if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
       return null;
     }
-
-    // Prisma may report the constraint name instead of the field list. With an
-    // idempotency key in the request, the authoritative check is the row
-    // itself: return it when the competing request committed first.
-    if (dto.idempotencyKey === undefined) {
-      return null;
-    }
     const existing = await this.prisma.order.findUnique({
-      where: { idempotencyKey: dto.idempotencyKey },
+      where: { idempotencyKey },
     });
     if (existing === null) {
       return null;
     }
     this.assertIdempotentOwner(existing, actor, dto);
+    this.assertSameRequest(existing, requestHash);
     return existing;
   }
 
-  private reuseExistingOrder(
+  private replayOrder(
     order: Order,
     actor: AuthenticatedUser | null,
     dto: CreateOrderDto,
+    requestHash: string,
   ): OrderResponseDto {
     this.assertIdempotentOwner(order, actor, dto);
+    this.assertSameRequest(order, requestHash);
     return this.toResponse(order);
+  }
+
+  private assertSameRequest(order: Order, requestHash: string): void {
+    // Rows created before ORD-01 carry no hash: replaying them stays safe.
+    if (order.idempotencyRequestHash === null) {
+      return;
+    }
+    if (order.idempotencyRequestHash !== requestHash) {
+      throw new ConflictException({
+        code: OrderErrorCode.IDEMPOTENCY_CONFLICT,
+        message:
+          'Cette clé d’idempotence a déjà servi pour une autre commande. Reprenez la commande existante ou utilisez une nouvelle clé.',
+      });
+    }
   }
 
   private assertIdempotentOwner(
@@ -361,6 +495,33 @@ export class OrdersService {
         message: 'Cette clé d’idempotence appartient à une autre commande.',
       });
     }
+  }
+
+  private hashRequest(dto: CreateOrderDto): string {
+    const lines = this.mergeLines(dto.items)
+      .map((line) => ({ variantId: line.variantId, quantity: line.quantity }))
+      .sort((a, b) => a.variantId.localeCompare(b.variantId) || a.quantity - b.quantity);
+    const canonical = {
+      items: lines,
+      couponCode: dto.couponCode?.trim().toUpperCase() ?? null,
+      guestName: dto.guestName?.trim() ?? null,
+      guestPhone: dto.guestPhone?.trim() ?? null,
+      address: {
+        recipientName: dto.address.recipientName.trim(),
+        phone: dto.address.phone,
+        city: dto.address.city.trim(),
+        district: dto.address.district.trim(),
+        line: dto.address.line.trim(),
+        landmark: dto.address.landmark?.trim() ?? null,
+        instructions: dto.address.instructions?.trim() ?? null,
+        slot: dto.address.slot ?? null,
+        callBeforeDelivery: dto.address.callBeforeDelivery ?? null,
+      },
+      deliveryZoneId: dto.deliveryZoneId ?? null,
+      paymentMethod: dto.paymentMethod,
+      notes: dto.notes?.trim() ?? null,
+    };
+    return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
   }
 
   private validationException(validation: CartValidationResponseDto): Error {
@@ -517,16 +678,43 @@ export class OrdersService {
     });
   }
 
+  // A zone is identified either by the id chosen in P10 (preferred) or by the
+  // delivery city. DeliveryZone carries no active flag, so existence is the
+  // only server-side availability check.
   private async findDeliveryZone(
     tx: Prisma.TransactionClient,
     city: string,
+    deliveryZoneId: string | undefined,
   ): Promise<{ id: string; fee: number }> {
-    const normalizedCity = city.trim().toLocaleLowerCase('fr');
+    const normalizedCity = normalizeCity(city);
+
+    if (deliveryZoneId !== undefined) {
+      const zone = await tx.deliveryZone.findUnique({
+        where: { id: deliveryZoneId },
+        select: { id: true, fee: true, cities: true },
+      });
+      if (zone === null) {
+        throw new BadRequestException({
+          code: OrderErrorCode.DELIVERY_ZONE_NOT_FOUND,
+          message: 'Cette zone de livraison n’existe plus. Choisissez une autre adresse.',
+          errors: [{ field: 'deliveryZoneId', message: 'Zone introuvable.' }],
+        });
+      }
+      if (!zone.cities.some((value) => normalizeCity(value) === normalizedCity)) {
+        throw new BadRequestException({
+          code: OrderErrorCode.DELIVERY_ZONE_MISMATCH,
+          message: `La ville ${city.trim()} ne fait pas partie de la zone choisie.`,
+          errors: [{ field: 'address.city', message: 'Ville hors de la zone sélectionnée.' }],
+        });
+      }
+      return { id: zone.id, fee: zone.fee };
+    }
+
     const zones = await tx.deliveryZone.findMany({
       select: { id: true, fee: true, cities: true },
     });
     const zone = zones.find((candidate) =>
-      candidate.cities.some((value) => value.trim().toLocaleLowerCase('fr') === normalizedCity),
+      candidate.cities.some((value) => normalizeCity(value) === normalizedCity),
     );
     if (zone === undefined) {
       throw new BadRequestException({
@@ -547,19 +735,11 @@ export class OrdersService {
       line: address.line.trim(),
       ...(address.landmark !== undefined ? { landmark: address.landmark.trim() } : {}),
       ...(address.instructions !== undefined ? { instructions: address.instructions.trim() } : {}),
+      ...(address.slot !== undefined ? { slot: address.slot } : {}),
+      ...(address.callBeforeDelivery !== undefined
+        ? { callBeforeDelivery: address.callBeforeDelivery }
+        : {}),
     };
-  }
-
-  private createReference(): string {
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let suffix = '';
-    for (let index = 0; index < 4; index += 1) {
-      suffix += alphabet[randomInt(alphabet.length)];
-    }
-    return `BRN-${yy}${mm}-${suffix}`;
   }
 
   private isReferenceConflict(error: unknown): boolean {
@@ -595,4 +775,16 @@ export class OrdersService {
       createdAt: order.createdAt.toISOString(),
     };
   }
+}
+
+function normalizeCity(city: string): string {
+  return city.trim().toLocaleLowerCase('fr');
+}
+
+// L'instantané d'adresse est un JSON libre côté Prisma : on ne lit que le nom
+// du destinataire, avec un repli null pour les anciennes lignes.
+function addressRecipientName(snapshot: Prisma.JsonValue): string | null {
+  if (snapshot === null || typeof snapshot !== 'object' || Array.isArray(snapshot)) return null;
+  const value = (snapshot as Prisma.JsonObject)['recipientName'];
+  return typeof value === 'string' && value.trim() !== '' ? value : null;
 }

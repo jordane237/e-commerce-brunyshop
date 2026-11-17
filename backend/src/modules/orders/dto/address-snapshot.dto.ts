@@ -1,7 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 const CAMEROON_PHONE = /^\+237[0-9]{9}$/;
+
+export const DELIVERY_SLOTS = ['morning', 'afternoon', 'evening'] as const;
+export type DeliverySlot = (typeof DELIVERY_SLOTS)[number];
 
 export class AddressSnapshotDto {
   @ApiProperty({ description: 'Nom du destinataire', maxLength: 150 })
@@ -44,4 +55,17 @@ export class AddressSnapshotDto {
   @IsString()
   @MaxLength(300)
   instructions?: string;
+
+  @ApiPropertyOptional({
+    enum: DELIVERY_SLOTS,
+    description: 'Créneau préféré (P10) : matin, après-midi ou soirée',
+  })
+  @IsOptional()
+  @IsIn(DELIVERY_SLOTS)
+  slot?: DeliverySlot;
+
+  @ApiPropertyOptional({ description: 'Appeler le client avant la livraison (P09)' })
+  @IsOptional()
+  @IsBoolean()
+  callBeforeDelivery?: boolean;
 }
