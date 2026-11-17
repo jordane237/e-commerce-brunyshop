@@ -238,6 +238,10 @@ Les prix sont exprimés en francs CFA (FCFA), toutes taxes comprises. Les frais 
 
 Le paiement se fait à la livraison, en espèces ou par Mobile Money, après vérification du colis. Aucun paiement n'est exigé avant la remise.
 
+En V2, un paiement en ligne par Mobile Money (MTN MoMo / Orange Money) pourra être proposé via un prestataire agréé. Le prestataire sera précisé après sélection (voir dossier CNT-07). Les conditions générales du prestataire s'appliqueront en complément des présentes.
+[Prestataire Mobile Money : à préciser après sélection — voir CNT-07]
+TODO : validation juriste (CNT-03) avant mise en production.
+
 ### Article 6 — Livraison
 
 Les zones, délais et frais sont indiqués sur la page Livraison. Les délais sont indicatifs. Le client doit fournir une adresse exacte et un point de repère fiable. En cas d'adresse erronée ou d'absence, une nouvelle présentation peut être facturée.
@@ -279,6 +283,7 @@ Le responsable du traitement est {{legal.companyName}}, joignable à support@bru
 - Identité et contact : prénom, nom, e-mail, téléphone.
 - Adresses de livraison : ville, quartier, adresse, repère, téléphone.
 - Commandes : articles, montants, statuts, historique.
+- Paiement Mobile Money (V2) : numéro de téléphone Mobile Money, montant, référence de transaction, statut de paiement (via prestataire agréé).
 - Données techniques : journaux de connexion, adresse IP, appareil, pages consultées.
 - Préférences : favoris, consentements.
 

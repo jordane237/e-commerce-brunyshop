@@ -26,3 +26,13 @@
 - Réseau `backend` marqué `internal: true`.
 - Les services applicatifs utilisent `expose:` et ne sont accessibles que via la gateway.
 - Vérification hôte : `ss -tlnp` ne doit montrer aucun port `5432` ou `6379`.
+
+## Secrets de paiement Mobile Money (V2)
+- Référence : `docs/business/CNT-07/POLITIQUE-SECURITE-CLES.md`.
+- Aucune clé Mobile Money ne doit être présente dans le repo, dans `.env.example` (uniquement `CHANGEME_*`) ou dans les documents.
+- Les clés de paiement doivent être stockées dans un gestionnaire de secrets (Docker/Kubernetes secrets ou `sops` en MVP, Vault/AWS Secrets Manager en V2).
+- Rotation trimestrielle et révocation immédiate en cas de fuite.
+- Webhooks signés (HMAC) et idempotence via `providerRef`.
+- Audit via `AuditService` (`PAYMENT_KEY_USED`, `PAYMENT_KEY_ROTATED`, `PAYMENT_KEY_COMPROMISED`).
+- Logs sans clé en clair (`redact` pino).
+EOF
