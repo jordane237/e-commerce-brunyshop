@@ -19,6 +19,9 @@ interface HostItem extends SizeSelectorItem {
       [readonly]="readonly()"
       [maxItems]="maxItems()"
       [loading]="loading()"
+      [showLabel]="showLabel()"
+      [term]="term()"
+      [lowStockThreshold]="lowStockThreshold()"
       (select)="selected.set($event)"
     />
   `,
@@ -33,6 +36,9 @@ class SizeSelectorHostComponent {
   readonly readonly = signal(false);
   readonly maxItems = signal<number | null>(null);
   readonly loading = signal(false);
+  readonly showLabel = signal(true);
+  readonly term = signal('Taille');
+  readonly lowStockThreshold = signal<number | null>(null);
 }
 
 function setHostValue(instance: object, key: string, value: unknown): void {
@@ -95,7 +101,7 @@ describe('SizeSelectorComponent', () => {
 
     expect(disabled.disabled).toBe(true);
     expect(disabled.getAttribute('aria-disabled')).toBe('true');
-    expect(disabled.getAttribute('aria-label')).toBe('Taille 43');
+    expect(disabled.getAttribute('aria-label')).toBe('Taille 43 (indisponible)');
   });
 
   it('exposes stock in the accessible label', async () => {
@@ -130,6 +136,37 @@ describe('SizeSelectorComponent', () => {
       'autres pointures',
     );
     expect(nativeElement.querySelectorAll('.bs-size').length).toBe(1);
+  });
+
+  it('affiche « Plus que X en stock » sous une pointure faible', async () => {
+    const { nativeElement } = await create({
+      items: [{ id: 'v1', size: '42', stock: 2 }],
+      lowStockThreshold: 3,
+      term: 'Pointure',
+    });
+
+    expect(nativeElement.querySelector('.bs-size-selector__low-stock')?.textContent).toContain(
+      'Plus que 2 en stock',
+    );
+    expect(nativeElement.querySelector('.bs-size')?.getAttribute('aria-label')).toBe(
+      'Pointure 42, plus que 2 en stock',
+    );
+  });
+
+  it('expose un radiogroup et l’état coché', async () => {
+    const { nativeElement } = await create({ selected: { id: 'v2', size: '42' } });
+
+    expect(nativeElement.querySelector('[role="radiogroup"]')).not.toBeNull();
+    expect(nativeElement.querySelectorAll('[role="radio"]').length).toBe(3);
+    expect(nativeElement.querySelector('.bs-size--selected')?.getAttribute('aria-checked')).toBe(
+      'true',
+    );
+  });
+
+  it('ne rend pas la ligne « Sélectionner » quand showLabel est faux', async () => {
+    const { nativeElement } = await create({ showLabel: false });
+
+    expect(nativeElement.querySelector('.bs-size-selector__label')).toBeNull();
   });
 
   it('does not crash with an empty list', async () => {

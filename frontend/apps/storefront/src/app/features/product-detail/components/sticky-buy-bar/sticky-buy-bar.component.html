@@ -1,0 +1,35 @@
+<div class="sticky-buy-bar" role="region" aria-label="Actions d'achat rapide">
+  <div class="sticky-buy-bar__price">
+    <span class="sticky-buy-bar__label">Total à payer</span>
+    <bruny-price-tag [amount]="effectivePrice()" [compareAt]="originalPrice()" size="md" />
+  </div>
+
+  <div class="sticky-buy-bar__actions">
+    <bruny-button
+      variant="primary"
+      [disabled]="!canAddToCart()"
+      (click)="addToCart.emit()"
+      [attr.aria-describedby]="!canAddToCart() && addToCartMessage() ? 'sticky-buy-help' : null"
+    >
+      <bruny-icon name="cart" [size]="18" aria-hidden="true" />
+      Ajouter au panier
+    </bruny-button>
+
+    <a
+      class="sticky-buy-bar__whatsapp"
+      [href]="whatsappUrl()"
+      target="_blank"
+      rel="noopener noreferrer"
+      [attr.aria-label]="'Contacter BrunyShop sur WhatsApp au sujet de ' + productName()"
+    >
+      <bruny-icon name="whatsapp" [size]="20" aria-hidden="true" />
+      <span>WhatsApp</span>
+    </a>
+  </div>
+
+  @if (!canAddToCart() && addToCartMessage()) {
+    <p id="sticky-buy-help" class="sticky-buy-bar__help" role="status">
+      {{ addToCartMessage() }}
+    </p>
+  }
+</div>

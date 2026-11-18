@@ -27,6 +27,7 @@ export type IconName =
   | 'edit'
   | 'eye'
   | 'eye-off'
+  | 'zoom-in'
   | 'sort'
   | 'phone'
   | 'map-pin'
@@ -85,6 +86,7 @@ const ICONS: Record<IconName, readonly string[]> = {
   trash: ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 15H6L5 6', 'M10 11v6', 'M14 11v6'],
   edit: ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'],
   eye: ['M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z'],
+  'zoom-in': ['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z', 'm21 21-4.35-4.35', 'M11 8v6', 'M8 11h6'],
   'eye-off': [
     'M3 3l18 18',
     'M10.6 10.6a3 3 0 0 0 4.2 4.2',

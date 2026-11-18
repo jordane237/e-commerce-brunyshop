@@ -67,9 +67,11 @@ export function productSchema(
       url,
       price: product.effectivePrice,
       priceCurrency: 'XAF',
+      itemCondition: 'https://schema.org/NewCondition',
       availability: product.inStock
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
+      seller: { '@type': 'Organization', name: config.siteName, url: config.siteUrl },
     },
   };
 }

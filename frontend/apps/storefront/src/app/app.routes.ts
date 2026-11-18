@@ -14,8 +14,10 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'produit/:slug',
-    loadComponent: () =>
-      import('./features/product/product-page').then((module) => module.ProductPage),
+    loadChildren: () =>
+      import('./features/product-detail/product-detail.routes').then(
+        (module) => module.productDetailRoutes,
+      ),
   },
   {
     path: 'panier',

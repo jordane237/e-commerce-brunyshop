@@ -1,7 +1,7 @@
 import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { CatalogProduct } from '@bruny/data-access';
+import type { CatalogProduct, CatalogProductSummary } from '@bruny/data-access';
 import { BadgeComponent } from '../badge/badge.component';
 import { ButtonComponent } from '../button/button.component';
 import { IconComponent } from '../icon/icon.component';
@@ -25,7 +25,7 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
   styleUrl: './product-card.component.scss',
 })
 export class ProductCardComponent {
-  @Input({ required: true }) product!: CatalogProduct;
+  @Input({ required: true }) product!: CatalogProduct | CatalogProductSummary;
   @Input() loading = false;
   @Input() showSizes = true;
   @Input() showAdd = false;
@@ -57,6 +57,7 @@ export class ProductCardComponent {
   }
 
   get availableSizes(): string[] {
+    if (!('variants' in this.product)) return [];
     const sizes = this.product.variants
       .filter((variant) => variant.isAvailable)
       .map((variant) => variant.size);

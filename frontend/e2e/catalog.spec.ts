@@ -30,7 +30,8 @@ test.describe('Catalogue', () => {
 
     await page.locator('bruny-product-card a').first().click();
     await expect(page).toHaveURL(/\/produit\//);
-    await expect(page.getByRole('heading', { name: 'Choisissez votre pointure' })).toBeVisible();
+    await expect(page.locator('app-product-gallery')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   });
 
   test('filtre par catégorie et synchronise l’URL', async ({ page }) => {
