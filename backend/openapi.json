@@ -3478,6 +3478,50 @@
         },
         "required": ["recipientName", "phone", "city", "district", "line"]
       },
+      "CreateOrderSourceDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "utm_source",
+            "maxLength": 100
+          },
+          "medium": {
+            "type": "string",
+            "description": "utm_medium",
+            "maxLength": 100
+          },
+          "campaign": {
+            "type": "string",
+            "description": "utm_campaign",
+            "maxLength": 100
+          },
+          "term": {
+            "type": "string",
+            "description": "utm_term",
+            "maxLength": 100
+          },
+          "content": {
+            "type": "string",
+            "description": "utm_content",
+            "maxLength": 100
+          },
+          "gclid": {
+            "type": "string",
+            "description": "Identifiant Google Ads",
+            "maxLength": 255
+          },
+          "fbclid": {
+            "type": "string",
+            "description": "Identifiant Facebook Ads",
+            "maxLength": 255
+          },
+          "capturedAt": {
+            "type": "string",
+            "description": "Date de capture (ISO 8601)"
+          }
+        }
+      },
       "CreateOrderDto": {
         "type": "object",
         "properties": {
@@ -3519,6 +3563,14 @@
             "type": "string",
             "description": "Note du client pour la préparation",
             "maxLength": 500
+          },
+          "source": {
+            "description": "Contexte d’acquisition (UTM, clics publicitaires) capturé côté boutique",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateOrderSourceDto"
+              }
+            ]
           },
           "turnstileToken": {
             "type": "string",

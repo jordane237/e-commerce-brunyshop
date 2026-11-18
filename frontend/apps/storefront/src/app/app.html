@@ -10,6 +10,7 @@
 </header>
 <main><router-outlet /></main>
 <bruny-footer />
+<app-consent-banner />
 @if (toast.current(); as currentToast) {
 <bruny-toast
   [message]="currentToast.message"

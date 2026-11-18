@@ -36,7 +36,7 @@ export class PrivacyComponent implements OnInit {
     { id: 'securite', title: 'Sécurité', level: 2 },
     { id: 'turnstile', title: 'Protection contre les robots', level: 2 },
     { id: 'droits', title: 'Vos droits', level: 2 },
-    { id: 'cookies', title: 'Cookies', level: 2 },
+    { id: 'cookies', title: 'Cookies et traceurs', level: 2 },
     { id: 'contact', title: 'Contact', level: 2 },
   ];
 

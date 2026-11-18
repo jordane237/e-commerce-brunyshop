@@ -1,23 +1,25 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { ConsentService } from '../../../core/services/consent.service';
 import { FooterComponent } from './footer.component';
 
 describe('FooterComponent', () => {
   async function create() {
+    const consent = { openBanner: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [FooterComponent],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), { provide: ConsentService, useValue: consent }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(FooterComponent);
     fixture.detectChanges();
     await fixture.whenStable();
-    return fixture;
+    return { fixture, consent };
   }
 
   it('exposes the information, help and legal navigation', async () => {
-    const fixture = await create();
+    const { fixture } = await create();
     const element = fixture.nativeElement as HTMLElement;
     const hrefs = Array.from(element.querySelectorAll('a')).map((link) =>
       link.getAttribute('href'),
@@ -44,11 +46,22 @@ describe('FooterComponent', () => {
   });
 
   it('renders a copyright with the current year', async () => {
-    const fixture = await create();
+    const { fixture } = await create();
     const element = fixture.nativeElement as HTMLElement;
 
     expect(element.querySelector('.site-footer__bottom')?.textContent).toContain(
       `© ${new Date().getFullYear()} BRUNY SHOPPING`,
     );
+  });
+
+  it('rouvre le bandeau depuis « Gérer mes préférences cookies »', async () => {
+    const { fixture, consent } = await create();
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((item) => item.textContent?.includes('Gérer mes préférences cookies'));
+
+    button?.click();
+
+    expect(consent.openBanner).toHaveBeenCalledOnce();
   });
 });

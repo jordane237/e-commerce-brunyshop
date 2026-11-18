@@ -32,8 +32,10 @@ describe('PrivacyComponent', () => {
     const { fixture } = await create();
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.querySelectorAll('tbody tr')).toHaveLength(6);
+    expect(element.querySelectorAll('tbody tr')).toHaveLength(7);
     expect(element.querySelector('caption')?.textContent).toContain('Finalités et bases légales');
+    expect(element.querySelector('#cookies')?.textContent).toContain('Pixel Meta');
+    expect(element.querySelector('#cookies')?.textContent).toContain('_fbp');
   });
 
   it('sets the page metadata', async () => {

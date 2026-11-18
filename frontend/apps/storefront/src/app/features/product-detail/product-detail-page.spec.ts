@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogProductDetail } from '@bruny/data-access';
 import { APP_CONFIG, DEFAULT_APP_CONFIG } from '../../core/app-config';
+import { MetaPixelService } from '../../core/services/meta-pixel.service';
 import { SeoService } from '../../core/seo.service';
 import { ProductDetailPage } from './product-detail-page';
 import { ProductDetailStore } from './product-detail.store';
@@ -122,6 +123,10 @@ function createStoreMock() {
 
 function createPage(store = createStoreMock()) {
   const seo = { setPageMeta: vi.fn() };
+  const metaPixel = {
+    trackViewContent: vi.fn(),
+    trackAddToCart: vi.fn(),
+  };
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     imports: [ProductDetailPage],
@@ -129,6 +134,7 @@ function createPage(store = createStoreMock()) {
       provideRouter([]),
       { provide: ProductDetailStore, useValue: store },
       { provide: SeoService, useValue: seo },
+      { provide: MetaPixelService, useValue: metaPixel },
       { provide: APP_CONFIG, useValue: DEFAULT_APP_CONFIG },
       {
         provide: ActivatedRoute,
@@ -138,7 +144,7 @@ function createPage(store = createStoreMock()) {
   });
   const fixture = TestBed.createComponent(ProductDetailPage);
   fixture.detectChanges();
-  return { fixture, store, seo };
+  return { fixture, store, seo, metaPixel };
 }
 
 describe('ProductDetailPage', () => {
@@ -197,6 +203,14 @@ describe('ProductDetailPage', () => {
     );
   });
 
+  it('envoie ViewContent après le chargement de la fiche', async () => {
+    const { fixture, metaPixel } = createPage();
+    await fixture.whenStable();
+    await Promise.resolve();
+
+    expect(metaPixel.trackViewContent).toHaveBeenCalledWith(product);
+  });
+
   it('transmet les sélections de couleur et de pointure au store', () => {
     const { fixture, store } = createPage();
     const page = fixture.componentInstance;
@@ -212,12 +226,24 @@ describe('ProductDetailPage', () => {
     expect(store.setActiveImage).toHaveBeenCalledWith(1);
   });
 
-  it('ajoute au panier via le store', () => {
-    const { fixture, store } = createPage();
+  it('ajoute au panier via le store et envoie AddToCart', () => {
+    const { fixture, store, metaPixel } = createPage();
+    fixture.componentInstance.onSizeSelect('41');
 
     fixture.componentInstance.onAddToCart();
 
     expect(store.addToCart).toHaveBeenCalledOnce();
+    expect(metaPixel.trackAddToCart).toHaveBeenCalledWith(product, product.variants[0], 1);
+  });
+
+  it('n’envoie pas AddToCart si le store refuse l’ajout', () => {
+    const store = createStoreMock();
+    store.addToCart.mockReturnValue(false);
+    const { fixture, metaPixel } = createPage(store);
+
+    fixture.componentInstance.onAddToCart();
+
+    expect(metaPixel.trackAddToCart).not.toHaveBeenCalled();
   });
 
   it('ouvre la modale de zoom', () => {

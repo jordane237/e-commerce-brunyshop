@@ -303,11 +303,14 @@ export class OrdersService {
             paymentMethod: dto.paymentMethod,
             paymentStatus: 'PENDING',
             addressSnapshot: this.freezeAddress(dto.address),
-            ...(meta.ipAddress !== undefined || meta.userAgent !== undefined
+            ...(dto.source !== undefined ||
+            meta.ipAddress !== undefined ||
+            meta.userAgent !== undefined
               ? {
                   source: {
                     ...(meta.ipAddress !== undefined ? { ipAddress: meta.ipAddress } : {}),
                     ...(meta.userAgent !== undefined ? { userAgent: meta.userAgent } : {}),
+                    ...(dto.source ?? {}),
                   },
                 }
               : {}),

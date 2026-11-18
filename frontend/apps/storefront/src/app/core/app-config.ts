@@ -9,6 +9,8 @@ export interface AppConfig {
   readonly contactPhoneDisplay: string;
   readonly contactFacebookUrl: string;
   readonly defaultOgImage: string | null;
+  /** ID du Pixel Meta. Placeholder tant que le Business Manager n'en fournit pas. */
+  readonly metaPixelId: string | null;
 }
 
 /**
@@ -26,6 +28,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   contactPhoneDisplay: '+237 6 00 00 00 00',
   contactFacebookUrl: 'https://www.facebook.com/BrunyShopping',
   defaultOgImage: null,
+  metaPixelId: 'CHANGEME_meta_pixel_id',
 };
 
 export const APP_CONFIG = new InjectionToken<AppConfig>('APP_CONFIG', {

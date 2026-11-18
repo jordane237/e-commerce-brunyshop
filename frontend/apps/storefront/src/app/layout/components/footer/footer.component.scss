@@ -67,13 +67,31 @@
   text-underline-offset: 2px;
 }
 
-.site-footer__nav a:hover {
+.site-footer__nav a:hover,
+.site-footer__preferences:hover {
   color: var(--bs-color-text-inverse);
   text-decoration: underline;
 }
 
+.site-footer__preferences {
+  display: inline-flex;
+  min-height: var(--bs-touch-target);
+  align-items: center;
+  padding: 0;
+  color: var(--bs-color-neutral-300);
+  font: inherit;
+  font-size: var(--bs-font-size-sm);
+  text-align: left;
+  text-decoration: none;
+  text-underline-offset: 2px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
 .site-footer__email:focus-visible,
-.site-footer__nav a:focus-visible {
+.site-footer__nav a:focus-visible,
+.site-footer__preferences:focus-visible {
   outline: 2px solid var(--bs-color-accent);
   outline-offset: 2px;
 }

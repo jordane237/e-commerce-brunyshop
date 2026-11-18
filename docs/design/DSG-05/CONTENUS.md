@@ -322,9 +322,17 @@ Nous mettons en œuvre des mesures techniques et organisationnelles : chiffremen
 
 Vous pouvez demander l'accès, la rectification, l'effacement ou la limitation de vos données, et vous opposer à certains traitements. Écrivez à support@brunyshop.cm. Une réponse vous sera apportée dans un délai de 30 jours. Vous pouvez également introduire une réclamation auprès de l'autorité compétente.
 
-### Cookies
+### Cookies et traceurs
 
-Le site utilise des cookies strictement nécessaires : session, panier, préférences d'affichage et sécurité. Ils ne sont pas utilisés à des fins publicitaires. Les cookies de mesure d'audience, s'ils sont ajoutés, nécessiteront votre consentement.
+Le site utilise des cookies et traceurs strictement nécessaires : session, panier, sécurité et mémorisation des choix de consentement. Ils sont toujours actifs car ils permettent au site de fonctionner.
+
+Les cookies de mesure d'audience, s'ils sont activés, produisent des statistiques sur l'utilisation du site. Ils ne sont déposés qu'après consentement.
+
+Si vous acceptez les cookies publicitaires, le Pixel Meta dépose notamment les cookies `_fbp` et `_fbc` afin de mesurer l'efficacité des publicités Facebook. Meta Platforms peut traiter des données techniques (adresse IP, navigateur, page consultée). Aucun nom, e-mail, téléphone ou adresse postale n'est transmis dans les événements publicitaires. Le Pixel n'est chargé qu'après accord explicite.
+
+Un bandeau s'affiche lors de la première visite. Vous pouvez accepter, refuser ou personnaliser les traceurs. Le choix est conservé sur l'appareil pendant 13 mois maximum et peut être modifié à tout moment via le lien « Gérer mes préférences cookies » du pied de page. Le retrait du consentement supprime les cookies publicitaires Meta et arrête l'envoi d'événements.
+
+Les cookies de mesure d'audience et publicitaires sont conservés 13 mois au maximum. TODO : validation juriste (CNT-03) avant mise en production.
 
 ### Contact
 

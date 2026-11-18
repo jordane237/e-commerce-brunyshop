@@ -271,6 +271,58 @@ describe('POST /api/v1/orders (ORD-01)', () => {
     expect(notification).not.toBeNull();
   });
 
+  it('enregistre le contexte UTM dans Order.source sans perdre les métadonnées techniques', async () => {
+    const fixture = await createFixture('source', 2);
+    const phone = nextPhone();
+
+    const response = await post(
+      body(
+        fixture,
+        {
+          source: {
+            source: 'facebook',
+            medium: 'cpc',
+            campaign: 'soldes-2026',
+            fbclid: 'fb-123',
+            capturedAt: '2026-11-18T10:00:00.000Z',
+          },
+        },
+        phone,
+      ),
+      randomUUID(),
+    );
+
+    expect(response.status).toBe(201);
+    const order = await prisma.order.findUniqueOrThrow({ where: { id: response.body.id } });
+    expect(order.source).toMatchObject({
+      source: 'facebook',
+      medium: 'cpc',
+      campaign: 'soldes-2026',
+      fbclid: 'fb-123',
+      capturedAt: '2026-11-18T10:00:00.000Z',
+      ipAddress: expect.any(String),
+    });
+  });
+
+  it('rejoue la même clé avec un autre contexte UTM sans conflit ni doublon', async () => {
+    const fixture = await createFixture('source-replay', 2);
+    const key = randomUUID();
+    const phone = nextPhone();
+    const first = body(fixture, { source: { source: 'facebook' } }, phone);
+    const second = { ...first, source: { source: 'google' } };
+
+    const firstResponse = await post(first, key);
+    const secondResponse = await post(second, key);
+
+    expect(firstResponse.status).toBe(201);
+    expect(secondResponse.status).toBe(201);
+    expect(secondResponse.body.id).toBe(firstResponse.body.id);
+    expect(await ordersFor(fixture.variantId)).toBe(1);
+
+    const order = await prisma.order.findUniqueOrThrow({ where: { id: firstResponse.body.id } });
+    expect(order.source).toMatchObject({ source: 'facebook' });
+  });
+
   it('rejoue la même clé sans créer de doublon', async () => {
     const fixture = await createFixture('replay', 3);
     const key = randomUUID();

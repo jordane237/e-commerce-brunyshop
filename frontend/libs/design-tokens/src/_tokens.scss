@@ -172,6 +172,7 @@ $bs-z-base: 0 !default;
 $bs-z-sticky: 100 !default;
 $bs-z-dropdown: 1000 !default;
 $bs-z-overlay: 1040 !default;
+$bs-z-consent: 1041 !default;
 $bs-z-modal: 1050 !default;
 $bs-z-toast: 1100 !default;
 
@@ -355,6 +356,7 @@ $bs-easing-out: cubic-bezier(0, 0, 0.2, 1) !default;
     --bs-z-sticky: #{$bs-z-sticky};
     --bs-z-dropdown: #{$bs-z-dropdown};
     --bs-z-overlay: #{$bs-z-overlay};
+    --bs-z-consent: #{$bs-z-consent};
     --bs-z-modal: #{$bs-z-modal};
     --bs-z-toast: #{$bs-z-toast};
 

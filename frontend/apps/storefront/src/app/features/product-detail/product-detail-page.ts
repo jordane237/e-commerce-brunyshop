@@ -20,6 +20,7 @@ import {
   type TabItem,
 } from '@bruny/ui';
 import { APP_CONFIG } from '../../core/app-config';
+import { MetaPixelService } from '../../core/services/meta-pixel.service';
 import { SeoService } from '../../core/seo.service';
 import { productSchema } from '../../core/structured-data';
 import { ColorSelectorComponent } from './components/color-selector/color-selector.component';
@@ -86,6 +87,7 @@ export class ProductDetailPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly seoService = inject(SeoService);
+  private readonly metaPixel = inject(MetaPixelService);
   private readonly config = inject(APP_CONFIG);
 
   readonly tabs = TABS;
@@ -170,7 +172,13 @@ export class ProductDetailPage {
   }
 
   onAddToCart(): void {
-    this.store.addToCart();
+    if (!this.store.addToCart()) return;
+
+    const product = this.product();
+    const variant = this.selectedVariant();
+    if (product !== null && variant !== null) {
+      this.metaPixel.trackAddToCart(product, variant, this.quantity());
+    }
   }
 
   goToCatalog(): void {
@@ -193,6 +201,7 @@ export class ProductDetailPage {
       ogType: 'product',
       jsonLd: productSchema(this.config, product, path),
     });
+    this.metaPixel.trackViewContent(product);
   }
 
   private truncate(value: string, max: number): string {

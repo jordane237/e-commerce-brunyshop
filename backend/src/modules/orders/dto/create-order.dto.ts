@@ -5,6 +5,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsEnum,
+  IsISO8601,
   IsOptional,
   IsString,
   IsUUID,
@@ -18,6 +19,56 @@ import { AddressSnapshotDto } from './address-snapshot.dto';
 import { CreateOrderItemDto } from './create-order-item.dto';
 
 const CAMEROON_PHONE = /^\+237[0-9]{9}$/;
+
+/** Contexte d'acquisition marketing, stocké dans `Order.source` (Json). */
+export class CreateOrderSourceDto {
+  @ApiPropertyOptional({ description: 'utm_source', maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  source?: string;
+
+  @ApiPropertyOptional({ description: 'utm_medium', maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  medium?: string;
+
+  @ApiPropertyOptional({ description: 'utm_campaign', maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  campaign?: string;
+
+  @ApiPropertyOptional({ description: 'utm_term', maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  term?: string;
+
+  @ApiPropertyOptional({ description: 'utm_content', maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  content?: string;
+
+  @ApiPropertyOptional({ description: 'Identifiant Google Ads', maxLength: 255 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  gclid?: string;
+
+  @ApiPropertyOptional({ description: 'Identifiant Facebook Ads', maxLength: 255 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  fbclid?: string;
+
+  @ApiPropertyOptional({ description: 'Date de capture (ISO 8601)' })
+  @IsOptional()
+  @IsISO8601()
+  capturedAt?: string;
+}
 
 /**
  * Corps de `POST /orders`.
@@ -78,6 +129,15 @@ export class CreateOrderDto {
   @IsString()
   @MaxLength(500)
   notes?: string;
+
+  @ApiPropertyOptional({
+    type: CreateOrderSourceDto,
+    description: 'Contexte d’acquisition (UTM, clics publicitaires) capturé côté boutique',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateOrderSourceDto)
+  source?: CreateOrderSourceDto;
 
   // Optional so TurnstileGuard can return CAPTCHA_REQUIRED before validation.
   @ApiPropertyOptional({ description: 'Jeton Cloudflare Turnstile' })

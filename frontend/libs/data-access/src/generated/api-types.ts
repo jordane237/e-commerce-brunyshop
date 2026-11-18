@@ -253,7 +253,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Lister tous les produits (admin) avec filtres, tri, pagination */
+    get: operations['AdminProductsController_list_v1'];
     put?: never;
     /**
      * Créer un produit avec variantes
@@ -455,7 +456,7 @@ export interface paths {
     put?: never;
     /**
      * Créer une commande et décrémenter le stock atomiquement
-     * @description Les prix sont recalculés côté serveur ; aucun montant client n'est accepté. Le stock est décrémenté dans la même transaction que la commande. Paiement MVP : COD uniquement.
+     * @description Aucun prix fourni par le client n'est utilisé : tous les montants sont recalculés côté serveur (catalogue, coupon, zone de livraison). L'en-tête Idempotency-Key est obligatoire : un renvoi avec la même clé et le même corps retourne la même commande. CAPTCHA Turnstile obligatoire. Limites : 5 requêtes/min/IP et 10 commandes/heure/téléphone. Paiement MVP : COD uniquement.
      */
     post: operations['OrdersController_create_v1'];
     delete?: never;
@@ -910,6 +911,10 @@ export interface components {
       /** @description Produits similaires : même catégorie, prix effectif à ±50 %, 6 par défaut (fallback même catégorie sans contrainte de prix) */
       similarProducts: components['schemas']['ProductSummaryDto'][];
     };
+    PaginatedAdminProductsDto: {
+      items: Record<string, never>[];
+      meta: Record<string, never>;
+    };
     CreateProductImageDto: {
       /** @example https://cdn.brunyshop.cm/products/air-max-noir.jpg */
       url: string;
@@ -1286,7 +1291,10 @@ export interface components {
       meta: components['schemas']['CartValidationMetaDto'];
     };
     CreateOrderItemDto: {
-      /** @description Identifiant de la variante choisie */
+      /**
+       * Format: uuid
+       * @description Identifiant de la variante choisie
+       */
       variantId: string;
       /** @description Quantité commandée */
       quantity: number;
@@ -1306,6 +1314,31 @@ export interface components {
       landmark?: string;
       /** @description Instructions de livraison */
       instructions?: string;
+      /**
+       * @description Créneau préféré (P10) : matin, après-midi ou soirée
+       * @enum {string}
+       */
+      slot?: 'morning' | 'afternoon' | 'evening';
+      /** @description Appeler le client avant la livraison (P09) */
+      callBeforeDelivery?: boolean;
+    };
+    CreateOrderSourceDto: {
+      /** @description utm_source */
+      source?: string;
+      /** @description utm_medium */
+      medium?: string;
+      /** @description utm_campaign */
+      campaign?: string;
+      /** @description utm_term */
+      term?: string;
+      /** @description utm_content */
+      content?: string;
+      /** @description Identifiant Google Ads */
+      gclid?: string;
+      /** @description Identifiant Facebook Ads */
+      fbclid?: string;
+      /** @description Date de capture (ISO 8601) */
+      capturedAt?: string;
     };
     CreateOrderDto: {
       /** @description Lignes de la commande (1 à 50) */
@@ -1318,14 +1351,23 @@ export interface components {
       guestPhone?: string;
       address: components['schemas']['AddressSnapshotDto'];
       /**
+       * Format: uuid
+       * @description Zone de livraison choisie en P10. Si absente, la zone est résolue par la ville.
+       */
+      deliveryZoneId?: string;
+      /**
        * @description Moyen de paiement. Seul COD est disponible dans le MVP.
        * @enum {string}
        */
       paymentMethod: 'COD' | 'MOBILE_MONEY' | 'CARD';
-      /** @description Clé d’idempotence contre les doubles soumissions */
-      idempotencyKey?: string;
+      /** @description Note du client pour la préparation */
+      notes?: string;
+      /** @description Contexte d’acquisition (UTM, clics publicitaires) capturé côté boutique */
+      source?: components['schemas']['CreateOrderSourceDto'];
       /** @description Jeton Cloudflare Turnstile */
       turnstileToken?: string;
+      /** @description Champ piège anti-bot (doit rester vide) */
+      _honey?: string;
     };
     OrderResponseDto: {
       id: string;
@@ -2051,6 +2093,52 @@ export interface operations {
       };
     };
   };
+  AdminProductsController_list_v1: {
+    parameters: {
+      query?: {
+        /** @description Recherche (nom, slug, SKU), insensible a la casse. */
+        search?: string;
+        status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+        /** @description Filtre par categorie. */
+        categoryId?: string;
+        /** @description in: en stock, low: stock faible, out: rupture. */
+        stock?: 'in' | 'low' | 'out';
+        sort?: 'updatedAt' | 'name' | 'price' | 'stock';
+        order?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Liste paginée. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedAdminProductsDto'];
+        };
+      };
+      /** @description Jeton absent, invalide ou expiré. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   AdminProductsController_create_v1: {
     parameters: {
       query?: never;
@@ -2531,7 +2619,10 @@ export interface operations {
   OrdersController_create_v1: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        /** @description UUID v4 unique par tentative de commande */
+        'Idempotency-Key': string;
+      };
       path?: never;
       cookie?: never;
     };
@@ -2550,7 +2641,7 @@ export interface operations {
           'application/json': components['schemas']['OrderResponseDto'];
         };
       };
-      /** @description Body invalide, guest incomplet, coupon ou zone invalides */
+      /** @description Body invalide, Idempotency-Key absente ou mal formée, guest incomplet, coupon ou zone invalides, CAPTCHA invalide */
       400: {
         headers: {
           [name: string]: unknown;
@@ -2564,14 +2655,14 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Stock insuffisant ou clé d’idempotence en conflit */
+      /** @description INSUFFICIENT_STOCK, OUT_OF_STOCK, IDEMPOTENCY_CONFLICT ou ORDER_REFERENCE_CONFLICT */
       409: {
         headers: {
           [name: string]: unknown;
         };
         content?: never;
       };
-      /** @description Trop de requêtes (20/min/IP) */
+      /** @description RATE_LIMIT_EXCEEDED (5/min/IP) ou ORDER_RATE_LIMIT_EXCEEDED (10/h/téléphone) */
       429: {
         headers: {
           [name: string]: unknown;
