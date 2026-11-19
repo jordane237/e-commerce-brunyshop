@@ -231,6 +231,17 @@ jobs:
         env:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -244,6 +255,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: quality
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: brunyshop_test
+          POSTGRES_PASSWORD: brunyshop_test
+          POSTGRES_DB: brunyshop_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      DATABASE_URL: postgresql://brunyshop_test:brunyshop_test@localhost:5432/brunyshop_test
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'ci-only-access-secret-at-least-forty-eight-characters-abcdefg' }}
+      JWT_ACCESS_TTL: 15m
+      REFRESH_TOKEN_TTL: 30d
+      APP_PUBLIC_URL: http://localhost:4200
+      ADMIN_PUBLIC_URL: http://localhost:4300
+      THROTTLE_TTL: 60
+      THROTTLE_LIMIT: 1000
+      CORS_ORIGINS: http://localhost:4200,http://localhost:4300
+      TURNSTILE_ENABLED: 'false'
+      STORAGE_PROVIDER: fake
+      MAIL_DRIVER: console
     steps:
       - name: Checkout
         uses: actions/checkout@v4
