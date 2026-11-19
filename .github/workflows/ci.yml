@@ -63,6 +63,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm prisma:generate
+
       - name: Lint
         run: pnpm lint
 
@@ -70,14 +73,18 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit tests
-        run: pnpm test -- --coverage
+        run: |
+          pnpm -C backend test --coverage
+          pnpm -C frontend test --coverage
 
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: coverage/
+          path: |
+            backend/coverage
+            frontend/coverage
           retention-days: 7
 
   # ─────────────────────────────────────────────────────────────

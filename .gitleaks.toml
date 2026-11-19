@@ -1,97 +1,53 @@
-# Gitleaks configuration — détection de secrets accidentellement versionnés
+# Gitleaks — détection de secrets accidentellement versionnés
 #
-# Usage : gitleaks detect --config .gitleaks.toml
-# Exécuté dans CI (job security -> gitleaks).
-#
-# Allowlists :
-#   - node_modules/          : dépendances tierces
-#   - .pnpm-store/           : cache pnpm
-#   - pnpm-lock.yaml         : lockfile généré
-#   - .env.example           : template avec placeholders
-#   - openapi.json           : spec exportée
-#   - fixtures/              : données de test
-#   - CHANGEME_*             : placeholders officiels
-#   - Logs / reports de test
+# Schéma gitleaks v8 ([[allowlists]] et non [allowlist]).
+# Les règles par défaut de gitleaks sont conservées ; seuls les faux positifs
+# documentés du projet sont autorisés explicitement.
 
-[pipeline]
-  assume = true
-  trustNewlines = false
-  failOnMetadata = true
-  retryCount = 3
+title = "BrunyShop — secrets scan"
 
 [extend]
-  allowSecrets = true
+useDefault = true
 
-[[rules]]
-  id = "generic-api-key"
-  description = "API keys / tokens"
-  regex = '''(?i)(api[_-]?key|apikey|secret|passwd|password|token|private[_-]?key|bearer)["\'\\s:=]+([\w\W]{6,})'''
-  tags = ["credentials", "api", "secret"]
+# Faux positifs : clés d'idempotence de test et exemples de payload.
+# Ces valeurs ne donnent aucun accès et ne sont pas des secrets.
+[[allowlists]]
+description = "Clés d'idempotence non sensibles (tests et documentation)"
+regexTarget = "line"
+regexes = ['''(?i)idempotency[_-]?key''']
+paths = [
+  '''(^|/)backend/src/.*\.(test|spec)\.ts$''',
+  '''(^|/)docs/''',
+]
 
-[[rules]]
-  id = "private-key"
-  description = "Private keys (PEM)"
-  regex = '''(?i)---(BEGIN|end)[ \s]*(?i)(RSA |DSA |EC |OPENSSH )?(PRIVATE KEY)---'''
-  tags = ["credentials", "private-key", "crypto"]
+[[allowlists]]
+description = "Fichiers générés, dépendances et artefacts"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.pnpm-store/''',
+  '''(^|/)dist/''',
+  '''(^|/)coverage/''',
+  '''(^|/)test-results/''',
+  '''(^|/)playwright-report/''',
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''(^|/)openapi\.json$''',
+  '''(^|/)\.env\.example$''',
+  '''(^|/)\.env\.production\.example$''',
+]
 
-[[rules]]
-  id = "github-token"
-  description = "GitHub tokens (classic/oauth)"
-  regex = '''(?i)(gh[pa]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{72,})'''
-  tags = ["credentials", "github"]
+[[allowlists]]
+description = "Fixtures et données de démonstration"
+paths = [
+  '''(^|/)fixtures/''',
+  '''(^|/)test[/-]fixtures/''',
+]
 
-[[rules]]
-  id = "aws-credentials"
-  description = "AWS access keys"
-  regex = '''(?i)(AKIA[0-9A-Z]{16})'''
-  tags = ["credentials", "aws"]
-
-[[rules]]
-  id = "slack-webhook"
-  description = "Slack webhook URLs"
-  regex = '''(https://hooks.slack.com/services/T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24})'''
-  tags = ["credentials", "slack"]
-
-[[rules]]
-  id = "database-url"
-  description = "Database connection strings"
-  regex = '''(postgres(?:~\w+)?://\w+:(?:\w+)@\w+[.:\w+/-]+(\w+))'''
-  tags = ["credentials", "database"]
-
-# Allowlists
-
-[allowlist]
-  # Dossiers générés / tiers
-  [[allowlist.path]]
-    regex = '(^|/|\\.)node_modules/'
-
-  [[allowlist.path]]
-    regex = '(^|/)\\.pnpm-store/'
-
-  [[allowlist.path]]
-    regex = '(^|/|\\.)pnpm-lock\\.yaml$'
-
-  [[allowlist.path]]
-    regex = '(^|/\\.)env\\.example$'
-
-  [[allowlist.path]]
-    regex = '(^|/|\\.)openapi\\.json$'
-
-  # Fixtures et données de test
-  [[allowlist.path]]
-    regex = '(^|/|\\.)fixtures/'
-
-  [[allowlist.path]]
-    regex = '(^|/|\\.)test[/-]fixtures/'
-
-  # Placeholders officiels du projet
-  [[allowlist.path]]
-    regex = '''(?i)^(.*[_-]?(CHANGEME|TODO|PLACEHOLDER|EXEMPLE|EXAMPLE))'''
-
-  # Templates de secrets
-  [[allowlist.path]]
-    regex = '''(?i)^(.*[_-]?(CHANGE_ME|REPLACE_ME|EXAMPLE))'''
-
-  # Exceptions courantes (logs, reports de test)
-  [[allowlist.path]]
-    regex = '''(?i)(^\.log|test-results|playwright-report)$'''
+[[allowlists]]
+description = "Placeholders officiels à fournir par le PO"
+regexTarget = "secret"
+regexes = [
+  '''(?i)CHANGEME''',
+  '''(?i)CHANGE_ME''',
+  '''(?i)REPLACE_ME''',
+  '''(?i)placeholder''',
+]
