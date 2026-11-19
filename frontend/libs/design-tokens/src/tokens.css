@@ -135,6 +135,7 @@
   /* Z-index */
   --bs-z-sticky: 100;
   --bs-z-dropdown: 1000;
+  --bs-z-whatsapp-fab: 1030;
   --bs-z-overlay: 1040;
   --bs-z-consent: 1041;
   --bs-z-modal: 1050;

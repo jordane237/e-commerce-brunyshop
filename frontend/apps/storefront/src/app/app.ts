@@ -5,6 +5,7 @@ import { ToastComponent } from '@bruny/ui';
 import { ConsentBannerComponent } from './layout/components/consent-banner/consent-banner.component';
 import { FooterComponent } from './layout/components/footer/footer.component';
 import { MiniCartComponent } from './layout/components/mini-cart/mini-cart.component';
+import { WhatsAppFabComponent } from './layout/components/whatsapp-fab/whatsapp-fab.component';
 import { ConsentService } from './core/services/consent.service';
 import { MetaPixelService } from './core/services/meta-pixel.service';
 import { UtmService } from './core/services/utm.service';
@@ -17,6 +18,7 @@ import { UtmService } from './core/services/utm.service';
     MiniCartComponent,
     FooterComponent,
     ConsentBannerComponent,
+    WhatsAppFabComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-root',
