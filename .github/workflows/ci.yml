@@ -22,9 +22,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, working]
   push:
-    branches: [main]
+    branches: [main, working, 'feature/**', 'review/**']
   workflow_dispatch:
 
 concurrency:
@@ -299,10 +299,24 @@ jobs:
     if: always()
     steps:
       - name: Aggregate job results
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+          OPENAPI_RESULT: ${{ needs.openapi-check.result }}
+          API_CLIENT_RESULT: ${{ needs.api-client.result }}
         run: |
           overall_success=true
-          for job in quality build e2e security openapi-check api-client; do
-            result="${{ needs.$job.result }}"
+          for entry in \
+            "quality:$QUALITY_RESULT" \
+            "build:$BUILD_RESULT" \
+            "e2e:$E2E_RESULT" \
+            "security:$SECURITY_RESULT" \
+            "openapi-check:$OPENAPI_RESULT" \
+            "api-client:$API_CLIENT_RESULT"; do
+            job="${entry%%:*}"
+            result="${entry#*:}"
             echo "Job '$job' result: $result"
             if [ "$result" != "success" ]; then
               overall_success=false
