@@ -158,6 +158,21 @@ describe('NotificationsService (NTF-01)', () => {
     expect(audit.log).toHaveBeenCalled();
   });
 
+  it('moveToDeadLetter ignore une transaction Prisma déjà fermée (P2028)', async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValueOnce({ code: 'P2028' } as never);
+
+    await expect(
+      service.moveToDeadLetter(
+        'notif-test',
+        new Error('Permanent failure'),
+        'notifications-email',
+        'send-email',
+        'job-1',
+        5,
+      ),
+    ).resolves.toBeUndefined();
+  });
+
   it('findDeadLetters retourne une liste paginée', async () => {
     vi.mocked(prisma.deadLetterJob.findMany).mockResolvedValueOnce([
       {

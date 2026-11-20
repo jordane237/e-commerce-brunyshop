@@ -275,24 +275,38 @@ export class NotificationsService {
   ): Promise<void> {
     const message = this.errorMessage(error);
 
-    await this.prisma.$transaction([
-      this.prisma.notification.updateMany({
-        where: { id: notificationId },
-        data: { status: 'DEAD_LETTER' },
-      }),
-      this.prisma.deadLetterJob.create({
-        data: {
-          queueName,
-          jobId,
-          jobName,
-          // The failed payload is intentionally not persisted: it may contain
-          // the real recipient. Only the job coordinates are kept.
-          payload: {},
-          error: message,
-          attempts,
-        },
-      }),
-    ]);
+    try {
+      await this.prisma.$transaction([
+        this.prisma.notification.updateMany({
+          where: { id: notificationId },
+          data: { status: 'DEAD_LETTER' },
+        }),
+        this.prisma.deadLetterJob.create({
+          data: {
+            queueName,
+            jobId,
+            jobName,
+            // The failed payload is intentionally not persisted: it may contain
+            // the real recipient. Only the job coordinates are kept.
+            payload: {},
+            error: message,
+            attempts,
+          },
+        }),
+      ]);
+    } catch (transactionError) {
+      // Un worker peut émettre son événement `failed` pendant l'arrêt de
+      // l'application : la transaction est alors déjà fermée. La dead-letter
+      // est best-effort dans ce cas, mais l'erreur reste tracée.
+      if ((transactionError as { code?: unknown }).code === 'P2028') {
+        this.logger.warn(
+          { notificationId, queueName, jobName, jobId },
+          'Dead-letter non persistée : transaction Prisma déjà fermée',
+        );
+        return;
+      }
+      throw transactionError;
+    }
 
     this.logger.error(
       {
