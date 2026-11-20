@@ -58,6 +58,17 @@ jobs:
       - name: Build image
         run: docker build -f ${{ matrix.image.dockerfile }} -t brunyshop-${{ matrix.image.name }}:${{ github.sha }} .
 
+      - name: Run Trivy scanner (table)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'brunyshop-${{ matrix.image.name }}:${{ github.sha }}'
+          format: 'table'
+          output: 'trivy-${{ matrix.image.name }}.txt'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+
       - name: Run Trivy scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -68,6 +79,22 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           limit-severities-for-sarif: true
+
+      - name: Create issue with Trivy results on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const name = '${{ matrix.image.name }}';
+            const body = fs.readFileSync(`trivy-${name}.txt`, 'utf8').slice(0, 60000);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Trivy CRITICAL/HIGH findings - ${name} (${context.sha.slice(0,7)})`,
+              body: '```\n' + body + '\n```',
+              labels: ['security', 'trivy']
+            });
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
