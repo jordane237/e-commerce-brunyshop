@@ -43,6 +43,7 @@ describe('NotificationsService (NTF-01)', () => {
                 attempts: 0,
               }),
               update: vi.fn().mockResolvedValue({}),
+              updateMany: vi.fn().mockResolvedValue({ count: 1 }),
               findUnique: vi.fn().mockResolvedValue(null),
             },
             deadLetterJob: {
@@ -120,7 +121,7 @@ describe('NotificationsService (NTF-01)', () => {
   it('recordFailure met à jour la notification en FAILED avec lastError', async () => {
     await service.recordFailure('notif-test', new Error('Connection refused'));
 
-    expect(prisma.notification.update).toHaveBeenCalledWith(
+    expect(prisma.notification.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'notif-test' },
         data: expect.objectContaining({
@@ -141,7 +142,7 @@ describe('NotificationsService (NTF-01)', () => {
       5,
     );
 
-    expect(prisma.notification.update).toHaveBeenCalledWith({
+    expect(prisma.notification.updateMany).toHaveBeenCalledWith({
       where: { id: 'notif-test' },
       data: { status: 'DEAD_LETTER' },
     });

@@ -225,7 +225,7 @@ export class NotificationsService {
   }
 
   async markAsSent(notificationId: string, jobId?: string): Promise<void> {
-    await this.prisma.notification.update({
+    const { count } = await this.prisma.notification.updateMany({
       where: { id: notificationId },
       data: {
         status: 'SENT',
@@ -233,13 +233,17 @@ export class NotificationsService {
         attempts: { increment: 1 },
       },
     });
+    if (count === 0) {
+      this.logger.warn({ notificationId, jobId }, 'Notification introuvable, statut SENT ignoré');
+      return;
+    }
 
     this.logger.debug({ notificationId, jobId }, 'Notification marked SENT');
   }
 
   async recordFailure(notificationId: string, error: unknown, jobId?: string): Promise<void> {
     const message = this.errorMessage(error);
-    await this.prisma.notification.update({
+    const { count } = await this.prisma.notification.updateMany({
       where: { id: notificationId },
       data: {
         status: 'FAILED',
@@ -247,6 +251,9 @@ export class NotificationsService {
         lastError: message,
       },
     });
+    if (count === 0) {
+      this.logger.warn({ notificationId, jobId }, 'Notification introuvable, statut FAILED ignoré');
+    }
 
     this.logger.warn(
       {
@@ -269,7 +276,7 @@ export class NotificationsService {
     const message = this.errorMessage(error);
 
     await this.prisma.$transaction([
-      this.prisma.notification.update({
+      this.prisma.notification.updateMany({
         where: { id: notificationId },
         data: { status: 'DEAD_LETTER' },
       }),
