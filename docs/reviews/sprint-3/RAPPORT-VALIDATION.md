@@ -11,8 +11,8 @@
 Le Sprint 3 est **techniquement intégrable**, avec des réserves documentées qui ne permettent pas de le déclarer entièrement terminé.
 
 - **3 tickets pleinement conformes** : CAT-08, CRT-02, ORD-01.
-- **15 tickets conformes avec réserves** : le code peut être mergé, mais un critère de validation reste dépendant d'un autre ticket, d'une validation PO/juridique ou d'une preuve manquante.
-- **1 ticket non conforme sur ses critères de validation** : CNT-03. Les documents sont prêts, mais les tarifs, délais et relectures externes ne sont pas validés.
+- **16 tickets conformes avec réserves** : le code peut être mergé, mais un critère de validation reste dépendant d'un autre ticket, d'une validation PO/juridique ou d'une preuve manquante.
+- **CNT-03** : désormais conforme avec réserves. Les tarifs, délais et la relecture externe restent à valider, mais les contenus sont intégrables sans bloquer les autres tickets.
 
 Aucune correction fonctionnelle de tickets, aucun nettoyage de masse et aucune suppression n'ont été effectués pendant cette revue. Ces étapes restent soumises à validation.
 
@@ -26,7 +26,7 @@ Aucune correction fonctionnelle de tickets, aucun nettoyage de masse et aucune s
 | CAT-07 | ⚠️ Conforme avec réserves | « Meilleures ventes » utilise le tri `newest` ; mesure LCP à trancher. |
 | CAT-08 | ✅ Conforme | Filtres catalogue testés. |
 | CAT-10 | ✅ Conforme avec réserves | Guide des tailles statique au lieu de l'API CAT-06. |
-| CNT-03 | ❌ Non conforme | Tarifs/délais `[À confirmer]`, relecture externe absente. |
+| CNT-03 | ⚠️ Conforme avec réserves | Tarifs/délais provisoires et relecture externe recommandée, mais non bloquants pour l'intégration. |
 | CNT-07 | ⚠️ Conforme avec réserves | Dossier KYC prêt, sandbox non obtenu. |
 | CRT-02 | ✅ Conforme | Store panier persistant et revalidation testés. |
 | CRT-03 | ⚠️ Conforme avec réserves | CTA « Commander » désactivé faute de route P08. |

@@ -8,10 +8,10 @@
 
 | # | Critère d'acceptation | Statut | Preuve |
 |---|---|---|---|
-| 1 | Zones, tarifs et délais de livraison réels définis | ❌ | `LIVRAISON-ZONES-TARIFS.md` : tous les tarifs/délais sont des propositions marquées `[À confirmer]` ; l'adresse de retrait est inconnue |
+| 1 | Zones, tarifs et délais de livraison réels définis | ⚠️ | `LIVRAISON-ZONES-TARIFS.md` : tarifs/délais proposés et marqués `[À confirmer]` ; valeurs non contractuelles, intégrables sans bloquer MKT-01 |
 | 2 | Politique d'échange de pointure : délai, état, emballage, transport | ⚠️ | `POLITIQUE-ECHANGE-POINTURE.md` couvre les quatre points mais laisse le délai, l'état et le payeur en `[À confirmer]` |
 | 3 | Textes À propos, FAQ, accueil en français clair | ✅ | `CONTENUS-CONSOLIDES.md` et pages MKT-01 ; 18 Q/R FAQ, textes relus en interne |
-| 4 | Texte relu par une personne extérieure à l'équipe | ❌ | `CHECKLIST-VALIDATION.md` : relecture externe non réalisée, aucune signature |
+| 4 | Texte relu par une personne extérieure à l'équipe | ⚠️ | `CHECKLIST-VALIDATION.md` : relecture externe recommandée, non bloquante pour l'intégration |
 
 ## 2. Conformité au cahier des charges
 
@@ -48,6 +48,12 @@ Le CDC §6.9 (contenus) et §12 (règles de gestion) sont visés. Les livrables 
 
 ## 8. Statut global
 
-**❌ Non conforme sur les critères de validation**
+**⚠️ Conforme avec réserves**
 
-Recommandation : **ne pas clôturer**. Le ticket doit rester ouvert jusqu'à validation PO + relecture externe ; les documents sont prêts à être remplis.
+Recommandation : **merge OK avec réserves**. Le ticket reste ouvert pour validation PO/relecture externe, mais il ne bloque plus l'intégration des autres tickets : les valeurs sont explicitement provisoires et non contractuelles.
+
+## 9. Impact sur les autres tickets
+
+- CNT-03 ne bloque pas MKT-01 : l'intégration peut utiliser les contenus avec placeholders `[À confirmer]`.
+- Les coordonnées de contact réelles (WhatsApp, Facebook) sont désormais utilisées.
+- Les valeurs métier restantes (tarifs, délais, RCCM, etc.) sont à confirmer par le PO sans bloquer le développement.

@@ -11,10 +11,10 @@
 | 5 | Politique d'échange : qui paie le transport (défaut vs convenance) | POLITIQUE-ECHANGE-POINTURE.md | PO | ⏳ |
 | 6 | Adresse de retour (physique) | POLITIQUE-ECHANGE-POINTURE.md | PO | ⏳ |
 | 7 | Frais de livraison offerts à partir de X XAF ? | LIVRAISON-ZONES-TARIFS.md | PO | ⏳ |
-| 8 | Numéro WhatsApp officiel | CONTENUS-CONSOLIDES.md | PO | ⏳ |
+| 8 | Numéro WhatsApp officiel | CONTENUS-CONSOLIDES.md | PO | ✅ (+237 6 79 17 62 96) |
 | 9 | Numéro téléphone officiel | CONTENUS-CONSOLIDES.md | PO | ⏳ |
 | 10 | E-mail contact officiel | CONTENUS-CONSOLIDES.md | PO | ⏳ |
-| 11 | Page Facebook officielle URL | CONTENUS-CONSOLIDES.md | PO | ⏳ |
+| 11 | Page Facebook officielle URL | CONTENUS-CONSOLIDES.md | PO | ✅ (profile.php?id=100087026340515) |
 | 12 | Histoire de l'entreprise (année, fondateur, anecdote) | CONTENUS-CONSOLIDES.md | PO | ⏳ |
 | 13 | Chiffres (+X clients, X paires livrées) | CONTENUS-CONSOLIDES.md | PO | ⏳ |
 | 14 | Photos équipe (prénoms + rôles) | CONTENUS-CONSOLIDES.md | PO | ⏳ |

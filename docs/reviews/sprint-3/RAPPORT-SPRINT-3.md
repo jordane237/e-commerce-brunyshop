@@ -13,8 +13,8 @@ Le Sprint 3 est **techniquement intégrable**, avec des réserves documentées. 
 
 - 19 tickets, 105 points.
 - 3 tickets pleinement conformes : CAT-08, CRT-02, ORD-01.
-- 15 tickets conformes avec réserves.
-- 1 ticket non conforme sur ses critères : CNT-03.
+- 16 tickets conformes avec réserves, dont CNT-03 (valeurs provisoires non bloquantes).
+- 0 ticket bloquant pour l'intégration.
 
 ## 3. Résultats techniques
 

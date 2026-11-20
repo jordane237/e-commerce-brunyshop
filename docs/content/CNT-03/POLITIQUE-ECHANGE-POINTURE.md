@@ -14,8 +14,8 @@
 
 1. **Demande** : contacter BrunyShop dans le délai d'éligibilité via :
    - Formulaire de contact : https://brunyshop.cm/contact (page P22)
-   - WhatsApp : `[+237 XXX XX XX XX — à confirmer]`
-   - E-mail : `[contact@brunyshop.cm — à confirmer]`
+   - WhatsApp : `+237 6 79 17 62 96` (réel, intégré le 20/11/2026)
+   - E-mail : `support@brunyshop.cm` (provisoire, à confirmer)
    - Fournir : numéro de commande, pointure reçue, pointure souhaitée, photo de l'article (état), photo de l'emballage
 2. **Validation** : BrunyShop vérifie l'éligibilité et confirme la procédure par e-mail ou WhatsApp sous `[48 h — à confirmer]`
 3. **Expédition et réception** : le client renvoie l'article à l'adresse indiquée (voir section 3), BrunyShop l'inspecte, expédie la nouvelle pointure (ou rembourse si indisponible)
@@ -43,8 +43,8 @@
 ## Contact
 
 - Formulaire : https://brunyshop.cm/contact
-- WhatsApp : `[+237 XXX XX XX XX]`
-- E-mail : `[contact@brunyshop.cm]`
+- WhatsApp : `+237 6 79 17 62 96` (réel)
+- E-mail : `support@brunyshop.cm` (provisoire)
 - Horaires : `[Lun-Ven 8h-18h, Sam 9h-13h — à confirmer]`
 
 ## Ton et style
