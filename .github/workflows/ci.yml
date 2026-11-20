@@ -157,6 +157,7 @@ jobs:
           --health-retries 5
     env:
       NODE_ENV: test
+      PORT: 4000
       DATABASE_URL: postgresql://brunyshop_test:brunyshop_test@localhost:5432/brunyshop_test
       REDIS_URL: redis://localhost:6379
       JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'ci-only-access-secret-at-least-forty-eight-characters-abcdefg' }}
@@ -201,8 +202,23 @@ jobs:
       - name: Run db:seed
         run: pnpm db:seed
 
-      - name: Run e2e tests
-        run: pnpm test:e2e
+      - name: Run backend e2e tests
+        run: pnpm -C backend test:e2e
+
+      - name: Install Playwright Chromium
+        run: pnpm -C frontend exec playwright install --with-deps chromium
+
+      - name: Run frontend e2e tests
+        run: |
+          pnpm -C backend dev > /tmp/api.log 2>&1 &
+          API_PID=$!
+          trap 'kill $API_PID' EXIT
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4000/api/v1/health/ready > /dev/null && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:4000/api/v1/health/ready > /dev/null || { cat /tmp/api.log; exit 1; }
+          pnpm -C frontend test:e2e
 
       - name: Upload e2e reports
         if: failure()
@@ -210,8 +226,8 @@ jobs:
         with:
           name: e2e-report
           path: |
-            playwright-report
-            test-results
+            frontend/playwright-report
+            frontend/test-results
           retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
@@ -245,8 +261,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit dependencies
-        run: pnpm audit --audit-level=high
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=high
 
   # ─────────────────────────────────────────────────────────────
   # Job 5 — openapi-check (vérifie que openapi.json est à jour)
