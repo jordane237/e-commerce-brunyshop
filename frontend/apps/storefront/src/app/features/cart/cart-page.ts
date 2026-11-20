@@ -1,181 +1,120 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { CartStore } from '@bruny/data-access';
-import { FcfaPipe } from '@bruny/util';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { debounceTime, Subject } from 'rxjs';
+import { CartStore } from '../../core/cart/cart.store';
+import { type CartItemValidationDto, type CartIssueDto } from '@bruny/data-access';
+import { EmptyStateComponent } from '@bruny/ui';
+import { CartLineItemComponent } from './components/cart-line-item/cart-line-item.component';
+import { CartSummaryComponent } from './components/cart-summary/cart-summary.component';
+import { CartReassuranceComponent } from './components/cart-reassurance/cart-reassurance.component';
+import type { ReassurancePoint } from './components/cart-reassurance/cart-reassurance.component';
+import { SeoService } from '../../core/seo.service';
 
 @Component({
-  standalone: true,
   selector: 'bruny-cart-page',
-  imports: [RouterLink, FcfaPipe],
-  template: `
-    <section class="container cart-page">
-      <p class="eyebrow">VOTRE SÉLECTION</p>
-      <h1>Mon panier</h1>
-      @if (!cart.lines().length) {
-        <div class="empty">
-          <h2>Votre panier est vide</h2>
-          <p>Explorez la boutique et ajoutez votre prochaine paire.</p>
-          <a routerLink="/boutique">Découvrir la boutique</a>
-        </div>
-      } @else {
-        <div class="layout">
-          <div class="lines">
-            @for (line of cart.lines(); track line.variantId) {
-              <article class="line">
-                @if (line.image) {
-                  <img [src]="line.image" [alt]="line.name" width="120" height="120" />
-                }
-                <div class="info">
-                  <a [routerLink]="['/produit', line.slug]">{{ line.name }}</a>
-                  <p>{{ line.color }} · Pointure {{ line.size }} · Quantité {{ line.quantity }}</p>
-                  <strong>{{ line.unitPrice | fcfa }}</strong>
-                </div>
-                <button
-                  type="button"
-                  (click)="cart.remove(line.variantId)"
-                  [attr.aria-label]="'Retirer ' + line.name"
-                >
-                  Retirer
-                </button>
-              </article>
-            }
-          </div>
-          <aside class="summary">
-            <h2>Récapitulatif</h2>
-            <p>
-              <span>{{ cart.count() }} article(s)</span><strong>{{ cart.total() | fcfa }}</strong>
-            </p>
-            <button type="button" disabled>Continuer la commande</button
-            ><small>Les frais de livraison seront calculés lors de la commande.</small>
-          </aside>
-        </div>
-      }
-    </section>
-  `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-      .cart-page {
-        padding-block: 48px 70px;
-      }
-      .eyebrow {
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.14em;
-        color: #9a7b14;
-      }
-      .cart-page h1 {
-        font-size: 2.2rem;
-        margin: 8px 0 28px;
-      }
-      .empty {
-        padding: 70px 24px;
-        text-align: center;
-        background: #f7f7f6;
-        border-radius: 16px;
-      }
-      .empty p {
-        color: #687087;
-      }
-      .empty a {
-        display: inline-block;
-        margin-top: 12px;
-        background: #1f2a44;
-        color: #fff;
-        padding: 12px 18px;
-        border-radius: 8px;
-        text-decoration: none;
-      }
-      .layout {
-        display: grid;
-        grid-template-columns: 1fr 320px;
-        gap: 28px;
-      }
-      .lines {
-        display: grid;
-        gap: 12px;
-      }
-      .line {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        background: white;
-        border: 1px solid #eceef2;
-        padding: 14px;
-        border-radius: 12px;
-      }
-      .line img {
-        width: 96px;
-        height: 96px;
-        object-fit: cover;
-        border-radius: 8px;
-        background: #f4f3ef;
-      }
-      .info {
-        flex: 1;
-      }
-      .info a {
-        color: #1f2a44;
-        font-weight: 800;
-        text-decoration: none;
-      }
-      .info p {
-        color: #687087;
-        font-size: 0.85rem;
-      }
-      .line > button {
-        border: 0;
-        color: #a5232d;
-        background: none;
-        cursor: pointer;
-      }
-      .summary {
-        padding: 22px;
-        background: #f7f7f6;
-        border-radius: 12px;
-        height: max-content;
-      }
-      .summary p {
-        display: flex;
-        justify-content: space-between;
-        padding-block: 12px;
-        border-block: 1px solid #dedfe4;
-      }
-      .summary button {
-        width: 100%;
-        height: 46px;
-        border: 0;
-        border-radius: 8px;
-        background: #1f2a44;
-        color: white;
-        font-weight: 700;
-      }
-      .summary button:disabled {
-        opacity: 0.55;
-      }
-      .summary small {
-        display: block;
-        margin-top: 12px;
-        color: #687087;
-        line-height: 1.5;
-      }
-      @media (max-width: 760px) {
-        .layout {
-          grid-template-columns: 1fr;
-        }
-        .line {
-          gap: 10px;
-        }
-        .line img {
-          width: 72px;
-          height: 72px;
-        }
-      }
-    `,
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    EmptyStateComponent,
+    CartLineItemComponent,
+    CartSummaryComponent,
+    CartReassuranceComponent,
   ],
+  templateUrl: './cart-page.html',
+  styleUrl: './cart-page.scss',
 })
-export class CartPage {
-  readonly cart = inject(CartStore);
+export class CartPage implements OnInit {
+  private readonly cartStore = inject(CartStore);
+  private readonly seoService = inject(SeoService);
+  private readonly router = inject(Router);
+  private readonly quantityChanged$ = new Subject<void>();
+
+  readonly cart = this.cartStore;
+
+  readonly validatedLinesMap = computed(() => {
+    const validation = this.cart.validationResult();
+    if (validation === null) return new Map<string, CartItemValidationDto>();
+    return new Map(validation.lines.map((line) => [line.variantId, line]));
+  });
+
+  readonly issuesMap = computed(() => {
+    const validation = this.cart.validationResult();
+    if (validation === null) return new Map<string, CartIssueDto>();
+    const map = new Map<string, CartIssueDto>();
+    for (const issue of validation.issues) {
+      if (issue.variantId !== undefined) map.set(issue.variantId, issue);
+    }
+    return map;
+  });
+
+  readonly hasBlockingIssues = computed(() => {
+    const validation = this.cart.validationResult();
+    if (validation === null) return false;
+    const blocking = [
+      'INSUFFICIENT_STOCK',
+      'OUT_OF_STOCK',
+      'PRODUCT_ARCHIVED',
+      'PRODUCT_NOT_FOUND',
+      'VARIANT_NOT_FOUND',
+    ];
+    return validation.issues.some((issue) => blocking.includes(issue.code));
+  });
+
+  readonly canCheckout = computed(() => !this.hasBlockingIssues() && this.cart.lines().length > 0);
+
+  readonly reassurancePoints: ReassurancePoint[] = [
+    {
+      icon: 'check-circle',
+      label: 'Paiement à la livraison',
+      description: 'Payez une fois la paire reçue.',
+    },
+    {
+      icon: 'refresh',
+      label: 'Échange sous 7 jours',
+      description: 'Pas la bonne pointure ? L’échange est possible.',
+    },
+    {
+      icon: 'truck',
+      label: 'Livraison à Douala et Yaoundé',
+      description: 'Vos commandes livrées dans les villes desservies.',
+    },
+    {
+      icon: 'whatsapp',
+      label: 'Support WhatsApp',
+      description: 'Une question ? Notre équipe vous répond.',
+    },
+  ];
+
+  constructor() {
+    this.quantityChanged$
+      .pipe(debounceTime(500), takeUntilDestroyed())
+      .subscribe(() => void this.cart.validate());
+  }
+
+  ngOnInit(): void {
+    this.seoService.setPageMeta({
+      title: 'Mon panier',
+      description:
+        'Vérifiez votre panier BrunyShop avant de commander. Paiement à la livraison disponible.',
+    });
+    if (!this.cart.isEmpty()) void this.cart.validate();
+  }
+
+  setQuantity(variantId: string, quantity: number): void {
+    this.cart.updateQuantity(variantId, quantity);
+    this.quantityChanged$.next();
+  }
+
+  remove(variantId: string): void {
+    this.cart.removeLine(variantId);
+  }
+
+  retry(): void {
+    void this.cart.validate();
+  }
+
+  goToCatalog(): void {
+    void this.router.navigate(['/boutique']);
+  }
 }

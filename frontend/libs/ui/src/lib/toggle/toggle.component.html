@@ -1,0 +1,36 @@
+<div
+  class="bs-toggle"
+  [class.bs-toggle--error]="!!error"
+  [class.bs-toggle--disabled]="disabled || loading"
+>
+  <label class="bs-toggle__row" [attr.for]="fieldId">
+    <span class="bs-toggle__label">{{ label }}</span>
+    <span class="bs-toggle__control">
+      <input
+        class="bs-toggle__input"
+        type="checkbox"
+        role="switch"
+        [id]="fieldId"
+        [name]="name"
+        [checked]="checked"
+        [disabled]="disabled || loading"
+        [attr.aria-invalid]="error ? 'true' : null"
+        [attr.aria-describedby]="describedBy"
+        (change)="onChange($event)"
+      />
+      <span class="bs-toggle__track" aria-hidden="true">
+        <span class="bs-toggle__thumb">
+          @if (loading) {
+            <bruny-spinner size="sm" [inline]="true" />
+          }
+        </span>
+      </span>
+    </span>
+  </label>
+
+  @if (error) {
+    <p class="bs-toggle__message bs-toggle__message--error" role="alert">{{ error }}</p>
+  } @else if (hint) {
+    <p class="bs-toggle__message">{{ hint }}</p>
+  }
+</div>

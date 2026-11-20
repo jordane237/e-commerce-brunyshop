@@ -1,0 +1,171 @@
+<div class="sidebar">
+  <div class="sidebar__head">
+    <h2 class="sidebar__title">Filtres</h2>
+    @if (activeFilterCount() > 0) {
+      <button class="sidebar__reset" type="button" (click)="reset.emit()">
+        Réinitialiser les filtres
+      </button>
+    }
+  </div>
+
+  <details class="group" open>
+    <summary class="group__summary">Catégories</summary>
+    <div class="group__body">
+      <label class="choice" [attr.for]="idPrefix() + '-category-all'">
+        <input
+          class="choice__input"
+          type="radio"
+          [id]="idPrefix() + '-category-all'"
+          [name]="idPrefix() + '-category'"
+          [checked]="!filters().category"
+          (change)="selectCategory(undefined)"
+        />
+        <span class="choice__label">Toutes les catégories</span>
+      </label>
+      @for (category of categories(); track category.slug) {
+        <label class="choice" [attr.for]="idPrefix() + '-category-' + category.slug">
+          <input
+            class="choice__input"
+            type="radio"
+            [id]="idPrefix() + '-category-' + category.slug"
+            [name]="idPrefix() + '-category'"
+            [checked]="filters().category === category.slug"
+            (change)="selectCategory(category.slug)"
+          />
+          <span class="choice__label">{{ category.name }}</span>
+          <span class="choice__count">{{ category.count }}</span>
+        </label>
+      }
+    </div>
+  </details>
+
+  <details class="group" open>
+    <summary class="group__summary">Marques</summary>
+    <div class="group__body">
+      <label class="choice" [attr.for]="idPrefix() + '-brand-all'">
+        <input
+          class="choice__input"
+          type="radio"
+          [id]="idPrefix() + '-brand-all'"
+          [name]="idPrefix() + '-brand'"
+          [checked]="!filters().brand"
+          (change)="selectBrand(undefined)"
+        />
+        <span class="choice__label">Toutes les marques</span>
+      </label>
+      @for (brand of brands(); track brand.slug) {
+        <label class="choice" [attr.for]="idPrefix() + '-brand-' + brand.slug">
+          <input
+            class="choice__input"
+            type="radio"
+            [id]="idPrefix() + '-brand-' + brand.slug"
+            [name]="idPrefix() + '-brand'"
+            [checked]="filters().brand === brand.slug"
+            (change)="selectBrand(brand.slug)"
+          />
+          <span class="choice__label">{{ brand.name }}</span>
+          <span class="choice__count">{{ brand.count }}</span>
+        </label>
+      }
+    </div>
+  </details>
+
+  <details class="group" open>
+    <summary class="group__summary">Pointures</summary>
+    <div class="group__body group__body--chips">
+      @for (size of sizes(); track size.value) {
+        <button
+          class="chip"
+          type="button"
+          [class.chip--active]="filters().size === size.value"
+          [attr.aria-pressed]="filters().size === size.value"
+          (click)="toggleSize(size.value)"
+        >
+          {{ size.value }}
+          <span class="chip__count">{{ size.count }}</span>
+        </button>
+      }
+    </div>
+  </details>
+
+  <details class="group" open>
+    <summary class="group__summary">Couleurs</summary>
+    <div class="group__body group__body--chips">
+      @for (color of colors(); track color.value) {
+        <button
+          class="chip"
+          type="button"
+          [class.chip--active]="filters().color === color.value"
+          [attr.aria-pressed]="filters().color === color.value"
+          (click)="toggleColor(color.value)"
+        >
+          {{ colorLabel(color.value) }}
+          <span class="chip__count">{{ color.count }}</span>
+        </button>
+      }
+    </div>
+  </details>
+
+  <details class="group" open>
+    <summary class="group__summary">Prix</summary>
+    <div class="group__body">
+      <div class="price">
+        <label class="price__field">
+          <span class="price__label">Prix minimum</span>
+          <input
+            class="price__input"
+            type="number"
+            inputmode="numeric"
+            min="0"
+            step="500"
+            [id]="idPrefix() + '-price-min'"
+            [value]="filters().minPrice ?? ''"
+            (change)="applyPrice($any($event.target).value, priceMax.value)"
+            #priceMin
+          />
+        </label>
+        <label class="price__field">
+          <span class="price__label">Prix maximum</span>
+          <input
+            class="price__input"
+            type="number"
+            inputmode="numeric"
+            min="0"
+            step="500"
+            [id]="idPrefix() + '-price-max'"
+            [value]="filters().maxPrice ?? ''"
+            (change)="applyPrice(priceMin.value, $any($event.target).value)"
+            #priceMax
+          />
+        </label>
+      </div>
+      <p class="price__unit">Montants en FCFA</p>
+    </div>
+  </details>
+
+  <details class="group" open>
+    <summary class="group__summary">Disponibilité</summary>
+    <div class="group__body">
+      <label class="choice" [attr.for]="idPrefix() + '-in-stock'">
+        <input
+          class="choice__input choice__input--checkbox"
+          type="checkbox"
+          [id]="idPrefix() + '-in-stock'"
+          [checked]="filters().inStock === true"
+          (change)="setStock($any($event.target).checked)"
+        />
+        <span class="choice__label">En stock</span>
+      </label>
+      <label class="choice" [attr.for]="idPrefix() + '-promo'">
+        <input
+          class="choice__input choice__input--checkbox"
+          type="checkbox"
+          [id]="idPrefix() + '-promo'"
+          [checked]="filters().promo === true"
+          (change)="setPromo($any($event.target).checked)"
+        />
+        <span class="choice__label">En promotion</span>
+      </label>
+    </div>
+  </details>
+</div>

@@ -22,7 +22,9 @@
             "server": "apps/storefront/src/main.server.ts",
             "ssr": { "entry": "apps/storefront/src/server.ts" },
             "outputMode": "server",
-            "security": { "allowedHosts": ["localhost", "127.0.0.1"] }
+            "security": {
+              "allowedHosts": ["localhost", "127.0.0.1", "localhost:4200", "127.0.0.1:4200"]
+            }
           },
           "configurations": {
             "production": {
@@ -38,6 +40,7 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": { "allowedHosts": true },
           "configurations": {
             "production": { "buildTarget": "storefront:build:production" },
             "development": {
@@ -77,6 +80,7 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": { "allowedHosts": true },
           "configurations": {
             "production": { "buildTarget": "admin:build:production" },
             "development": {

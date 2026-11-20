@@ -1,0 +1,51 @@
+<bruny-hero-banner />
+
+<bruny-categories-pills
+  [categories]="data.categories()"
+  [loading]="data.categoriesLoading()"
+  [error]="data.categoriesError()"
+  (retry)="data.loadCategories()"
+/>
+
+@if (allFailed()) {
+  <div class="container home__global-error" role="alert">
+    <p>Impossible de charger la page d’accueil. Vérifiez votre connexion.</p>
+    <button type="button" class="home__global-retry" (click)="data.reloadAll()">
+      Réessayer tout
+    </button>
+  </div>
+}
+
+<bruny-product-section
+  title="Nouveautés de la Semaine"
+  [products]="data.newProducts()"
+  [loading]="data.newProductsLoading()"
+  [error]="data.newProductsError()"
+  emptyMessage="Aucune nouveauté pour le moment."
+  (retry)="data.loadNewProducts()"
+  (add)="onAdd($event)"
+/>
+
+<bruny-reassurance-band />
+
+<bruny-product-section
+  title="Meilleures Ventes"
+  [products]="data.bestSellers()"
+  [loading]="data.bestSellersLoading()"
+  [error]="data.bestSellersError()"
+  emptyMessage="Aucune meilleure vente pour le moment."
+  (retry)="data.loadBestSellers()"
+  (add)="onAdd($event)"
+/>
+
+<bruny-product-section
+  title="Promotions"
+  [products]="data.promotions()"
+  [loading]="data.promotionsLoading()"
+  [error]="data.promotionsError()"
+  emptyMessage="Aucune promotion pour le moment."
+  (retry)="data.loadPromotions()"
+  (add)="onAdd($event)"
+/>
+
+<bruny-facebook-cta />

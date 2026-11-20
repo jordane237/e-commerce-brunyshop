@@ -1,0 +1,49 @@
+<div
+  class="bs-field"
+  [class.bs-field--error]="!!error"
+  [class.bs-field--disabled]="disabled || loading"
+>
+  <label class="bs-field__label" [attr.for]="fieldId">
+    {{ label }}
+    @if (required) {
+      <span class="bs-field__required" aria-hidden="true">*</span>
+    }
+  </label>
+
+  <div class="bs-field__control">
+    <select
+      class="bs-field__select"
+      [id]="fieldId"
+      [name]="name"
+      [value]="value"
+      [attr.aria-invalid]="error ? 'true' : null"
+      [attr.aria-describedby]="describedBy"
+      [attr.aria-required]="required ? 'true' : null"
+      [disabled]="disabled || loading"
+      [required]="required"
+      (change)="onChange($event)"
+    >
+      @if (placeholder) {
+        <option value="" [disabled]="required">{{ placeholder }}</option>
+      }
+      @for (option of options; track option.value) {
+        <option [value]="option.value" [disabled]="option.disabled ?? false">
+          {{ option.label }}
+        </option>
+      }
+    </select>
+    <span class="bs-field__chevron" aria-hidden="true">
+      @if (loading) {
+        <bruny-spinner size="sm" [inline]="true" />
+      } @else {
+        <bruny-icon name="chevron-down" [size]="18" />
+      }
+    </span>
+  </div>
+
+  @if (error) {
+    <p class="bs-field__error" [id]="errorId" role="alert">{{ error }}</p>
+  } @else if (hint) {
+    <p class="bs-field__hint" [id]="hintId">{{ hint }}</p>
+  }
+</div>

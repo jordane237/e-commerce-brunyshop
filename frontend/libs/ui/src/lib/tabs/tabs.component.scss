@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.bs-tabs {
+  display: flex;
+  gap: var(--bs-space-6);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--bs-color-border);
+}
+
+.bs-tabs__tab {
+  position: relative;
+  min-height: var(--bs-touch-target);
+  padding: var(--bs-space-3) 0;
+  border: 0;
+  background: transparent;
+  color: var(--bs-color-text-muted);
+  font: inherit;
+  font-weight: var(--bs-font-weight-bold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.bs-tabs__tab[aria-selected='true'] {
+  color: var(--bs-color-text);
+}
+
+.bs-tabs__tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--bs-color-primary);
+}
+
+.bs-tabs__tab:focus-visible {
+  outline: none;
+  box-shadow: var(--bs-shadow-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-tabs__tab {
+    scroll-behavior: auto;
+  }
+}

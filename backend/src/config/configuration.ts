@@ -1,5 +1,10 @@
 // Typed application configuration derived from validated environment variables.
+import {
+  readStorageSettings,
+  type StorageSettings,
+} from '../infrastructure/storage/storage.settings';
 import { Environment } from './env.validation';
+import { readTurnstileSettings, type TurnstileSettings } from './turnstile.settings';
 
 export interface AuthConfig {
   secret: string;
@@ -17,8 +22,25 @@ export interface ApplicationConfig {
   publicAppUrl: string;
   publicAdminUrl: string;
   corsOrigins: string[];
+  contactEmailTo: string;
   throttle: { ttlSeconds: number; limit: number };
+  catalog: {
+    productDetailTtlSeconds: number;
+    productsListTtlSeconds: number;
+    sizeGuidesTtlSeconds: number;
+    similarProductsLimit: number;
+  };
+  stock: {
+    lowAlertEnabled: boolean;
+    lowThresholdDefault: number;
+  };
+  orders: {
+    referencePrefix: string;
+    rateLimitPerHour: number;
+  };
+  storage: StorageSettings;
   auth: AuthConfig;
+  turnstile: TurnstileSettings;
   isProduction: boolean;
 }
 
@@ -37,10 +59,31 @@ export function loadApplicationConfig(env: Record<string, unknown>): Application
     publicAppUrl: String(env['APP_PUBLIC_URL']),
     publicAdminUrl: String(env['ADMIN_PUBLIC_URL']),
     corsOrigins,
+    contactEmailTo: String(env['CONTACT_EMAIL_TO'] ?? 'support@brunyshop.cm').trim(),
     throttle: {
       ttlSeconds: Number(env['THROTTLE_TTL']),
       limit: Number(env['THROTTLE_LIMIT']),
     },
+    stock: {
+      lowAlertEnabled: !['false', '0', 'no'].includes(
+        String(env['STOCK_LOW_ALERT_ENABLED'] ?? 'true').toLowerCase(),
+      ),
+      lowThresholdDefault: Number(env['STOCK_LOW_THRESHOLD_DEFAULT'] ?? 5),
+    },
+    orders: {
+      referencePrefix: String(env['ORDER_REFERENCE_PREFIX'] ?? 'BRN')
+        .trim()
+        .toUpperCase(),
+      rateLimitPerHour: Number(env['ORDER_RATE_LIMIT_PER_HOUR'] ?? 10),
+    },
+    catalog: {
+      productDetailTtlSeconds: Number(env['CACHE_PRODUCT_DETAIL_TTL_SECONDS'] ?? 300),
+      productsListTtlSeconds: Number(env['CACHE_PRODUCTS_LIST_TTL_SECONDS'] ?? 60),
+      sizeGuidesTtlSeconds: Number(env['CACHE_SIZE_GUIDES_TTL_SECONDS'] ?? 1800),
+      similarProductsLimit: Number(env['SIMILAR_PRODUCTS_LIMIT'] ?? 6),
+    },
+    storage: readStorageSettings(env),
+    turnstile: readTurnstileSettings(env),
     auth: {
       // Cachier 10.2: access JWT 10-15 min, rotating refresh cookie.
       secret: String(env['JWT_ACCESS_SECRET']),

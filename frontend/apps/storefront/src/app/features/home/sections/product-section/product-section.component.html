@@ -1,0 +1,39 @@
+<section class="section" [attr.aria-labelledby]="sectionId()">
+  <div class="container">
+    <header class="section__header">
+      <h2 class="section__title" [id]="sectionId()">{{ title() }}</h2>
+      @if (viewMoreLink()) {
+        <a class="section__more" [routerLink]="viewMoreLink()">Voir tout ›</a>
+      }
+    </header>
+
+    @if (loading()) {
+      <div class="section__grid" aria-busy="true">
+        @for (item of placeholders; track item) {
+          <div class="surface-card">
+            <bruny-skeleton height="220px" radius="lg" />
+            <div class="surface-card__body">
+              <bruny-skeleton width="60%" height="14px" />
+              <bruny-skeleton width="40%" height="18px" />
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (error()) {
+      <div class="section__state" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="section__retry" (click)="retry.emit()">Réessayer</button>
+      </div>
+    } @else if (isEmpty()) {
+      <p class="section__state">{{ emptyMessage() }}</p>
+    } @else if (products()?.length) {
+      <ul class="section__grid" role="list">
+        @for (product of products(); track product.id) {
+          <li>
+            <bruny-product-card [product]="product" [showAdd]="true" (add)="add.emit(product)" />
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

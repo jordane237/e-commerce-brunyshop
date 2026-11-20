@@ -1,0 +1,52 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard"],
+  "timezone": "Africa/Douala",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "groupName": "Angular",
+      "matchPackagePatterns": ["^@angular/", "^@angular-devkit/", "^@schematics/angular"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "groupName": "Nx",
+      "matchPackagePatterns": ["^nx$", "^@nx/"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "groupName": "NestJS",
+      "matchPackagePatterns": ["^@nestjs/"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "groupName": "Prisma",
+      "matchPackagePatterns": ["^prisma$", "^@prisma/"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "groupName": "ESLint + Prettier + TS tooling",
+      "matchPackagePatterns": [
+        "^eslint",
+        "^@typescript-eslint/",
+        "^prettier",
+        "^typescript",
+        "^@commitlint/",
+        "^husky$",
+        "^lint-staged$"
+      ]
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": false
+  },
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2
+}

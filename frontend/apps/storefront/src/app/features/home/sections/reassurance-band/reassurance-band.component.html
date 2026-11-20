@@ -1,0 +1,44 @@
+<section class="assurance" aria-labelledby="home-assurance-title">
+  <div class="container">
+    <h2 id="home-assurance-title" class="assurance__title">Garanties Bruny Shopping</h2>
+    <ul class="assurance__list" role="list">
+      @for (item of items; track item.id) {
+        <li class="assurance__item">
+          <span class="assurance__icon" aria-hidden="true">
+            @switch (item.icon) {
+              @case ('payment') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <path d="M2 10h20" />
+                </svg>
+              }
+              @case ('delivery') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M3 7h11v10H3z" />
+                  <path d="M14 10h4l3 3v4h-7z" />
+                  <circle cx="7" cy="18" r="1.6" />
+                  <circle cx="17" cy="18" r="1.6" />
+                </svg>
+              }
+              @case ('exchange') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M4 8h13l-3-3" />
+                  <path d="M20 16H7l3 3" />
+                </svg>
+              }
+              @case ('support') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M21 11.5a8.5 8.5 0 0 1-12.8 7.4L3 21l2.1-5.2A8.5 8.5 0 1 1 21 11.5z" />
+                </svg>
+              }
+            }
+          </span>
+          <span class="assurance__text">
+            <span class="assurance__item-title">{{ item.title }}</span>
+            <span class="assurance__desc">{{ item.description }}</span>
+          </span>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

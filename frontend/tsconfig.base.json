@@ -18,6 +18,7 @@
     "target": "es2022",
     "customConditions": ["@bruny-ws/source"],
     "paths": {
+      "@bruny/core": ["./libs/core/src/index.ts"],
       "@bruny/data-access": ["./libs/data-access/src/index.ts"],
       "@bruny/ui": ["./libs/ui/src/index.ts"],
       "@bruny/util": ["./libs/util/src/index.ts"],
