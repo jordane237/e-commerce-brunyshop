@@ -12,6 +12,6 @@ export class FacebookCtaComponent {
    * URL de la page Facebook. Configurable par le parent tant que la config
    * publique (`/api/v1/config`) n'expose pas ce lien.
    */
-  readonly url = input('https://www.facebook.com/BrunyShopping');
+  readonly url = input('https://www.facebook.com/profile.php?id=100087026340515');
   readonly label = input('Suivez-nous sur Facebook');
 }
