@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 import { SeoService } from '../../../core/seo.service';
@@ -9,7 +10,7 @@ describe('SizeGuideComponent', () => {
     const seo = { setPageMeta: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [SizeGuideComponent],
-      providers: [provideRouter([]), { provide: SeoService, useValue: seo }],
+      providers: [provideHttpClient(), provideRouter([]), { provide: SeoService, useValue: seo }],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(SizeGuideComponent);

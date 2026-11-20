@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import type { TocSection } from '@bruny/ui';
+import { ActivatedRoute } from '@angular/router';
+import { CatalogApi } from '@bruny/data-access';
 import { SeoService } from '../../../core/seo.service';
 import {
   LegalPageLayoutComponent,
@@ -20,7 +22,8 @@ interface SizeTable {
 }
 
 /**
- * Correspondances reprises du seed CAT-06 (`size-guides.seed.ts`).
+ * Correspondances reprises du seed CAT-06 (`size-guides.seed.ts`) — utilisées en
+ * secours lorsque la catégorie n'est pas fournie ou que l'API est indisponible.
  * ⚠️ Données à valider par le propriétaire (CNT-02) avant mise en production.
  */
 const SIZE_TABLES: readonly SizeTable[] = [
@@ -92,21 +95,23 @@ const SIZE_TABLES: readonly SizeTable[] = [
 })
 export class SizeGuideComponent implements OnInit {
   private readonly seo = inject(SeoService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly catalogApi = inject(CatalogApi);
 
   readonly breadcrumb: readonly BreadcrumbItem[] = [
     { label: 'Accueil', path: '/' },
     { label: 'Guide des tailles' },
   ];
 
-  readonly toc: readonly TocSection[] = [
+  readonly tables = signal<readonly SizeTable[]>(SIZE_TABLES);
+
+  readonly toc = signal<readonly TocSection[]>([
     { id: 'mesurer', title: 'Mesurer son pied', level: 2 },
     { id: 'hommes', title: 'Hommes', level: 2 },
     { id: 'femmes', title: 'Femmes', level: 2 },
     { id: 'enfants', title: 'Enfants', level: 2 },
     { id: 'conseils', title: 'Nos conseils', level: 2 },
-  ];
-
-  readonly tables = SIZE_TABLES;
+  ]);
 
   readonly intro =
     'Mesurez votre pied du talon au bout de l’orteil le plus long, debout et en fin de journée. Ajoutez 0,5 à 1 cm pour le confort. En cas d’hésitation entre deux pointures, choisissez la plus grande.';
@@ -117,6 +122,40 @@ export class SizeGuideComponent implements OnInit {
       description:
         'Correspondances de pointures EU, US, UK et centimètres pour hommes, femmes et enfants, avec les conseils de mesure BRUNY SHOPPING.',
       canonicalPath: '/guide-des-tailles',
+    });
+
+    const categoryId = this.route.snapshot.queryParamMap.get('category');
+    if (!categoryId) return;
+
+    this.catalogApi.sizeGuide(categoryId).subscribe({
+      next: (guide) => {
+        const mapped: SizeTable[] = [];
+        if (guide.table.men?.length) {
+          mapped.push({
+            id: 'hommes',
+            title: 'Hommes',
+            rows: guide.table.men.map((e) => ({ eu: e.eu, us: e.us, uk: e.uk, cm: e.cm })),
+          });
+        }
+        if (guide.table.women?.length) {
+          mapped.push({
+            id: 'femmes',
+            title: 'Femmes',
+            rows: guide.table.women.map((e) => ({ eu: e.eu, us: e.us, uk: e.uk, cm: e.cm })),
+          });
+        }
+        if (guide.table.kids?.length) {
+          mapped.push({
+            id: 'enfants',
+            title: 'Enfants',
+            rows: guide.table.kids.map((e) => ({ eu: e.eu, us: e.us, uk: e.uk, cm: e.cm })),
+          });
+        }
+        if (mapped.length > 0) this.tables.set(mapped);
+      },
+      error: () => {
+        // Secours : on conserve les tables statiques.
+      },
     });
   }
 }

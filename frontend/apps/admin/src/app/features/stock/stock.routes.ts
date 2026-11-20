@@ -4,6 +4,6 @@ export const STOCK_ROUTES: Route[] = [
   {
     path: '',
     loadComponent: () =>
-      import('../shared/placeholder/placeholder-page').then((module) => module.PlaceholderPage),
+      import('./stock-alerts.component').then((module) => module.StockAlertsComponent),
   },
 ];

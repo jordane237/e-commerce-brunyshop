@@ -32,8 +32,6 @@
       [error]="passwordError() ?? ''"
     />
 
-    <a routerLink="/mot-de-passe-oublie" class="auth-form__forgot">Mot de passe oublié ?</a>
-
     @if (captchaEnabled()) {
       <bruny-captcha
         [siteKey]="siteKey()"

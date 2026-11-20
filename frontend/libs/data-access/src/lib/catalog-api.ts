@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable, InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
-import type { paths } from '../generated/api-types';
+import type { components, paths } from '../generated/api-types';
 
 // Enum de tri repris du contrat généré : renommer une valeur côté backend casse
 // la compilation ici après `pnpm api:generate` (TEC-09 CA2).
@@ -181,5 +181,11 @@ export class CatalogApi {
 
   categories(): Observable<CatalogCategory[]> {
     return this.http.get<CatalogCategory[]>(`${this.baseUrl}/categories`);
+  }
+
+  sizeGuide(categoryId: string): Observable<components['schemas']['SizeGuideResponseDto']> {
+    return this.http.get<components['schemas']['SizeGuideResponseDto']>(
+      `${this.baseUrl}/size-guides/${encodeURIComponent(categoryId)}`,
+    );
   }
 }

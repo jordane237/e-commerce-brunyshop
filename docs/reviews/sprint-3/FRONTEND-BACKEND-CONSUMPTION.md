@@ -14,9 +14,9 @@
 | 1 | `GET /api/v1/products` | CAT-02 → CAT-07/CAT-08 | `CatalogApi.list` | `HomeDataService`, `CatalogStore` | ✅ |
 | 2 | `GET /api/v1/products/{slug}` | CAT-03 → CAT-10 | `CatalogApi.get` | `ProductDetailStore` | ✅ |
 | 3 | `GET /api/v1/categories` | CAT-01 → CAT-07/BO-03 | `CatalogApi.categories` | `HomeDataService`, `AdminProductsStore` | ✅ |
-| 4 | `GET /api/v1/size-guides/{categoryId}` | CAT-06 → CAT-10 | Aucun | `SizeGuideComponent` utilise une copie statique du seed | ❌ oubli partiel |
+| 4 | `GET /api/v1/size-guides/{categoryId}` | CAT-06 → CAT-10 | `CatalogApi.sizeGuide` | `SizeGuideComponent` (si `?category=`) avec secours statique | ✅ |
 | 5 | `POST /api/v1/cart/validate` | CRT-01 → CRT-02/03/04 | `CartApi.validate` | `CartStore` (boot, panier, mini-panier) | ✅ |
-| 6 | `POST /api/v1/orders` | ORD-01 | Aucun | Aucun écran P11/P12 | ❌ futur justifié |
+| 6 | `POST /api/v1/orders` | ORD-01 | `OrdersApi.create` | Aucun écran P11/P12 | ❌ futur justifié (wrapper prêt) |
 | 7 | `POST /api/v1/auth/register` | AUT-01/AUT-09 | `AuthService.register` | `RegisterComponent` | ✅ |
 | 8 | `POST /api/v1/auth/login` | AUT-02/AUT-09 | `AuthService.login` | `LoginComponent`, `admin/login-page` | ✅ |
 | 9 | `POST /api/v1/auth/refresh` | AUT-02/TEC-12 | `AuthService.refresh` | `auth.interceptor`, `SessionRestoreService` | ✅ |
@@ -24,8 +24,8 @@
 | 11 | `GET /api/v1/me` | AUT-02/TEC-12 | `AuthService.me` | `SessionRestoreService` | ✅ |
 | 12 | `POST /api/v1/auth/2fa/setup` | AUT-xx | Aucun | Aucun écran 2FA client | ❌ futur justifié |
 | 13 | `POST /api/v1/auth/2fa/verify` | AUT-xx | Aucun | Aucun écran 2FA client | ❌ futur justifié |
-| 14 | `POST /api/v1/auth/forgot-password` | AUT-xx | Aucun | Route P16 non livrée (lien mort dans AUT-09) | ❌ oubli |
-| 15 | `POST /api/v1/auth/reset-password` | AUT-xx | Aucun | Route P16 non livrée | ❌ oubli |
+| 14 | `POST /api/v1/auth/forgot-password` | AUT-xx | Aucun | Lien mort retiré de AUT-09 ; P16 à livrer | ❌ futur justifié |
+| 15 | `POST /api/v1/auth/reset-password` | AUT-xx | Aucun | P16 à livrer | ❌ futur justifié |
 | 16 | `GET /api/v1/config` | AUT-11/TEC-13 | `PublicConfigService.getConfig` | Login/inscription/contact, login admin | ✅ |
 | 17 | `POST /api/v1/contact` | MKT-02 | `ContactApi.submit` | `ContactComponent` | ✅ |
 | 18 | `GET /api/v1/admin/products` | CAT-04 → BO-03 | `AdminProductsApi.list` | `AdminProductsStore` → liste produits | ✅ |
@@ -35,7 +35,7 @@
 | 22 | `POST /api/v1/admin/products/{id}/duplicate` | CAT-04 | Aucun | Duplication non livrée | ❌ futur justifié |
 | 23 | `PUT /api/v1/admin/products/{id}/variants` | CAT-04 | Aucun | Édition variantes non livrée | ❌ futur justifié |
 | 24 | `PUT /api/v1/admin/size-guides/{id}` | CAT-06 | Aucun | Édition guide non livrée | ❌ futur justifié |
-| 25 | `GET /api/v1/admin/stock/alerts` | STK-03 | Aucun | Dashboard et page Stock = placeholders | ❌ oubli (CA #3) |
+| 25 | `GET /api/v1/admin/stock/alerts` | STK-03 | `AdminStockApi.list` | Page Stock (`StockAlertsComponent`) | ✅ |
 | 26 | `POST /api/v1/admin/media/presign` | CAT-05 | Aucun | Formulaire produit non livré | ❌ futur justifié |
 | 27 | `POST /api/v1/admin/media/confirm` | CAT-05 | Aucun | Formulaire produit non livré | ❌ futur justifié |
 | 28 | `PATCH /api/v1/admin/media/images/reorder` | CAT-05 | Aucun | Formulaire produit non livré | ❌ futur justifié |
@@ -49,17 +49,19 @@
 
 | Statut | Nombre | Commentaire |
 |---|---|---|
-| ✅ Consommés | 14 | Tous les flux du Sprint 3 réellement livrés côté UI |
+| ✅ Consommés | 16 | Tous les flux du Sprint 3 réellement livrés côté UI |
 | ⚠️ Partiels | 0 | Aucun endpoint n'est appelé avec un contrat incomplet |
-| ❌ Non consommés | 17 | 13 justifiés par un écran futur, 4 oublis (size-guides, mot de passe oublié/réinitialisation, stock alerts) |
+| ❌ Non consommés | 15 | Écrans futurs (commande, médias, 2FA, etc.) |
 | ➖ Hors périmètre | 2 | Health checks d'infrastructure |
 
-## 3. Écarts à traiter
+## 3. Écarts à traiter1. **`GET /size-guides/{categoryId}`** — branché dans `SizeGuideComponent` via `CatalogApi.sizeGuide`, avec secours statique si l'API échoue ou si aucune catégorie n'est fournie. La fiche produit transmet déjà `?category=`.
 
-1. **`GET /size-guides/{categoryId}`** — la page `/guide-des-tailles` affiche une copie statique du seed et la fiche produit ne transmet pas la catégorie. L'API CAT-06 n'est donc jamais exercée en production. **Action** : brancher `SizeGuideComponent` sur l'API et ajouter `?category=` depuis CAT-10.
-2. **`GET /admin/stock/alerts`** — le backend STK-03 est complet mais aucun écran ne l'appelle. **Action** : implémenter la carte d'alertes du dashboard A03 ou la page Stock (CA #3 de STK-03).
-3. **`POST /auth/forgot-password` et `reset-password`** — le lien « Mot de passe oublié » de AUT-09 pointe vers une route inexistante. **Action** : livrer P16 ou retirer le lien.
-4. **`POST /orders`** — aucun wrapper `OrdersApi` n'existe. **Action** : à créer avec P11 (checkout) et à relier à `UtmService` pour le CA #3 de MKT-04.
+2. **`GET /admin/stock/alerts`** — consommé par la page Stock (`StockAlertsComponent`) via `AdminStockApi.list`.
+
+3. **`POST /auth/forgot-password` et `reset-password`** — le lien mort a été retiré de AUT-09 ; P16 reste à livrer.
+
+4. **`POST /orders`** — wrapper `OrdersApi.create` ajouté (préparation P11), non encore relié à l'UI.
+
 
 ## 4. Points de conception
 

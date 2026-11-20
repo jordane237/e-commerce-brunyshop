@@ -10,7 +10,7 @@
 |---|---|---|---|
 | 1 | Seuil bas configurable par variante, valeur globale par défaut dans les paramètres | ✅ | `schema.prisma:311` (`lowStockThreshold` par variante) ; `settings.service.ts:6-41` (`stock.low.defaultThreshold`, env puis 5) |
 | 2 | Une seule alerte jusqu'au réapprovisionnement (pas de spam) | ✅ | `lowStockAlertSentAt` + listener `stock-low.listener.ts:41-84` ; 4 tests listener + 6 tests e2e |
-| 3 | L'alerte apparaît dans le tableau de bord et part par notification interne | ❌ | Notification interne et e-mail implémentés, mais `dashboard.routes.ts` et `stock.routes.ts` chargent un `PlaceholderPage` ; `GET /admin/stock/alerts` n'est consommé nulle part côté Angular |
+| 3 | L'alerte apparaît dans le tableau de bord et part par notification interne | ⚠️ | Notification interne et e-mail implémentés ; la page Stock consomme désormais `GET /admin/stock/alerts` via `StockAlertsComponent` ; le dashboard reste un placeholder |
 | 4 | L'événement `stock.low` est émis | ✅ | `stock-low.event.ts:16`, émission après commit `inventory.service.ts:98-153` ; tests unitaires et e2e |
 
 ## 2. Conformité au cahier des charges
@@ -44,7 +44,7 @@ Le CDC §5.5 (cache/tâches) et §6.7 (stock) sont visés côté backend. Le bac
 
 ## 7. Points d'attention
 
-- CA #3 non satisfait : aucun écran, aucune consommation de l'API, aucune notification in-app affichée.
+- CA #3 partiellement satisfait : la page Stock consomme `GET /admin/stock/alerts` ; le dashboard reste un placeholder et aucune notification in-app n'est affichée.
 - Pas de `GET /admin/stock/alerts/count` séparé ; les compteurs sont dans `meta`, ce qui suffit.
 - Le seuil global n'est pas injecté automatiquement dans les nouvelles variantes : la colonne a un défaut statique à 5, le Setting sert à la consultation.
 

@@ -62,7 +62,6 @@ describe('LoginComponent', () => {
 
     expect(element.querySelector('h1')?.textContent).toContain('Se connecter');
     expect(element.textContent).toContain('ESPACE CLIENT');
-    expect(element.textContent).toContain('Mot de passe oublié ?');
     expect(element.textContent).toContain('Pas encore de compte ?');
     expect(element.querySelector('input#login-identifier')).not.toBeNull();
     expect(element.querySelector('input#login-password')).not.toBeNull();

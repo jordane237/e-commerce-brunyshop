@@ -2,7 +2,7 @@
   title="Guide des tailles"
   eyebrow="Informations"
   [intro]="intro"
-  [toc]="toc"
+  [toc]="toc()"
   [breadcrumb]="breadcrumb"
 >
   <section id="mesurer" aria-labelledby="mesurer-title">
@@ -15,7 +15,7 @@
     </ol>
   </section>
 
-  @for (table of tables; track table.id) {
+  @for (table of tables(); track table.id) {
     <section [id]="table.id" [attr.aria-labelledby]="table.id + '-title'">
       <h2 [id]="table.id + '-title'">{{ table.title }}</h2>
       <div
