@@ -86,7 +86,7 @@ La CI est passée de rouge à verte sur les sept jobs (`quality`, `build`, `api-
 ## 6. Limites non levées
 
 - Le tunnel P08–P13 n'existe pas : les parcours panier → commande → confirmation ne sont pas démontrables de bout en bout.
-- Aucun ID Meta Pixel ni numéro WhatsApp réel n'a été fourni ; les intégrations restent configurables mais non validées en production.
+- Le numéro WhatsApp et l'URL Facebook réels sont désormais intégrés. L'ID Meta Pixel reste à fournir ; les intégrations restent configurables mais non validées en production.
 - Aucun test avec lecteur d'écran réel (NVDA/VoiceOver) n'a été réalisé.
 - CNT-03 et les contenus légaux MKT-01 nécessitent une validation humaine externe.
 - Le run Docker Scan dédié n'a pas été observé vert après la correction de l'action Trivy.

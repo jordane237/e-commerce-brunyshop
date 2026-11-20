@@ -15,7 +15,7 @@
 
 ## 2. Conformité au cahier des charges
 
-Le CDC §6.10 (contact) et §11.4 (accessibilité) sont visés. Le comportement est conforme, mais le masquage tunnel n'est pas prouvé en conditions réelles et le numéro reste un placeholder.
+Le CDC §6.10 (contact) et §11.4 (accessibilité) sont visés. Le comportement est conforme, mais le masquage tunnel n'est pas prouvé en conditions réelles. Le numéro placeholder a été remplacé par le numéro réel après la revue.
 
 ## 3. Qualité du code
 
@@ -34,7 +34,7 @@ Le CDC §6.10 (contact) et §11.4 (accessibilité) sont visés. Le comportement 
 
 - Aucun secret ; aucune PII envoyée à WhatsApp au-delà du message prérempli.
 - `rel="noopener noreferrer"` et nouvel onglet.
-- Le numéro placeholder ne doit pas partir en production.
+- Le numéro placeholder a été remplacé par le numéro réel `+237 6 79 17 62 96` après la revue.
 
 ## 6. Documentation
 
@@ -43,7 +43,7 @@ Le CDC §6.10 (contact) et §11.4 (accessibilité) sont visés. Le comportement 
 ## 7. Points d'attention
 
 - CA #2 partiellement démontrable (routes absentes).
-- Numéro placeholder `237600000000`.
+- Numéro réel intégré : `237679176296`.
 - Aucun lien d'aide n'est défini pour le tunnel.
 - Le FAB n'est pas dans la maquette ; proposition à valider.
 - Risque de doublon avec la future bottom-nav WhatsApp.
