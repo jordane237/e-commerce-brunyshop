@@ -4,7 +4,7 @@
 # =============================================================================
 FROM node:24.15-alpine AS base
 WORKDIR /app
-RUN corepack enable
+RUN corepack enable && apk upgrade --no-cache
 
 # =============================================================================
 # Stage 2: Dependencies
@@ -21,6 +21,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 FROM deps AS build
 COPY frontend frontend
 RUN pnpm -C frontend build:storefront
+RUN pnpm prune --prod
 RUN test -f frontend/dist/apps/storefront/server/server.mjs || \
     (echo "SSR build failed: server.mjs missing" && exit 1)
 
@@ -31,8 +32,8 @@ FROM node:24.15-alpine AS runtime
 RUN addgroup -S bruny && adduser -S bruny -G bruny
 WORKDIR /app
 
-COPY --from=deps --chown=bruny:bruny /app/node_modules ./node_modules
-COPY --from=deps --chown=bruny:bruny /app/frontend/node_modules ./frontend/node_modules
+COPY --from=build --chown=bruny:bruny /app/node_modules ./node_modules
+COPY --from=build --chown=bruny:bruny /app/frontend/node_modules ./frontend/node_modules
 COPY --from=build --chown=bruny:bruny /app/frontend/dist/apps/storefront/browser ./frontend/dist/apps/storefront/browser
 COPY --from=build --chown=bruny:bruny /app/frontend/dist/apps/storefront/server ./frontend/dist/apps/storefront/server
 
