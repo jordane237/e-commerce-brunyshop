@@ -30,6 +30,7 @@ RUN test -f backend/dist/main.js || (echo "Build failed: backend/dist/main.js mi
 # Stage 4: Runtime — minimal Node image, non-root
 # =============================================================================
 FROM node:24.15-alpine AS runtime
+RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 RUN addgroup -S bruny && adduser -S bruny -G bruny
 WORKDIR /app
 

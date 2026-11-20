@@ -29,6 +29,7 @@ RUN test -f frontend/dist/apps/storefront/server/server.mjs || \
 # Stage 4: Runtime — Node.js SSR server, non-root
 # =============================================================================
 FROM node:24.15-alpine AS runtime
+RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 RUN addgroup -S bruny && adduser -S bruny -G bruny
 WORKDIR /app
 
