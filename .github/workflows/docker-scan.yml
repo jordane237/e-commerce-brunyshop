@@ -75,3 +75,10 @@ jobs:
         with:
           sarif_file: 'trivy-${{ matrix.image.name }}.sarif'
           category: 'trivy-${{ matrix.image.name }}'
+
+      - name: Upload Trivy SARIF artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-${{ matrix.image.name }}-sarif
+          path: 'trivy-${{ matrix.image.name }}.sarif'
