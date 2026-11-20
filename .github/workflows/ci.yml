@@ -157,7 +157,6 @@ jobs:
           --health-retries 5
     env:
       NODE_ENV: test
-      PORT: 4000
       DATABASE_URL: postgresql://brunyshop_test:brunyshop_test@localhost:5432/brunyshop_test
       REDIS_URL: redis://localhost:6379
       JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'ci-only-access-secret-at-least-forty-eight-characters-abcdefg' }}
@@ -205,7 +204,7 @@ jobs:
       - name: Run backend e2e tests
         run: |
           set +e
-          pnpm -C backend test:e2e 2>&1 | tee /tmp/backend-e2e.log
+          PORT=4000 pnpm -C backend test:e2e 2>&1 | tee /tmp/backend-e2e.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
             grep -E "FAIL |AssertionError|Error:|Test Files|Tests " /tmp/backend-e2e.log | tail -20 | while IFS= read -r line; do
@@ -218,8 +217,9 @@ jobs:
         run: pnpm -C frontend exec playwright install --with-deps chromium
 
       - name: Run frontend e2e tests
+        timeout-minutes: 10
         run: |
-          pnpm -C backend dev > /tmp/api.log 2>&1 &
+          PORT=4000 pnpm -C backend dev > /tmp/api.log 2>&1 &
           API_PID=$!
           (cd frontend && exec node node_modules/@angular/cli/bin/ng.js serve storefront --host 127.0.0.1 --port 4200) > /tmp/storefront.log 2>&1 &
           STOREFRONT_PID=$!
