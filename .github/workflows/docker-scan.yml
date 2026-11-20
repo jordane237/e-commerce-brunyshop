@@ -81,14 +81,14 @@ jobs:
           limit-severities-for-sarif: true
 
       - name: Publish Trivy findings (if any)
-        if: failure() && hashFiles(format('trivy-{0}.txt', matrix.image.name)) != ''
+        if: failure() && hashFiles(format('trivy-{0}.sarif', matrix.image.name)) != ''
         continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const name = '${{ matrix.image.name }}';
-            const body = fs.readFileSync(`trivy-${name}.txt`, 'utf8').slice(0, 60000);
+            const body = fs.readFileSync(`trivy-${name}.sarif`, 'utf8').slice(0, 100000);
             const branch = 'trivy-findings';
             try {
               await github.rest.git.createRef({
@@ -103,8 +103,8 @@ jobs:
             await github.rest.repos.createOrUpdateFileContents({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              path: `findings/trivy-${name}.txt`,
-              message: `chore: publish trivy findings for ${name}`,
+              path: `findings/trivy-${name}.sarif`,
+              message: `chore: publish trivy sarif for ${name}`,
               content: Buffer.from(body).toString('base64'),
               branch
             });
