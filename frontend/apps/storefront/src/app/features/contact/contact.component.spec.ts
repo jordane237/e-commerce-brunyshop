@@ -65,15 +65,17 @@ describe('ContactComponent (MKT-02)', () => {
     expect(element.querySelector('textarea#contact-message')).not.toBeNull();
 
     const whatsapp = element.querySelector('.contact-direct--whatsapp') as HTMLAnchorElement;
-    expect(whatsapp.getAttribute('href')).toBe('https://wa.me/237600000000');
+    expect(whatsapp.getAttribute('href')).toBe('https://wa.me/237679176296');
     expect(whatsapp.getAttribute('target')).toBe('_blank');
     expect(whatsapp.getAttribute('rel')).toContain('noopener');
 
     const phone = element.querySelector('.contact-direct--phone') as HTMLAnchorElement;
-    expect(phone.getAttribute('href')).toBe('tel:+237600000000');
+    expect(phone.getAttribute('href')).toBe('tel:+237679176296');
 
     const facebook = element.querySelector('.contact-direct--facebook') as HTMLAnchorElement;
-    expect(facebook.getAttribute('href')).toBe('https://www.facebook.com/BrunyShopping');
+    expect(facebook.getAttribute('href')).toBe(
+      'https://www.facebook.com/profile.php?id=100087026340515',
+    );
     expect(element.querySelector('iframe')).toBeNull();
   });
 

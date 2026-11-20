@@ -32,7 +32,7 @@ describe('WhatsAppService', () => {
     const link = service.buildLink({ page: 'home' });
 
     expect(linkUrl(link).origin).toBe('https://wa.me');
-    expect(linkUrl(link).pathname).toBe('/237600000000');
+    expect(linkUrl(link).pathname).toBe('/237679176296');
     expect(messageOf(link)).toBe(
       "Bonjour BRUNY SHOPPING, je visite votre boutique et j'ai une question.",
     );

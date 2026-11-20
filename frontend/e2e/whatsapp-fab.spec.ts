@@ -3,7 +3,7 @@ import { waitForHydration } from './hydration';
 
 const CONSENT_KEY = 'brunyshop.consent.v1';
 const FAB = 'a.whatsapp-fab';
-const PHONE = '237600000000';
+const PHONE = '237679176296';
 const PRODUCT_SLUG = 'produit-test-mkt06';
 
 const product = {

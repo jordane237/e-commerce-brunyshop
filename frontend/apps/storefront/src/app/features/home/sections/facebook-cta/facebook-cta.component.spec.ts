@@ -8,11 +8,11 @@ describe('FacebookCtaComponent', () => {
       imports: [FacebookCtaComponent],
     }).createComponent(FacebookCtaComponent);
 
-    fixture.componentRef.setInput('url', 'https://www.facebook.com/BrunyShopping');
+    fixture.componentRef.setInput('url', 'https://www.facebook.com/profile.php?id=100087026340515');
     fixture.detectChanges();
 
     const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('a');
-    expect(link?.href).toBe('https://www.facebook.com/BrunyShopping');
+    expect(link?.href).toBe('https://www.facebook.com/profile.php?id=100087026340515');
     expect(link?.target).toBe('_blank');
     expect(link?.rel).toBe('noopener noreferrer');
     expect(link?.getAttribute('aria-label')).toBe('Suivez-nous sur Facebook (nouvel onglet)');

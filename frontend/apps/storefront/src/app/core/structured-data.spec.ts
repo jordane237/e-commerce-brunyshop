@@ -32,7 +32,7 @@ describe('structured data', () => {
         {
           '@type': 'Organization',
           email: 'support@brunyshop.cm',
-          contactPoint: { telephone: '+237600000000', areaServed: 'CM' },
+          contactPoint: { telephone: '+237679176296', areaServed: 'CM' },
         },
       ],
     });

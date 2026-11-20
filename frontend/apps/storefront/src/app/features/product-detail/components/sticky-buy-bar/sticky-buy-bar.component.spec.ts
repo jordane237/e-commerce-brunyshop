@@ -11,7 +11,7 @@ describe('StickyBuyBarComponent', () => {
     fixture.componentRef.setInput('originalPrice', 30000);
     fixture.componentRef.setInput('canAddToCart', true);
     fixture.componentRef.setInput('addToCartMessage', '');
-    fixture.componentRef.setInput('whatsappUrl', 'https://wa.me/237600000000?text=Bonjour');
+    fixture.componentRef.setInput('whatsappUrl', 'https://wa.me/237679176296?text=Bonjour');
     fixture.componentRef.setInput('productName', 'Mocassin Cuir');
     for (const [key, value] of Object.entries(overrides)) {
       fixture.componentRef.setInput(key, value);
@@ -59,7 +59,7 @@ describe('StickyBuyBarComponent', () => {
     const { element } = await create();
     const link = element.querySelector('.sticky-buy-bar__whatsapp') as HTMLAnchorElement;
 
-    expect(link.href).toContain('https://wa.me/237600000000');
+    expect(link.href).toContain('https://wa.me/237679176296');
     expect(link.target).toBe('_blank');
     expect(link.rel).toContain('noopener');
   });

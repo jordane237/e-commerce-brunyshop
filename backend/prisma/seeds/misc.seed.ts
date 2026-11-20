@@ -33,7 +33,7 @@ const SETTINGS = [
   { key: 'store.name', value: 'BRUNY SHOPPING' },
   { key: 'store.currency', value: 'XAF' },
   { key: 'store.country', value: 'CM' },
-  { key: 'support.whatsapp', value: '+237600000000' },
+  { key: 'support.whatsapp', value: '+237679176296' },
   { key: 'order.reference.prefix', value: 'BRN' },
   { key: 'stock.low.defaultThreshold', value: 5 },
 ] as const;
