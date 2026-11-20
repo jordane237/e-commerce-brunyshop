@@ -34,6 +34,9 @@ export class App {
   constructor() {
     // Après hydratation uniquement : le serveur ne rend ni bandeau ni traceur.
     afterNextRender(() => {
+      // Signal fiable pour les e2e : les interactions ne doivent pas partir
+      // sur le HTML SSR avant que les gestionnaires Angular soient installés.
+      document.documentElement.dataset['appHydrated'] = 'true';
       this.consent.initialize();
       this.utm.captureFromUrl();
       this.metaPixel.start();

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { waitForHydration } from './hydration';
 
 const STORAGE_KEY = 'brunyshop.cart.v1';
 
@@ -21,6 +22,21 @@ function line(variantId = 'variant-e2e') {
     imageAlt: null,
     addedAt: '2026-11-13T10:00:00.000Z',
   };
+}
+
+async function seedConsent(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'brunyshop.consent.v1',
+      JSON.stringify({
+        necessary: true,
+        analytics: false,
+        marketing: false,
+        version: '1.0',
+        updatedAt: new Date().toISOString(),
+      }),
+    );
+  });
 }
 
 async function seedCart(page: Page, variantId = 'variant-e2e') {
@@ -75,8 +91,13 @@ test('conserve le panier invité, ouvre le mini-panier après ajout et le revali
     });
   });
 
+  await seedConsent(page);
   await page.goto('/boutique');
-  const addButton = page.locator('bruny-product-card .bs-button').first();
+  await waitForHydration(page);
+  const addButton = page
+    .locator('bruny-product-card')
+    .first()
+    .getByRole('button', { name: 'Ajouter', exact: true });
   await expect(addButton).toBeVisible({ timeout: 15_000 });
   await addButton.click();
 

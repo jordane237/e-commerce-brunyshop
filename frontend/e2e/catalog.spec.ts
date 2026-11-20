@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { waitForHydration } from './hydration';
 
 const SIDEBAR = '.catalog__sidebar';
 
@@ -16,7 +17,7 @@ function sizeChip(page: Page) {
  */
 async function openCatalog(page: Page, path = '/boutique'): Promise<void> {
   await page.goto(path);
-  await page.waitForLoadState('networkidle');
+  await waitForHydration(page);
 }
 
 test.describe('Catalogue', () => {

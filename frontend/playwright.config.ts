@@ -3,6 +3,10 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // Le serveur Angular de dev ne supporte pas plusieurs pages en parallèle
+  // sans perdre des interactions (clics/URL non appliqués). La suite reste
+  // rapide (~1 min) et déterministe en série.
+  workers: 1,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',

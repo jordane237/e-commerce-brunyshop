@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { waitForHydration } from './hydration';
 
 const CONSENT_KEY = 'brunyshop.consent.v1';
 const FAB = 'a.whatsapp-fab';
@@ -90,6 +91,7 @@ async function mockProduct(page: Page): Promise<void> {
 async function open(page: Page, path: string): Promise<Locator> {
   await seedConsent(page);
   await page.goto(path);
+  await waitForHydration(page);
   const fab = page.locator(FAB);
   await expect(fab).toBeVisible({ timeout: 20_000 });
   return fab;
