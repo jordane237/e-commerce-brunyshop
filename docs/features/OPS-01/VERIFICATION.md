@@ -24,12 +24,13 @@
 | 13 | Réseaux `backend` marqués `internal: true` | ✅ Confirmé |
 | 14 | Seule la gateway publie le port 80 | ✅ Confirmé |
 | 15 | `.dockerignore` exclut les fichiers `.env*` | ✅ Confirmé |
-| 16 | Workflow Trivy `.github/workflows/docker-scan.yml` présent et configuré | ✅ Présent (exécution CI non lancée localement) |
+| 16 | Workflow Trivy `.github/workflows/docker-scan.yml` présent et configuré | ✅ Présent et exécuté en CI |
+| 17 | Scan Trivy CRITICAL/HIGH sur images api, storefront, admin | ✅ Vert (run `44771815132`, commit `4c1fde5`) |
 
 ## Limitations connues
 - Le téléchargement des moteurs Prisma musl (`linux-musl-openssl-3.0.x`) échoue en environnement local sans réseau fiable ; `prisma generate` a été validé côté hôte (glibc) et la compilation TypeScript dans l'image Alpine a réussi.
 - Les builds Docker complets des images `storefront` et `admin` n'ont pas été exécutés jusqu'au bout localement à cause de la lenteur réseau ; la syntaxe des Dockerfiles et les builds applicatifs ont été validés.
-- Le scan Trivy n'a pas été exécuté localement ; il est prévu dans la CI via `.github/workflows/docker-scan.yml`.
+- Le scan Trivy a été exécuté en CI et est vert sur `working` (run `44771815132`). Les CVE OS ont été corrigées par `apk upgrade` dans les stages runtime et la suppression de npm des images Node.
 
 ## Conclusion
 La configuration OPS-01 est cohérente et validée autant que possible dans l'environnement local. Les points restants dépendent d'un environnement CI/réseau fiable pour l'exécution complète des builds et du scan Trivy.

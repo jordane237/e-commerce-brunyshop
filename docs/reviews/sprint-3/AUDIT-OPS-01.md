@@ -10,7 +10,7 @@
 |---|---|---|---|
 | 1 | Dockerfiles multi-étapes api/storefront/admin, non-root, `.dockerignore` | ✅ | `infra/docker/Dockerfile.*` : étapes `base/deps/build/runtime` ; `USER bruny` (api/storefront), `USER nginx` (admin/gateway) ; `infra/docker/.dockerignore` |
 | 2 | Nginx : reverse proxy, compression, en-têtes de sécurité, cache statique | ✅ | `nginx.gateway.conf` (gzip, proxy `/api`, storefront), `nginx.security-headers.conf` (CSP, HSTS, X-Frame-Options), `expires` sur les assets |
-| 3 | Analyse des vulnérabilités intégrée à la CI | ⚠️ | Workflow `docker-scan.yml` présent, mais il échouait sur `trivy-action@0.36.0` (tag inexistant). **Corrigé pendant cette revue** en `v0.36.0` ; run vert non encore constaté |
+| 3 | Analyse des vulnérabilités intégrée à la CI | ✅ | Workflow `docker-scan.yml` présent ; run vert sur `working` (run `44771815132`, commit `4c1fde5`) après correction des CVE OS (apk upgrade) et suppression de npm dans les images Node |
 | 4 | Base de données et Redis non exposés publiquement | ✅ | `docker-compose.prod.yml` : aucun `ports` pour postgres/redis/minio ; seule la gateway publie `80:8080` |
 
 ## 2. Conformité au cahier des charges
@@ -27,7 +27,7 @@ Le CDC §14 (CI/CD et déploiement) et §10.6 (sécurité d'infrastructure) sont
 
 - Aucun test applicatif spécifique.
 - `docker build --check`, `nginx -t` et `docker compose config` documentés dans `VERIFICATION.md`.
-- Scan Trivy : à revalider après la correction du workflow.
+- Scan Trivy : run vert sur `working` (run `44771815132`), CA #3 validé.
 
 ## 5. Sécurité
 
@@ -42,12 +42,11 @@ Le CDC §14 (CI/CD et déploiement) et §10.6 (sécurité d'infrastructure) sont
 
 ## 7. Points d'attention
 
-- CA #3 dépend d'un run CI réel après correction.
 - Le téléchargement des moteurs Prisma musl n'a pas été validé.
-- Le scan Trivy peut encore révéler des CVE ; aucune politique de blocage n'est prouvée.
+- Le scan Trivy est vert ; une future mise à jour d'image de base devra être revalidée.
 
 ## 8. Statut global
 
-**✅ Conforme avec réserves**
+**✅ Conforme**
 
-Recommandation : **merge OK avec réserve**. Confirmer un run Docker Scan vert avant de clôturer CA #3.
+Recommandation : **merge OK**. CA #3 clôturé avec un run Docker Scan vert.
