@@ -203,7 +203,16 @@ jobs:
         run: pnpm db:seed
 
       - name: Run backend e2e tests
-        run: pnpm -C backend test:e2e
+        run: |
+          set +e
+          pnpm -C backend test:e2e 2>&1 | tee /tmp/backend-e2e.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            grep -E "FAIL |AssertionError|Error:|Test Files|Tests " /tmp/backend-e2e.log | tail -20 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+          fi
+          exit "$status"
 
       - name: Install Playwright Chromium
         run: pnpm -C frontend exec playwright install --with-deps chromium
@@ -242,10 +251,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      # L'action officielle exige une licence depuis 2026 ; le binaire CLI
+      # reste gratuit. Version et empreinte SHA-256 épinglées.
+      - name: Install Gitleaks
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+
       - name: Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        run: /tmp/gitleaks detect --source . --config .gitleaks.toml --redact --verbose
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
