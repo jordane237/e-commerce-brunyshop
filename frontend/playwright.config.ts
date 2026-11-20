@@ -1,4 +1,8 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
+
+const frontendRoot = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   testDir: './e2e',
@@ -19,7 +23,10 @@ export default defineConfig({
     ...devices['Desktop Chrome'],
   },
   webServer: {
-    command: 'pnpm exec ng serve storefront --host 127.0.0.1 --port 4200',
+    // Appel direct du CLI : `pnpm exec ng` n'est pas résolu dans le webServer CI.
+    command:
+      'node node_modules/@angular/cli/bin/ng.js serve storefront --host 127.0.0.1 --port 4200',
+    cwd: frontendRoot,
     url: 'http://127.0.0.1:4200/boutique',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
