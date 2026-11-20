@@ -221,12 +221,19 @@ jobs:
         run: |
           pnpm -C backend dev > /tmp/api.log 2>&1 &
           API_PID=$!
-          trap 'kill $API_PID' EXIT
+          (cd frontend && exec node node_modules/@angular/cli/bin/ng.js serve storefront --host 127.0.0.1 --port 4200) > /tmp/storefront.log 2>&1 &
+          STOREFRONT_PID=$!
+          trap 'kill $API_PID $STOREFRONT_PID' EXIT
           for i in $(seq 1 60); do
             curl -fsS http://127.0.0.1:4000/api/v1/health/ready > /dev/null && break
             sleep 2
           done
           curl -fsS http://127.0.0.1:4000/api/v1/health/ready > /dev/null || { cat /tmp/api.log; exit 1; }
+          for i in $(seq 1 90); do
+            curl -fsS http://127.0.0.1:4200/boutique > /dev/null && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:4200/boutique > /dev/null || { cat /tmp/storefront.log; exit 1; }
           pnpm -C frontend test:e2e
 
       - name: Upload e2e reports

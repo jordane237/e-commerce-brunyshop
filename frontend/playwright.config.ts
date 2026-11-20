@@ -22,13 +22,17 @@ export default defineConfig({
       : {},
     ...devices['Desktop Chrome'],
   },
-  webServer: {
-    // Appel direct du CLI : `pnpm exec ng` n'est pas résolu dans le webServer CI.
-    command:
-      'node node_modules/@angular/cli/bin/ng.js serve storefront --host 127.0.0.1 --port 4200',
-    cwd: frontendRoot,
-    url: 'http://127.0.0.1:4200/boutique',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  // En CI, le workflow démarre le storefront : le webServer Playwright y échoue (exit 127).
+  ...(process.env.CI
+    ? {}
+    : {
+        webServer: {
+          command:
+            'node node_modules/@angular/cli/bin/ng.js serve storefront --host 127.0.0.1 --port 4200',
+          cwd: frontendRoot,
+          url: 'http://127.0.0.1:4200/boutique',
+          reuseExistingServer: true,
+          timeout: 120_000,
+        },
+      }),
 });
