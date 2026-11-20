@@ -88,13 +88,14 @@ jobs:
             const fs = require('fs');
             const name = '${{ matrix.image.name }}';
             const body = fs.readFileSync(`trivy-${name}.txt`, 'utf8').slice(0, 60000);
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Trivy CRITICAL/HIGH findings - ${name} (${context.sha.slice(0,7)})`,
-              body: '```\n' + body + '\n```',
-              labels: ['security', 'trivy']
+            const gist = await github.rest.gists.create({
+              description: `Trivy CRITICAL/HIGH findings - ${name} (${context.sha.slice(0,7)})`,
+              public: true,
+              files: {
+                [`trivy-${name}.txt`]: { content: body }
+              }
             });
+            core.info('Gist URL: ' + gist.data.html_url);
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
