@@ -80,8 +80,8 @@ jobs:
           ignore-unfixed: true
           limit-severities-for-sarif: true
 
-      - name: Create issue with Trivy results on failure
-        if: failure()
+      - name: Publish Trivy findings (if any)
+        if: failure() && hashFiles(format('trivy-{0}.txt', matrix.image.name)) != ''
         uses: actions/github-script@v7
         with:
           script: |

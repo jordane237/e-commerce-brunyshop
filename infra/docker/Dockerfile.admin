@@ -28,11 +28,13 @@ RUN test -d frontend/dist/apps/admin/browser || \
 # Stage 4: Runtime — Nginx unprivileged (non-root, port 8080)
 # =============================================================================
 FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
+USER root
 RUN apk upgrade --no-cache
 COPY --from=build /app/frontend/dist/apps/admin/browser /usr/share/nginx/html
 COPY infra/docker/nginx.security-headers.conf /etc/nginx/conf.d/security-headers.conf
 COPY infra/docker/nginx.admin.conf /etc/nginx/conf.d/default.conf
 
+USER nginx
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://127.0.0.1:8080/health || exit 1
