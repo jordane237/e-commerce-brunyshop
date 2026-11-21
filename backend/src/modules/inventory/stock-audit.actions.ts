@@ -1,0 +1,3 @@
+export const STOCK_AUDIT_ACTIONS = {
+  STOCK_LOW_ALERT_SENT: 'STOCK_LOW_ALERT_SENT',
+} as const;

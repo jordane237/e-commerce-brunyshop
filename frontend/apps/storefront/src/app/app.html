@@ -4,12 +4,20 @@
   >
   <nav aria-label="Navigation principale">
     <a routerLink="/boutique">Boutique</a>
-    <a routerLink="/panier">Panier ({{ cart.count() }})</a>
-    <a href="https://wa.me/237600000000" target="_blank" rel="noopener">Nous contacter</a>
+    <a routerLink="/contact">Nous contacter</a>
   </nav>
+  <bruny-mini-cart />
 </header>
 <main><router-outlet /></main>
-<footer class="site-footer">
-  BRUNY SHOPPING · Chaussures sélectionnées au Cameroun · Prix en FCFA
-</footer>
-<bruny-toast [message]="errorMessage()" />
+<bruny-footer />
+<app-whatsapp-fab />
+<app-consent-banner />
+@if (toast.current(); as currentToast) {
+<bruny-toast
+  [message]="currentToast.message"
+  [variant]="currentToast.variant"
+  [title]="currentToast.title ?? ''"
+  [duration]="currentToast.duration"
+  (closed)="toast.dismissCurrent()"
+/>
+}

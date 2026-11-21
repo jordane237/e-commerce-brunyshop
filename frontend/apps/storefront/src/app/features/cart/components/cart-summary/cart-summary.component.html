@@ -1,0 +1,46 @@
+<aside class="cart-summary" aria-label="Récapitulatif de la commande">
+  <h2 class="cart-summary__title">Récapitulatif</h2>
+  @if (loading()) {
+    <bruny-skeleton variant="text" />
+    <bruny-skeleton variant="text" />
+    <bruny-skeleton variant="text" />
+  } @else {
+    <dl class="cart-summary__list">
+      <div class="cart-summary__row">
+        <dt>Sous-total</dt>
+        <dd>{{ subtotal() | fcfa }}</dd>
+      </div>
+      @if (discount() > 0) {
+        <div class="cart-summary__row cart-summary__row--discount">
+          <dt>Remise</dt>
+          <dd>− {{ discount() | fcfa }}</dd>
+        </div>
+      }
+      <div class="cart-summary__row">
+        <dt>Livraison estimée</dt>
+        <dd>
+          @if (shippingFee() !== null) {
+            {{ shippingFee() | fcfa }}
+          } @else {
+            Calculée à l'étape suivante
+          }
+        </dd>
+      </div>
+      <div class="cart-summary__row cart-summary__row--total">
+        <dt>Total</dt>
+        <dd>{{ total() | fcfa }}</dd>
+      </div>
+    </dl>
+    <bruny-button
+      variant="primary"
+      [block]="true"
+      [disabled]="!canCheckout() || !checkoutAvailable()"
+    >
+      Passer la commande
+    </bruny-button>
+    @if (!checkoutAvailable()) {
+      <p class="cart-summary__note" role="note">Le paiement sera disponible prochainement.</p>
+    }
+    <a routerLink="/boutique" class="cart-summary__continue">Continuer mes achats</a>
+  }
+</aside>

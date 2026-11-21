@@ -1,0 +1,37 @@
+{
+  "common": {
+    "actions": {
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "close": "Fermer",
+      "retry": "Réessayer",
+      "search": "Rechercher",
+      "back": "Retour"
+    },
+    "states": {
+      "loading": "Chargement…",
+      "empty": "Aucun résultat.",
+      "error": "Une erreur est survenue."
+    },
+    "labels": {
+      "email": "Adresse e-mail",
+      "phone": "Téléphone",
+      "password": "Mot de passe",
+      "required": "Champ obligatoire"
+    }
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire.",
+    "email": "Saisissez une adresse e-mail valide.",
+    "phone": "Saisissez un numéro camerounais à 9 chiffres (ex. 6 71 23 45 67).",
+    "minlength": "Ce champ doit contenir au moins {{min}} caractères.",
+    "maxlength": "Ce champ ne peut pas dépasser {{max}} caractères.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas."
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Réessayez dans un instant.",
+    "network": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+    "unauthorized": "Votre session a expiré. Reconnectez-vous.",
+    "notFound": "La page demandée est introuvable."
+  }
+}

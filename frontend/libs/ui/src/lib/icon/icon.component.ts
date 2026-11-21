@@ -2,6 +2,10 @@ import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@an
 
 export type IconName =
   | 'search'
+  | 'more-vertical'
+  | 'archive'
+  | 'copy'
+  | 'chevrons-up-down'
   | 'chevron-down'
   | 'chevron-up'
   | 'chevron-left'
@@ -12,6 +16,7 @@ export type IconName =
   | 'menu'
   | 'cart'
   | 'whatsapp'
+  | 'facebook'
   | 'heart'
   | 'arrow-right'
   | 'plus'
@@ -22,16 +27,35 @@ export type IconName =
   | 'edit'
   | 'eye'
   | 'eye-off'
+  | 'zoom-in'
   | 'sort'
   | 'phone'
   | 'map-pin'
   | 'filter'
   | 'refresh'
   | 'user'
-  | 'lock';
+  | 'lock'
+  | 'bell'
+  | 'layout-dashboard'
+  | 'package'
+  | 'layers'
+  | 'shopping-bag'
+  | 'truck'
+  | 'navigation'
+  | 'users'
+  | 'user-cog'
+  | 'tag'
+  | 'star'
+  | 'settings'
+  | 'history'
+  | 'log-out';
 
 const ICONS: Record<IconName, readonly string[]> = {
   search: ['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z', 'm21 21-4.35-4.35'],
+  'more-vertical': ['M12 5h.01', 'M12 12h.01', 'M12 19h.01'],
+  archive: ['M21 8v13H3V8', 'M1 3h22v5H1z', 'M10 12h4'],
+  copy: ['M9 9h11v11H9z', 'M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1'],
+  'chevrons-up-down': ['m7 15 5 5 5-5', 'm7 9 5-5 5 5'],
   'chevron-down': ['m6 9 6 6 6-6'],
   'chevron-up': ['m18 15-6-6-6 6'],
   'chevron-left': ['m15 18-6-6 6-6'],
@@ -50,6 +74,7 @@ const ICONS: Record<IconName, readonly string[]> = {
     'M21 11.5a8.5 8.5 0 0 1-12.8 7.4L3 21l2.1-5.2A8.5 8.5 0 1 1 21 11.5Z',
     'M8.5 9.5c.5 3 2.5 5 5.5 5.5',
   ],
+  facebook: ['M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3V2Z'],
   heart: [
     'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z',
   ],
@@ -61,6 +86,7 @@ const ICONS: Record<IconName, readonly string[]> = {
   trash: ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 15H6L5 6', 'M10 11v6', 'M14 11v6'],
   edit: ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'],
   eye: ['M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z'],
+  'zoom-in': ['M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z', 'm21 21-4.35-4.35', 'M11 8v6', 'M8 11h6'],
   'eye-off': [
     'M3 3l18 18',
     'M10.6 10.6a3 3 0 0 0 4.2 4.2',
@@ -79,6 +105,41 @@ const ICONS: Record<IconName, readonly string[]> = {
   refresh: ['M21 12a9 9 0 1 1-2.6-6.4', 'M21 3v6h-6'],
   user: ['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z'],
   lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
+  bell: ['M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9', 'M10 21h4'],
+  'layout-dashboard': ['M3 3h8v7H3z', 'M13 3h8v5h-8z', 'M13 12h8v9h-8z', 'M3 14h8v7H3z'],
+  package: ['m21 8-9-5-9 5 9 5 9-5Z', 'M3 8v8l9 5 9-5V8', 'M12 13v8'],
+  layers: ['m12 2 9 5-9 5-9-5 9-5Z', 'm3 12 9 5 9-5', 'm3 17 9 5 9-5'],
+  'shopping-bag': ['M6 7h12l1 14H5L6 7Z', 'M9 7V5a3 3 0 0 1 6 0v2'],
+  truck: [
+    'M3 6h11v10H3z',
+    'M14 10h4l3 3v3h-7z',
+    'M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
+    'M18 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
+  ],
+  navigation: ['m3 11 19-9-9 19-2-8-8-2Z'],
+  users: [
+    'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
+    'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+    'M23 21v-2a4 4 0 0 0-3-3.9',
+    'M16 3.1a4 4 0 0 1 0 7.8',
+  ],
+  'user-cog': [
+    'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
+    'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+    'M19 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
+    'M19 11v1',
+    'M19 18v1',
+    'M17.5 12l.9.5',
+    'M20.1 16.5l-.9.5',
+  ],
+  tag: ['M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8Z', 'M7 7h.01'],
+  star: ['m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6Z'],
+  settings: [
+    'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+    'M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.8-1L14.5 3h-5l-.3 2.1a7 7 0 0 0-1.8 1l-2.3-1-2 3.4L5.1 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.8 1L9.5 21h5l.3-2.1a7 7 0 0 0 1.8-1l2.3 1 2-3.4-2-1.5c.1-.3.1-.7.1-1Z',
+  ],
+  history: ['M3 12a9 9 0 1 0 3-6.7L3 8', 'M3 3v5h5', 'M12 7v5l3 2'],
+  'log-out': ['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4', 'M16 17l5-5-5-5', 'M21 12H9'],
 };
 
 @Component({

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /panier
+Disallow: /connexion
+Disallow: /inscription
+Disallow: /compte
+Disallow: /design-system
+
+Sitemap: https://brunyshop.cm/sitemap.xml

@@ -1,0 +1,35 @@
+<div
+  class="contact-field"
+  [class.contact-field--error]="!!error"
+  [class.contact-field--disabled]="disabled"
+>
+  <label class="contact-field__label" [attr.for]="fieldId">
+    {{ label }}
+    @if (required) {
+      <span class="contact-field__required" aria-hidden="true">*</span>
+    }
+  </label>
+
+  <textarea
+    class="contact-field__control"
+    [id]="fieldId"
+    [name]="name"
+    [value]="value"
+    [placeholder]="placeholder"
+    [rows]="rows"
+    [attr.maxlength]="maxLength"
+    [attr.aria-invalid]="error ? 'true' : null"
+    [attr.aria-describedby]="describedBy"
+    [attr.aria-required]="required ? 'true' : null"
+    [disabled]="disabled"
+    [required]="required"
+    (input)="onInput($event)"
+    (blur)="onBlur()"
+  ></textarea>
+
+  @if (error) {
+    <p class="contact-field__error" [id]="errorId" role="alert">{{ error }}</p>
+  } @else if (hint) {
+    <p class="contact-field__hint" [id]="hintId">{{ hint }}</p>
+  }
+</div>

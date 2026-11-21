@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+.measure-steps {
+  counter-reset: measure-step;
+  padding-left: 0;
+  list-style: none;
+}
+
+.measure-steps li {
+  position: relative;
+  padding-left: var(--bs-space-10);
+  counter-increment: measure-step;
+}
+
+.measure-steps li::before {
+  content: counter(measure-step);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: var(--bs-radius-full);
+  background: var(--bs-color-primary);
+  color: var(--bs-color-text-inverse);
+  font-size: var(--bs-font-size-sm);
+  font-weight: var(--bs-font-weight-bold);
+}
+
+table th[scope='row'] {
+  white-space: nowrap;
+}

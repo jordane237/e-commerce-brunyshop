@@ -1,0 +1,26 @@
+<div class="products-filters" role="group" aria-label="Filtres produits">
+  <bruny-select
+    label="Statut"
+    name="status"
+    [options]="statusOptions"
+    [value]="status ?? ''"
+    (valueChange)="statusChange.emit($event || undefined)"
+  />
+  <bruny-select
+    label="Catégorie"
+    name="category"
+    [options]="categoryOptions"
+    [value]="categoryId ?? ''"
+    (valueChange)="categoryChange.emit($event || undefined)"
+  />
+  <bruny-select
+    label="Stock"
+    name="stock"
+    [options]="stockOptions"
+    [value]="stock ?? ''"
+    (valueChange)="stockChange.emit($event || undefined)"
+  />
+  <button type="button" class="products-filters__reset" (click)="reset.emit()">
+    Réinitialiser les filtres
+  </button>
+</div>

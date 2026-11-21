@@ -1,0 +1,24 @@
+<div class="cgv" [class.cgv--error]="!!error()">
+  <input
+    class="cgv__input"
+    type="checkbox"
+    [id]="inputId()"
+    [formControl]="control()"
+    [attr.aria-invalid]="error() ? 'true' : null"
+    [attr.aria-describedby]="error() ? inputId() + '-error' : null"
+  />
+  <label class="cgv__label" [attr.for]="inputId()">
+    J'accepte les
+    <a routerLink="/cgv" target="_blank" rel="noopener noreferrer">
+      conditions générales de vente
+    </a>
+    et la
+    <a routerLink="/politique-confidentialite" target="_blank" rel="noopener noreferrer">
+      politique de confidentialité
+    </a>
+    .
+  </label>
+</div>
+@if (error()) {
+  <p class="cgv__error" [id]="inputId() + '-error'" role="alert">{{ error() }}</p>
+}

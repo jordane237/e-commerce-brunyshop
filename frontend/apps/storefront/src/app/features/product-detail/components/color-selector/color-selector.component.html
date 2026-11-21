@@ -1,0 +1,33 @@
+<fieldset class="color-selector">
+  <legend class="color-selector__legend">
+    Couleur
+    @if (selected(); as current) {
+      <span class="color-selector__selected"> : {{ current.color }}</span>
+    }
+  </legend>
+
+  <div class="color-selector__colors" role="radiogroup" aria-label="Choix de la couleur">
+    @for (color of colors(); track color.slug) {
+      <button
+        type="button"
+        role="radio"
+        class="color-selector__swatch"
+        [class.color-selector__swatch--selected]="isSelected(color)"
+        [class.color-selector__swatch--unavailable]="!color.hasStock"
+        [attr.aria-checked]="isSelected(color)"
+        [attr.aria-disabled]="!color.hasStock"
+        [attr.aria-label]="'Couleur ' + color.color + (color.hasStock ? '' : ' (indisponible)')"
+        [attr.title]="color.color"
+        [attr.tabindex]="isSelected(color) || $index === 0 ? 0 : -1"
+        [disabled]="!color.hasStock"
+        [style.background-color]="hex(color)"
+        (click)="onSelect(color)"
+        (keydown)="onKeydown($event)"
+      >
+        @if (isSelected(color)) {
+          <bruny-icon name="check" [size]="16" aria-hidden="true" />
+        }
+      </button>
+    }
+  </div>
+</fieldset>

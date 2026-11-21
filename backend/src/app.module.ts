@@ -30,8 +30,12 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { MediaModule } from './modules/media/media.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { ContactModule } from './modules/contact/contact.module';
+import { PublicConfigModule } from './modules/config/public-config.module';
+import { TurnstileModule } from './security/turnstile/turnstile.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -78,6 +82,8 @@ import { RolesGuard } from './common/guards/roles.guard';
               '*.email',
               '*.phone',
               '*.token',
+              '*.turnstileToken',
+              'req.body.turnstileToken',
               'password',
               'refreshToken',
             ],
@@ -153,8 +159,12 @@ import { RolesGuard } from './common/guards/roles.guard';
     ReviewsModule,
     WishlistModule,
     NotificationsModule,
+    MediaModule,
     AnalyticsModule,
     SettingsModule,
+    TurnstileModule,
+    PublicConfigModule,
+    ContactModule,
   ],
   providers: [
     {
