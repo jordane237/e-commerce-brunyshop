@@ -85,3 +85,6 @@ frontend/playwright-report/
 # LibreOffice locks
 ~$*
 .~lock.*
+
+# Trivy findings (generated)
+findings/
