@@ -1,0 +1,252 @@
+<div class="products-page">
+  <div class="products-toolbar">
+    <input
+      type="search"
+      class="products-toolbar__search"
+      placeholder="Rechercher un produit"
+      [formControl]="searchControl"
+      aria-label="Rechercher un produit"
+    />
+    <button
+      type="button"
+      class="products-toolbar__filters"
+      (click)="openFilters()"
+      [attr.aria-label]="
+        'Filtres (' + (filters().status || filters().categoryId || filters().stock ? 1 : 0) + ')'
+      "
+    >
+      Filtres
+    </button>
+    @if (isMobile()) {
+      <button
+        type="button"
+        class="products-toolbar__create"
+        (click)="onCreate()"
+        aria-label="Nouveau produit"
+      >
+        +
+      </button>
+    } @else {
+      <bruny-button variant="primary" (clicked)="onCreate()">Nouveau produit</bruny-button>
+    }
+  </div>
+
+  @if (filters().status || filters().categoryId || filters().stock || filters().search) {
+    <div class="active-filters" role="list" aria-label="Filtres actifs">
+      @if (filters().search) {
+        <span class="active-filters__chip" role="listitem">
+          Recherche : {{ filters().search }}
+          <button
+            type="button"
+            (click)="store.setFilters({ search: undefined })"
+            aria-label="Supprimer le filtre recherche"
+          >
+            ×
+          </button>
+        </span>
+      }
+      @if (filters().status) {
+        <span class="active-filters__chip" role="listitem">
+          Statut : {{ getStatusLabel(filters().status!) }}
+          <button
+            type="button"
+            (click)="store.setFilters({ status: undefined })"
+            aria-label="Supprimer le filtre statut"
+          >
+            ×
+          </button>
+        </span>
+      }
+      @if (filters().categoryId) {
+        <span class="active-filters__chip" role="listitem">
+          Catégorie
+          <button
+            type="button"
+            (click)="store.setFilters({ categoryId: undefined })"
+            aria-label="Supprimer le filtre catégorie"
+          >
+            ×
+          </button>
+        </span>
+      }
+      @if (filters().stock) {
+        <span class="active-filters__chip" role="listitem">
+          Stock
+          <button
+            type="button"
+            (click)="store.setFilters({ stock: undefined })"
+            aria-label="Supprimer le filtre stock"
+          >
+            ×
+          </button>
+        </span>
+      }
+      <button type="button" (click)="resetFilters()">Réinitialiser les filtres</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <bruny-skeleton variant="rect" height="400px" />
+  } @else if (isEmpty()) {
+    <bruny-empty-state
+      title="Votre catalogue est vide."
+      description="Créez votre premier produit pour commencer à vendre."
+      actionLabel="Nouveau produit"
+      (actionClicked)="onCreate()"
+    />
+  } @else if (error()) {
+    <div role="alert">
+      <p>{{ error() }}</p>
+      <bruny-button (clicked)="store.loadProducts()">Réessayer</bruny-button>
+    </div>
+  } @else {
+    @if (isMobile()) {
+      <bruny-card-list
+        [items]="products()"
+        [rowKey]="'id'"
+        [loading]="loading()"
+        [cardTemplate]="cardTemplateTpl!"
+      >
+        <ng-template #cardTemplate let-product>
+          <article class="product-card-admin">
+            @if (product.image) {
+              <img
+                [src]="product.image.url"
+                [alt]="product.image.alt ?? product.name"
+                width="64"
+                height="64"
+              />
+            } @else {
+              <div class="product-card-admin__placeholder" aria-hidden="true">
+                {{ product.name.charAt(0) }}
+              </div>
+            }
+            <div class="product-card-admin__info">
+              <h3>{{ product.name }}</h3>
+              <p class="product-card-admin__meta">
+                {{ product.category.name }} · {{ product.basePrice | fcfa }}
+              </p>
+              <p class="product-card-admin__stock">Stock : {{ product.totalStock }}</p>
+              <bruny-status-badge [status]="product.status" />
+            </div>
+            <bruny-action-menu [items]="getRowActions(product)" [label]="'Actions du produit'" />
+          </article>
+        </ng-template>
+      </bruny-card-list>
+      @if (meta() && meta()!.page < meta()!.totalPages) {
+        <div class="products-page__more">
+          <bruny-button variant="secondary" (clicked)="loadMore()">Voir plus</bruny-button>
+        </div>
+      }
+    } @else {
+      <bruny-data-table
+        [columns]="columns()"
+        [rows]="products()"
+        [rowKey]="'id'"
+        [selectable]="true"
+        [sortKey]="sortKey()"
+        [sortDirection]="sortDirection()"
+        [actionsTemplate]="rowActions"
+        (selectionChange)="onSelectionChange($event)"
+        (sortChange)="onSortChange($event)"
+      >
+        <ng-template #rowActions let-product>
+          <bruny-action-menu [items]="getRowActions(product)" [label]="'Actions du produit'" />
+        </ng-template>
+      </bruny-data-table>
+    }
+
+    @if (!isMobile() && meta() && meta()!.totalPages > 1) {
+      <div class="products-pagination">
+        <span
+          >{{ (meta()!.page - 1) * meta()!.limit + 1 }}–{{
+            meta()!.page * meta()!.limit > meta()!.total
+              ? meta()!.total
+              : meta()!.page * meta()!.limit
+          }}
+          sur {{ meta()!.total }}</span
+        >
+        <div class="products-pagination__controls">
+          <button
+            type="button"
+            [disabled]="meta()!.page <= 1"
+            (click)="store.setPage(meta()!.page - 1)"
+          >
+            Précédent
+          </button>
+          <button
+            type="button"
+            [disabled]="meta()!.page >= meta()!.totalPages"
+            (click)="store.setPage(meta()!.page + 1)"
+          >
+            Suivant
+          </button>
+        </div>
+      </div>
+    }
+  }
+
+  @if (hasSelection()) {
+    <bruny-bulk-actions-bar
+      [count]="selectedCount()"
+      [actions]="bulkActions"
+      (clear)="store.clearSelection()"
+    />
+  }
+
+  <bruny-confirm-dialog
+    [open]="confirmDialogOpen()"
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    (confirmed)="onConfirm()"
+    (cancelled)="onCancelConfirm()"
+  />
+
+  <bruny-drawer [(isOpen)]="filtersOpen" title="Filtres">
+    <app-products-filters
+      [categories]="categories()"
+      [status]="filters().status"
+      [categoryId]="filters().categoryId"
+      [stock]="filters().stock"
+      (statusChange)="onStatusFilter($event)"
+      (categoryChange)="onCategoryFilter($event)"
+      (stockChange)="onStockFilter($event)"
+      (reset)="resetFilters()"
+    />
+  </bruny-drawer>
+</div>
+
+<ng-template #imageCell let-product>
+  <div class="product-cell">
+    @if (product.image) {
+      <img
+        [src]="product.image.url"
+        [alt]="product.image.alt ?? product.name"
+        width="40"
+        height="40"
+      />
+    } @else {
+      <div class="product-cell__placeholder" aria-hidden="true">{{ product.name.charAt(0) }}</div>
+    }
+    <div>
+      <div class="product-cell__name">{{ product.name }}</div>
+      <div class="product-cell__sku">{{ product.sku }}</div>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #priceCell let-product>
+  {{ product.basePrice | fcfa }}
+</ng-template>
+
+<ng-template #stockCell let-product>
+  {{ product.totalStock }}
+</ng-template>
+
+<ng-template #statusCell let-product>
+  <bruny-status-badge [status]="product.status" />
+</ng-template>
+
+<ng-template #dateCell let-product>
+  {{ product.updatedAt | date: 'd MMM y' }}
+</ng-template>

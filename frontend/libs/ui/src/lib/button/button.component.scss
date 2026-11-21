@@ -1,0 +1,129 @@
+:host {
+  display: inline-flex;
+}
+
+:host(.bs-button-host--block) {
+  display: flex;
+}
+
+.bs-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bs-space-2);
+  min-height: var(--bs-control-height-md);
+  min-width: var(--bs-touch-target);
+  padding: 0 var(--bs-space-4);
+  border: var(--bs-border-width) solid transparent;
+  border-radius: var(--bs-radius-md);
+  font-family: var(--bs-font-family-base);
+  font-size: var(--bs-font-size-sm);
+  font-weight: var(--bs-font-weight-bold);
+  line-height: 1;
+  color: var(--bs-color-text-inverse);
+  background: var(--bs-color-primary);
+  cursor: pointer;
+  transition:
+    background-color var(--bs-duration-fast) var(--bs-easing-standard),
+    border-color var(--bs-duration-fast) var(--bs-easing-standard),
+    color var(--bs-duration-fast) var(--bs-easing-standard);
+}
+
+.bs-button:focus-visible {
+  outline: none;
+  box-shadow: var(--bs-shadow-focus);
+}
+
+.bs-button--sm {
+  min-height: var(--bs-control-height-sm);
+  padding-inline: var(--bs-space-3);
+  font-size: var(--bs-font-size-xs);
+}
+
+.bs-button--lg {
+  min-height: var(--bs-control-height-lg);
+  padding-inline: var(--bs-space-6);
+  font-size: var(--bs-font-size-md);
+}
+
+.bs-button--block {
+  width: 100%;
+}
+
+.bs-button--icon-only {
+  width: var(--bs-touch-target);
+  padding: 0;
+}
+
+.bs-button__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bs-space-2);
+}
+
+.bs-button--primary {
+  background: var(--bs-color-primary);
+  color: var(--bs-color-text-inverse);
+}
+
+.bs-button--primary:hover:not(:disabled) {
+  background: var(--bs-color-primary-hover);
+}
+
+.bs-button--primary:active:not(:disabled) {
+  background: var(--bs-color-primary-active);
+}
+
+.bs-button--secondary {
+  background: transparent;
+  border-color: var(--bs-color-accent);
+  color: var(--bs-color-accent-text);
+}
+
+.bs-button--secondary:hover:not(:disabled) {
+  background: var(--bs-color-accent-soft);
+  border-color: var(--bs-color-accent-hover);
+}
+
+.bs-button--ghost {
+  background: var(--bs-color-surface);
+  border-color: var(--bs-color-border-strong);
+  color: var(--bs-color-text);
+}
+
+.bs-button--ghost:hover:not(:disabled) {
+  background: var(--bs-color-neutral-100);
+}
+
+.bs-button--danger {
+  background: var(--bs-color-danger);
+  color: var(--bs-color-text-inverse);
+}
+
+.bs-button--danger:hover:not(:disabled) {
+  background: var(--bs-color-danger-strong);
+}
+
+.bs-button--whatsapp {
+  background: var(--bs-color-whatsapp-strong);
+  color: var(--bs-color-text-inverse);
+}
+
+.bs-button--whatsapp:hover:not(:disabled) {
+  background: #0b6b36;
+}
+
+.bs-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.bs-button--loading {
+  cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-button {
+    transition: none;
+  }
+}

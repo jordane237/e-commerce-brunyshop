@@ -1,0 +1,45 @@
+<nav
+  class="sidebar"
+  [class.sidebar--collapsed]="collapsed()"
+  [class.sidebar--drawer]="drawer()"
+  aria-label="Menu principal"
+>
+  <a class="sidebar__brand" [routerLink]="homeRoute()" (click)="itemSelected.emit()">
+    <span class="sidebar__logo">BRUNY</span>
+    <span class="sidebar__brand-text">ADMIN</span>
+  </a>
+
+  <ul class="sidebar__list" role="list">
+    @for (item of visibleNavItems(); track item.id) {
+      <li>
+        <a
+          class="sidebar__item"
+          [routerLink]="item.route"
+          routerLinkActive="sidebar__item--active"
+          #activeLink="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          [attr.aria-current]="activeLink.isActive ? 'page' : null"
+          [attr.aria-label]="item.label"
+          [attr.title]="collapsed() ? item.label : null"
+          (click)="itemSelected.emit()"
+        >
+          <bruny-icon [name]="item.icon" />
+          <span class="sidebar__label">{{ item.label }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+
+  @if (showToggle()) {
+    <button
+      class="sidebar__toggle"
+      type="button"
+      (click)="toggleCollapse.emit()"
+      [attr.aria-label]="collapsed() ? 'Déplier le menu' : 'Replier le menu'"
+      [attr.aria-expanded]="!collapsed()"
+    >
+      <bruny-icon [name]="collapsed() ? 'chevron-right' : 'chevron-left'" />
+      <span class="sidebar__label">Replier</span>
+    </button>
+  }
+</nav>

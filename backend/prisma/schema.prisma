@@ -16,6 +16,62 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
+// Notifications (NTF-01)
+// ---------------------------------------------------------------------------
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  DEAD_LETTER
+}
+
+model Notification {
+  id              String             @id @default(uuid())
+  userId          String?            @db.Uuid
+  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  channel         NotificationChannel
+  templateKey     String             @db.VarChar(64)
+  templateVersion String             @db.VarChar(16)
+  recipient       String             @db.VarChar(255)
+  status          NotificationStatus @default(PENDING)
+  attempts        Int                @default(0)
+  lastError       String?
+  metadata        Json?
+  sentAt          DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([templateKey, templateVersion])
+  @@map("notifications")
+}
+
+model DeadLetterJob {
+  id          String   @id @default(uuid()) @db.Uuid
+  queueName   String   @db.VarChar(64)
+  jobId       String   @db.VarChar(64)
+  jobName     String   @db.VarChar(64)
+  payload     Json
+  error       String   @db.Text
+  attempts    Int
+  failedAt    DateTime @default(now())
+
+  @@index([queueName])
+  @@index([failedAt])
+  @@map("dead_letter_jobs")
+}
+
+// ---------------------------------------------------------------------------
 // Identity & access
 // ---------------------------------------------------------------------------
 
@@ -23,6 +79,7 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
   DISABLED
+  PENDING_VERIFICATION
 }
 
 model User {
@@ -33,7 +90,10 @@ model User {
   passwordHash    String
   firstName       String
   lastName        String
-  status          UserStatus @default(ACTIVE)
+  status          UserStatus @default(PENDING_VERIFICATION)
+  // Terms and consent (AUT-01: version des CGV + timestamp de consentement).
+  termsVersion    String?    @default("1.0")
+  termsAcceptedAt DateTime?
   // Encrypted at application level before storage.
   twoFactorSecret String?
   lastLoginAt     DateTime?
@@ -53,6 +113,8 @@ model User {
   auditLogs       AuditLog[]
   driverShipments Shipment[]
   backupCodes     BackupCode[]
+  notifications   Notification[]
+  contactMessagesHandled ContactMessage[] @relation("ContactMessageHandler")
 }
 
 model Role {
@@ -150,17 +212,38 @@ model Category {
   name    String
   slug    String  @unique
   parentId String?
-  // No SizeGuide entity in the cahier; kept as a plain reference for now.
+  // CAT-06: optional size guide inherited by the category products.
   sizeGuideId String?
   position Int    @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryTree")
-  products Product[]
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryTree")
+  products  Product[]
+  sizeGuide SizeGuide? @relation(fields: [sizeGuideId], references: [id], onDelete: SetNull)
 
   @@index([parentId])
+  @@index([sizeGuideId])
+}
+
+// CAT-06: EU/US/UK/cm conversion tables. The table payload is JSONB so a new
+// public can be added without a migration; DTOs validate its shape strictly.
+model SizeGuide {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  table       Json
+  version     String    @default("v1")
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  categories Category[]
+
+  @@index([slug])
+  @@map("size_guides")
 }
 
 model Brand {
@@ -226,6 +309,9 @@ model ProductVariant {
   // Held for pending online payments (RG-STK-03); available = stock - reservedStock.
   reservedStock     Int      @default(0)
   lowStockThreshold Int      @default(5)
+  // Date de la dernière alerte de stock bas envoyée. Null tant que la
+  // variante n'a pas atteint son seuil, ou après un réapprovisionnement.
+  lowStockAlertSentAt DateTime?
   // Optimistic concurrency for the last pairs (RG-STK-07).
   version           Int      @default(1)
   createdAt         DateTime @default(now())
@@ -237,6 +323,9 @@ model ProductVariant {
   cartItems      CartItem[]
 
   @@index([productId])
+  @@index([lowStockAlertSentAt])
+  // Une seule variante par couple couleur/pointure dans un produit (CAT-04).
+  @@unique([productId, color, size])
 }
 
 model ProductImage {
@@ -245,6 +334,8 @@ model ProductImage {
   // When set, the image only applies to variants of that color.
   variantColor String?
   url          String
+  // CAT-05: processed WebP key (original and thumbnail are derived from it).
+  storageKey   String?
   position     Int      @default(0)
   alt          String?
   createdAt    DateTime @default(now())
@@ -314,6 +405,9 @@ model Order {
   deletedAt      DateTime?
   // Anti double-submission guard.
   idempotencyKey String? @unique
+  // SHA-256 of the canonical request body, bound to idempotencyKey: the same
+  // key with a different payload is a conflict, not a replay (ORD-01).
+  idempotencyRequestHash String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -533,8 +627,9 @@ model StockMovement {
   delta     Int
   reason    StockMovementReason
   orderId   String?
-  // Author of the movement (manual adjustments always carry a user).
-  userId    String
+  // Author of the movement. Nullable for guest checkout: the order carries
+  // the customer identity, while the movement keeps orderId for traceability.
+  userId    String?
   // Stock levels before/after the movement (RG-STK-05 traceability).
   before    Int
   after     Int
@@ -542,7 +637,7 @@ model StockMovement {
   updatedAt DateTime            @updatedAt
 
   variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  user    User           @relation(fields: [userId], references: [id])
+  user    User?          @relation(fields: [userId], references: [id])
 
   @@index([variantId])
   @@index([orderId])
@@ -560,17 +655,21 @@ enum StockMovementReason {
 
 model AuditLog {
   id       String   @id @default(uuid())
-  userId   String
+  // Nullable pour les actions système (ex. alerte stock bas) sans acteur
+  // humain. Les entrées existantes conservent leur userId.
+  userId   String?
   action   String
   entity   String
   entityId String
   before   Json?
   after    Json?
   ip       String?
+  // Contexte HTTP de l'acteur (CAT-04), nullable pour les entrées antérieures.
+  userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([entity, entityId])
   @@index([userId])
@@ -582,18 +681,50 @@ model Setting {
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model BackupCode {
-  id       String    @id @default(uuid())
-  userId   String
+}model BackupCode {
+  id        String    @id @default(uuid())
+  userId    String
   // Argon2id hash of a single-use 2FA recovery code (BOA-04).
   codeHash String
-  usedAt   DateTime?
+  usedAt    DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// AUT-11: public contact form. Anonymous submissions are persisted in this
+// dedicated model (privacy and support workflow) and a structured Pino event
+// records the submission.
+enum ContactMessageStatus {
+  NEW
+  READ
+  REPLIED
+  SPAM
+  CLOSED
+}
+
+model ContactMessage {
+  id             String               @id @default(uuid())
+  name           String
+  email          String
+  phone          String?
+  subject        String
+  orderReference String?
+  message        String
+  consent        Boolean
+  status         ContactMessageStatus @default(NEW)
+  ip             String?
+  userAgent      String?
+  handledAt      DateTime?
+  handledBy      String?
+  handler        User?                @relation("ContactMessageHandler", fields: [handledBy], references: [id], onDelete: SetNull)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([email])
+  @@index([createdAt])
+  @@index([status])
 }

@@ -1,0 +1,33 @@
+<section class="auth-page">
+  <header class="auth-page__header">
+    <a routerLink="/boutique" class="auth-page__brand" aria-label="BRUNY SHOPPING, accueil">
+      BRUNY <span>SHOPPING</span>
+    </a>
+    <a routerLink="/boutique" class="auth-page__back">
+      <bruny-icon name="chevron-left" [size]="16" />
+      Retour à la boutique
+    </a>
+  </header>
+
+  <div class="auth-page__shell">
+    <aside class="auth-page__aside" aria-label="Avantages Bruny Shopping">
+      <p class="auth-page__eyebrow">{{ eyebrow() }}</p>
+      <p class="auth-page__aside-title">{{ asideTitle() }}</p>
+      <ul class="auth-page__points">
+        @for (point of asidePoints(); track point) {
+          <li>
+            <bruny-icon name="check" [size]="16" />
+            {{ point }}
+          </li>
+        }
+      </ul>
+    </aside>
+
+    <div class="auth-page__panel">
+      <p class="auth-page__eyebrow auth-page__eyebrow--mobile">{{ eyebrow() }}</p>
+      <h1 class="auth-page__title">{{ title() }}</h1>
+      <p class="auth-page__subtitle">{{ subtitle() }}</p>
+      <ng-content />
+    </div>
+  </div>
+</section>

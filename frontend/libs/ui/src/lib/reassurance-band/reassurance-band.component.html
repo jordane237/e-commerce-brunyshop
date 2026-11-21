@@ -1,0 +1,20 @@
+<section class="bs-reassurance" [attr.aria-label]="ariaLabel()">
+  <ul class="bs-reassurance__list" role="list">
+    @for (point of points(); track point.label) {
+      <li class="bs-reassurance__item">
+        <bruny-icon
+          [name]="point.icon"
+          [size]="20"
+          aria-hidden="true"
+          class="bs-reassurance__icon"
+        />
+        <div class="bs-reassurance__text">
+          <p class="bs-reassurance__label">{{ point.label }}</p>
+          @if (point.description) {
+            <p class="bs-reassurance__description">{{ point.description }}</p>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+</section>

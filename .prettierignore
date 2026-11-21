@@ -8,6 +8,9 @@ Cahier_des_charges_BRUNY_SHOPPING.docx
 pnpm-lock.yaml
 backend/src/generated
 
+# Markdown (docs, README, ADR) : non formaté, évite le bruit dans les commits docs
+*.md
+
 # Frontend build/test caches
 frontend/.angular/
 frontend/test-results/

@@ -13,11 +13,20 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 
+// Structured details may carry extra fields (variantId, requestedQuantity,
+// availableQuantity, ...) while still exposing the stable field/message pair
+// consumed by existing clients.
+export interface NormalizedErrorDetail {
+  field: string;
+  message: string;
+  [key: string]: unknown;
+}
+
 export interface NormalizedErrorBody {
   statusCode: number;
   code: string;
   message: string;
-  errors: Array<{ field: string; message: string }>;
+  errors: NormalizedErrorDetail[];
   requestId: string;
   timestamp: string;
 }
@@ -73,12 +82,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
           : this.codeFor(status);
 
       const { message, errors } = this.readMessage(payloadObject['message'], exception.message);
+      // Business exceptions may attach precise details (stock availability,
+      // conflicting variant, ...). Preserve them instead of dropping them
+      // during normalization; validation errors keep their existing shape.
+      const explicitErrors = this.readExplicitErrors(payloadObject['errors']);
 
       return {
         status,
         code: customCode,
         message: isProduction ? 'An error occurred while processing your request.' : message,
-        errors,
+        errors: explicitErrors.length > 0 ? explicitErrors : errors,
       };
     }
     return {
@@ -89,6 +102,23 @@ export class AllExceptionsFilter implements ExceptionFilter {
         : String(exception),
       errors: [],
     };
+  }
+
+  private readExplicitErrors(raw: unknown): NormalizedErrorDetail[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.flatMap((item): NormalizedErrorDetail[] => {
+      if (typeof item !== 'object' || item === null) {
+        return [];
+      }
+      const record = item as Record<string, unknown>;
+      if (typeof record['field'] !== 'string' || typeof record['message'] !== 'string') {
+        return [];
+      }
+      const { field, message, ...details } = record;
+      return [{ field, message, ...details }];
+    });
   }
 
   // Payload messages arrive either as a plain string, an array of strings

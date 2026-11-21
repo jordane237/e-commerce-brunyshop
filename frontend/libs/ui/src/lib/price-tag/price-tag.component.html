@@ -1,0 +1,6 @@
+<span class="bs-price" [class.bs-price--sm]="size === 'sm'" [class.bs-price--lg]="size === 'lg'">
+  <strong class="bs-price__current">{{ amount | fcfa }}</strong>
+  @if (compareAt && compareAt > amount) {
+    <s class="bs-price__compare">{{ compareAt | fcfa }}</s>
+  }
+</span>

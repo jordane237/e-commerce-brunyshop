@@ -1,13 +1,21 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AuthChallenge, SessionService, TwoFactorSetup } from '@bruny/data-access';
-import { errorMessage } from '../../core/http';
+import { PublicConfigService } from '@bruny/data-access';
+import {
+  AuthChallenge,
+  AuthService,
+  readApiErrorMessage,
+  SessionService,
+  TwoFactorSetup,
+} from '@bruny/core';
+import { CaptchaComponent } from '@bruny/ui';
+import { adminHomePath } from '../shared/auth-home';
 
 @Component({
   standalone: true,
   selector: 'bruny-login-page',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, CaptchaComponent],
   template: `
     <section class="login-layout">
       <div class="brand-panel">
@@ -35,7 +43,13 @@ import { errorMessage } from '../../core/http';
               autocomplete="current-password"
               placeholder="Votre mot de passe"
           /></label>
-          <button [disabled]="form.invalid || busy()">
+          @if (captchaEnabled()) {
+            <bruny-captcha [siteKey]="siteKey()" [control]="captchaControl" action="login" />
+          }
+          @if (captchaError()) {
+            <p class="error" role="alert">{{ captchaError() }}</p>
+          }
+          <button [disabled]="form.invalid || busy() || captchaUnavailable()">
             {{ busy() ? 'Connexion…' : 'Se connecter' }}
           </button>
         </form>
@@ -191,47 +205,92 @@ import { errorMessage } from '../../core/http';
     `,
   ],
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   private readonly fb = inject(FormBuilder).nonNullable;
+  private readonly auth = inject(AuthService);
   private readonly session = inject(SessionService);
+  private readonly publicConfig = inject(PublicConfigService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  readonly errorMessage = errorMessage;
+  readonly errorMessage = signal('');
   readonly busy = signal(false);
   readonly challenge = signal<AuthChallenge | null>(null);
   readonly setup = signal<TwoFactorSetup | null>(null);
+  readonly siteKey = signal<string | null>(null);
+  readonly captchaEnabled = signal(false);
+  readonly captchaUnavailable = signal(false);
+  readonly captchaError = signal('');
   readonly form = this.fb.group({
     identifier: ['', [Validators.required]],
     password: ['', [Validators.required]],
+    // Null is the pristine value; the Turnstile control value accessor writes
+    // the one-time token here when the invisible challenge resolves.
+    turnstileToken: new FormControl<string | null>(null),
   });
+  readonly captchaControl = this.form.controls.turnstileToken;
   readonly codeForm = this.fb.group({
     code: ['', [Validators.required, Validators.pattern(/^(?:[0-9]{6}|[0-9]{8})$/)]],
   });
+
+  ngOnInit(): void {
+    this.publicConfig.getConfig().subscribe({
+      next: (config) => {
+        if (!config.turnstileEnabled) return;
+        if (config.turnstileSiteKey === null || config.turnstileSiteKey.trim() === '') {
+          this.captchaError.set('La vérification de sécurité est mal configurée.');
+          this.captchaUnavailable.set(true);
+          return;
+        }
+        this.siteKey.set(config.turnstileSiteKey);
+        this.captchaEnabled.set(true);
+        this.captchaControl.setValidators(Validators.required);
+        this.captchaControl.updateValueAndValidity();
+      },
+      error: () => {
+        this.captchaError.set(
+          'Impossible de charger la vérification de sécurité. Vérifiez votre connexion.',
+        );
+        this.captchaUnavailable.set(true);
+      },
+    });
+  }
 
   login(): void {
     if (this.form.invalid) return;
     this.busy.set(true);
     this.errorMessage.set('');
-    const { identifier, password } = this.form.getRawValue();
-    this.session.login(identifier, password).subscribe({
-      next: (result) => {
-        if ('accessToken' in result) {
-          this.completeLogin();
-          return;
-        }
-        this.challenge.set(result);
-        if (result.setupRequired) {
-          this.session.setupTwoFactor(result.challengeToken).subscribe({
-            next: (setup) => {
-              this.setup.set(setup);
-              this.busy.set(false);
-            },
-            error: () => this.busy.set(false),
-          });
-        } else this.busy.set(false);
-      },
-      error: () => this.busy.set(false),
-    });
+    const { identifier, password, turnstileToken } = this.form.getRawValue();
+    this.auth
+      .login({
+        identifier,
+        password,
+        ...(turnstileToken ? { turnstileToken } : {}),
+      })
+      .subscribe({
+        next: (result) => {
+          if ('accessToken' in result) {
+            this.completeLogin();
+            return;
+          }
+          this.challenge.set(result);
+          if (result.setupRequired) {
+            this.auth.setupTwoFactor(result.challengeToken).subscribe({
+              next: (setup) => {
+                this.setup.set(setup);
+                this.busy.set(false);
+              },
+              error: () => this.busy.set(false),
+            });
+          } else this.busy.set(false);
+        },
+        error: (error: unknown) => {
+          this.errorMessage.set(
+            readApiErrorMessage(error, 'Connexion impossible. Vérifiez votre réseau et réessayez.'),
+          );
+          this.busy.set(false);
+          this.resetCaptcha();
+        },
+      });
   }
 
   verify(): void {
@@ -239,15 +298,25 @@ export class LoginPage {
     const code = this.codeForm.controls.code.value;
     if (!challenge || this.codeForm.invalid) return;
     this.busy.set(true);
-    this.session.verifyTwoFactor(challenge.challengeToken, code).subscribe({
+    this.auth.verifyTwoFactor(challenge.challengeToken, code).subscribe({
       next: () => this.completeLogin(),
       error: () => this.busy.set(false),
     });
   }
 
   private completeLogin(): void {
-    const destination = this.route.snapshot.queryParamMap.get('returnUrl') || '/produits';
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    const fallback = adminHomePath(this.session);
+    const destination =
+      returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : fallback;
     this.busy.set(false);
-    void this.router.navigateByUrl(destination.startsWith('/') ? destination : '/produits');
+    void this.router.navigateByUrl(destination);
+  }
+
+  private resetCaptcha(): void {
+    if (!this.captchaEnabled()) return;
+    this.captchaControl.setValue(null);
+    this.captchaControl.markAsPristine();
+    this.captchaControl.markAsUntouched();
   }
 }
