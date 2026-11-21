@@ -1,0 +1,11 @@
+<div class="empty-state">
+  <h2 class="empty-state__title">{{ title() }}</h2>
+  @if (description()) {
+    <p class="empty-state__description">{{ description() }}</p>
+  }
+  @if (actionLabel()) {
+    <bruny-button variant="primary" (clicked)="actionClicked.emit()">{{
+      actionLabel()
+    }}</bruny-button>
+  }
+</div>

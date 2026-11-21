@@ -1,17 +1,42 @@
-FROM node:24.15-alpine AS build
-WORKDIR /workspace
-RUN corepack enable
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY backend/package.json backend/package.json
-COPY frontend/package.json frontend/package.json
-RUN pnpm install --frozen-lockfile
-COPY frontend frontend
-RUN pnpm -C frontend exec ng build admin --configuration=production
+# syntax=docker/dockerfile:1.7
+# =============================================================================
+# Stage 1: Base — Node.js Alpine
+# =============================================================================
+FROM node:24.15-alpine AS base
+WORKDIR /app
+RUN corepack enable && apk upgrade --no-cache
 
-FROM nginx:1.29-alpine AS runtime
+# =============================================================================
+# Stage 2: Dependencies
+# =============================================================================
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY frontend/package.json frontend/
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# =============================================================================
+# Stage 3: Build — Angular SPA production build
+# =============================================================================
+FROM deps AS build
+COPY frontend frontend
+RUN pnpm -C frontend build:admin
+RUN test -d frontend/dist/apps/admin/browser || \
+    (echo "Admin build failed: browser directory missing" && exit 1)
+
+# =============================================================================
+# Stage 4: Runtime — Nginx unprivileged (non-root, port 8080)
+# =============================================================================
+FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
+USER root
+RUN apk upgrade --no-cache
+COPY --from=build /app/frontend/dist/apps/admin/browser /usr/share/nginx/html
+COPY infra/docker/nginx.security-headers.conf /etc/nginx/conf.d/security-headers.conf
 COPY infra/docker/nginx.admin.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /workspace/frontend/dist/apps/admin/browser /usr/share/nginx/html
-RUN mkdir -p /var/cache/nginx /var/run && chown -R nginx:nginx /var/cache/nginx /var/run /usr/share/nginx/html
+
 USER nginx
 EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -qO- http://127.0.0.1:8080/health || exit 1
+
+USER nginx

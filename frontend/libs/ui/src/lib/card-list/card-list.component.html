@@ -1,0 +1,26 @@
+<ul class="card-list" role="list">
+  @if (loading()) {
+    @for (i of [1, 2, 3]; track i) {
+      <li class="card-list__item card-list__item--skeleton">
+        <bruny-skeleton variant="rect" height="5rem" />
+      </li>
+    }
+  } @else if (items().length === 0) {
+    <li class="card-list__item card-list__item--empty" role="listitem">
+      @if (emptyTemplate()) {
+        <ng-container [ngTemplateOutlet]="emptyTemplate()!" />
+      } @else {
+        <p>Aucun élément.</p>
+      }
+    </li>
+  } @else {
+    @for (item of items(); track item[rowKey()]) {
+      <li class="card-list__item" role="listitem">
+        <ng-container
+          [ngTemplateOutlet]="cardTemplate()"
+          [ngTemplateOutletContext]="{ $implicit: item }"
+        />
+      </li>
+    }
+  }
+</ul>

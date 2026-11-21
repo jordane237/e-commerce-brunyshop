@@ -1,29 +1,60 @@
-<div class="bs-sizes" role="group" [attr.aria-label]="label">
-  <p class="bs-sizes__label">{{ label }}</p>
-  <div class="bs-sizes__list">
-    @for (size of sizes; track size) {
-      <button
-        class="bs-sizes__button"
-        type="button"
-        [class.bs-sizes__button--selected]="selected === size"
-        [class.bs-sizes__button--low]="isLowStock(size)"
-        [class.bs-sizes__button--unavailable]="isUnavailable(size)"
-        [attr.aria-pressed]="selected === size"
-        [attr.aria-label]="
-          isUnavailable(size)
-            ? 'Pointure ' + size + ' épuisée'
-            : isLowStock(size)
-              ? 'Pointure ' + size + ', stock faible'
-              : 'Pointure ' + size
-        "
-        [disabled]="disabled || isUnavailable(size)"
-        (click)="select(size)"
-      >
-        {{ size }}
-        @if (isLowStock(size) && !isUnavailable(size)) {
-          <span class="bs-sizes__dot" aria-hidden="true"></span>
+<div
+  class="bs-size-selector"
+  [class.bs-size-selector--readonly]="readonly()"
+  [class.bs-size-selector--loading]="loading()"
+>
+  @if (showLabel()) {
+    <button
+      type="button"
+      class="bs-size-selector__label"
+      aria-label="Sélectionner la pointure"
+      [attr.aria-busy]="loading() ? 'true' : null"
+      [disabled]="readonly() || loading()"
+    >
+      @if (selected(); as selectedItem) {
+        {{ selectedItem.size }}
+      } @else {
+        Sélectionner
+      }
+    </button>
+  }
+
+  <div class="bs-size-selector__list" role="radiogroup" [attr.aria-label]="listLabel()">
+    @for (item of visibleItems(); track item.id; let index = $index) {
+      <div class="bs-size-selector__item">
+        <button
+          type="button"
+          role="radio"
+          class="bs-size"
+          [class.bs-size--selected]="isEqual(item, selected())"
+          [class.bs-size--disabled]="!isAvailable(item)"
+          [disabled]="!isAvailable(item) || readonly() || loading()"
+          [attr.aria-checked]="isEqual(item, selected())"
+          [attr.aria-disabled]="!isAvailable(item)"
+          [attr.aria-label]="ariaLabel(item)"
+          [attr.tabindex]="isEqual(item, selected()) || index === 0 ? 0 : -1"
+          (click)="onSelect(item)"
+          (keydown)="onKeydown($event)"
+        >
+          {{ item.size }}
+        </button>
+        @if (isLowStock(item)) {
+          <span class="bs-size-selector__low-stock" role="status">
+            Plus que {{ item.stock }} en stock
+          </span>
         }
-      </button>
+      </div>
     }
   </div>
+
+  @if (showMore()) {
+    <button
+      type="button"
+      class="bs-size-selector__more"
+      [disabled]="readonly() || loading()"
+      (click)="toggleMore()"
+    >
+      {{ moreLabel() }}
+    </button>
+  }
 </div>

@@ -4,5 +4,13 @@ import { SetMetadata } from '@nestjs/common';
 // /admin/* routes require STOCK, ORDER, ADMIN or SUPER_ADMIN).
 export const ROLES_KEY = 'requiredRoles';
 
-export const Roles = (...roles: string[]): MethodDecorator & ClassDecorator =>
+export type RoleName =
+  | 'SUPER_ADMIN'
+  | 'ADMIN'
+  | 'ORDER_MANAGER'
+  | 'STOCK_MANAGER'
+  | 'LIVREUR'
+  | 'CUSTOMER';
+
+export const Roles = (...roles: RoleName[]): MethodDecorator & ClassDecorator =>
   SetMetadata(ROLES_KEY, roles);

@@ -1,0 +1,30 @@
+.bruny-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bruny-status-badge--success {
+  background: var(--bs-color-success-soft);
+  color: var(--bs-color-success-strong);
+}
+.bruny-status-badge--warning {
+  background: var(--bs-color-warning-soft);
+  color: var(--bs-color-warning-strong);
+}
+.bruny-status-badge--danger {
+  background: var(--bs-color-danger-soft);
+  color: var(--bs-color-danger-strong);
+}
+.bruny-status-badge--info {
+  background: var(--bs-color-info-soft, #e0f2fe);
+  color: var(--bs-color-info-strong, #0369a1);
+}
+.bruny-status-badge--neutral {
+  background: var(--bs-color-neutral-100);
+  color: var(--bs-color-text);
+}

@@ -1,0 +1,15 @@
+<bruny-modal [open]="open()" [title]="title()" size="sm" (openChange)="onModalChange($event)">
+  <p class="confirm-dialog__message">{{ message() }}</p>
+  <footer class="confirm-dialog__actions">
+    <bruny-button variant="secondary" (clicked)="cancelled.emit()">{{
+      cancelLabel()
+    }}</bruny-button>
+    <bruny-button
+      [variant]="tone() === 'danger' ? 'danger' : 'primary'"
+      [loading]="loading()"
+      (clicked)="confirmed.emit()"
+    >
+      {{ confirmLabel() }}
+    </bruny-button>
+  </footer>
+</bruny-modal>

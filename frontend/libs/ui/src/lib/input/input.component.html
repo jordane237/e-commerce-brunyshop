@@ -32,6 +32,7 @@
       [disabled]="disabled || loading"
       [required]="required"
       (input)="onInput($event)"
+      (blur)="onBlur()"
     />
     @if (loading) {
       <span class="bs-field__status"><bruny-spinner size="sm" [inline]="true" /></span>

@@ -1,0 +1,46 @@
+.qty-selector {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--bs-color-border, #d1d5db);
+  border-radius: 999px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.qty-selector__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.25rem;
+}
+
+.qty-selector__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.qty-selector__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--bs-shadow-focus, 0 0 0 3px rgba(37, 99, 235, 0.35));
+}
+
+.qty-selector__input {
+  width: 48px;
+  height: 44px;
+  border: 0;
+  text-align: center;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+}
+
+.qty-selector__hint {
+  margin: var(--bs-space-1, 0.25rem) 0 0;
+  color: var(--bs-color-text-muted, #6b7280);
+  font-size: var(--bs-font-size-xs, 0.75rem);
+}

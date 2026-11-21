@@ -31,6 +31,8 @@
 /.sass-cache
 /connect.lock
 /coverage
+/backend/coverage
+/frontend/coverage
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
@@ -42,6 +44,7 @@ testem.log
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # System Files
 .DS_Store
@@ -54,6 +57,8 @@ Thumbs.db
 
 # Session tooling (not project content)
 .freebuff/
+.agents/
+skills-lock.json
 
 # Confidential specs (local only)
 Cahier_des_charges_BRUNY_SHOPPING.docx
@@ -61,7 +66,22 @@ Cahier_des_charges_BRUNY_SHOPPING.docx
 # generated code (prisma client, rebuilt by `pnpm build`)
 backend/src/generated
 
+# CAT-05 local media (never commit uploaded images)
+/backend/storage/
+/backend/uploads/
+/uploads/
+/media/
+*.upload
+*.tmp
+
+# TypeScript incremental cache
+*.tsbuildinfo
+
 # Frontend build/test caches
 frontend/.angular/
 frontend/test-results/
 frontend/playwright-report/
+
+# LibreOffice locks
+~$*
+.~lock.*

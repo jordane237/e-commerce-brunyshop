@@ -1,0 +1,58 @@
+<header class="admin-header" role="banner">
+  <button
+    class="admin-header__menu"
+    type="button"
+    aria-label="Ouvrir le menu"
+    aria-controls="admin-mobile-menu"
+    [attr.aria-expanded]="menuOpen()"
+    (click)="openMenu.emit()"
+  >
+    <bruny-icon name="menu" [size]="22" />
+  </button>
+
+  <a class="admin-header__brand" [routerLink]="homeRoute()">BRUNY <span>ADMIN</span></a>
+
+  <div class="admin-header__breadcrumb">
+    <bruny-breadcrumb />
+  </div>
+
+  <div class="admin-header__actions">
+    <bruny-notification-bell />
+
+    <div class="user-menu">
+      <button
+        class="user-menu__trigger"
+        type="button"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="userMenuOpen()"
+        (click)="toggleUserMenu()"
+      >
+        <span class="user-menu__avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="user-menu__identity">
+          <span class="user-menu__name">{{ displayName() }}</span>
+          <span class="user-menu__role">{{ roleLabel() }}</span>
+        </span>
+        <bruny-icon name="chevron-down" [size]="16" />
+      </button>
+
+      @if (userMenuOpen()) {
+        <div class="user-menu__dropdown" role="menu" aria-label="Menu utilisateur">
+          <a class="user-menu__item" role="menuitem" routerLink="/profil" (click)="closeUserMenu()">
+            <bruny-icon name="user" [size]="18" />
+            Mon profil
+          </a>
+          <button
+            class="user-menu__item user-menu__item--danger"
+            type="button"
+            role="menuitem"
+            [disabled]="loggingOut()"
+            (click)="logout()"
+          >
+            <bruny-icon name="log-out" [size]="18" />
+            Déconnexion
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

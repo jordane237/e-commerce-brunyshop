@@ -27,3 +27,138 @@ a {
   width: min(1200px, calc(100% - 40px));
   margin-inline: auto;
 }
+
+/* Contenu éditorial long — MKT-01 (CA #2 lisibilité). */
+.prose {
+  max-width: 75ch;
+  color: var(--bs-color-text);
+  font-size: var(--bs-font-size-md);
+  line-height: 1.7;
+}
+
+.prose > * + * {
+  margin-top: var(--bs-space-4);
+}
+
+.prose h2 {
+  margin-top: var(--bs-space-10);
+  margin-bottom: 0;
+  font-size: var(--bs-font-size-2xl);
+  line-height: var(--bs-line-height-snug);
+  letter-spacing: var(--bs-letter-spacing-heading);
+  scroll-margin-top: var(--bs-space-10);
+}
+
+.prose h3 {
+  margin-top: var(--bs-space-6);
+  margin-bottom: 0;
+  font-size: var(--bs-font-size-lg);
+  line-height: var(--bs-line-height-snug);
+}
+
+.prose p,
+.prose li {
+  margin-top: var(--bs-space-3);
+}
+
+.prose ul,
+.prose ol {
+  padding-left: var(--bs-space-6);
+}
+
+.prose li + li {
+  margin-top: var(--bs-space-2);
+}
+
+.prose a {
+  color: var(--bs-color-primary);
+  font-weight: var(--bs-font-weight-medium);
+  text-underline-offset: 2px;
+}
+
+.prose strong {
+  font-weight: var(--bs-font-weight-semibold);
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--bs-font-size-sm);
+}
+
+.prose caption {
+  padding-bottom: var(--bs-space-3);
+  color: var(--bs-color-text);
+  font-size: var(--bs-font-size-md);
+  font-weight: var(--bs-font-weight-semibold);
+  text-align: left;
+}
+
+.prose th,
+.prose td {
+  padding: var(--bs-space-3);
+  border: var(--bs-border-width) solid var(--bs-color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose thead th {
+  background: var(--bs-color-surface-muted);
+  font-weight: var(--bs-font-weight-semibold);
+}
+
+.prose tbody th {
+  font-weight: var(--bs-font-weight-medium);
+}
+
+.prose blockquote {
+  margin: var(--bs-space-8) 0;
+  padding: var(--bs-space-6);
+  border-left: 4px solid var(--bs-color-accent);
+  border-radius: var(--bs-radius-sm);
+  background: var(--bs-color-accent-soft);
+  font-size: var(--bs-font-size-lg);
+}
+
+.prose blockquote p {
+  margin: 0;
+}
+
+.prose blockquote footer {
+  margin-top: var(--bs-space-3);
+  color: var(--bs-color-text-muted);
+  font-size: var(--bs-font-size-sm);
+}
+
+.prose .callout {
+  padding: var(--bs-space-5);
+  border: var(--bs-border-width) solid var(--bs-color-border);
+  border-left: 4px solid var(--bs-color-info);
+  border-radius: var(--bs-radius-sm);
+  background: var(--bs-color-info-soft);
+}
+
+.prose .callout > :first-child {
+  margin-top: 0;
+}
+
+.prose .table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.prose .table-scroll:focus-visible {
+  outline: 2px solid var(--bs-color-border-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .prose table {
+    font-size: var(--bs-font-size-xs);
+  }
+
+  .prose th,
+  .prose td {
+    padding: var(--bs-space-2);
+  }
+}
