@@ -31,6 +31,7 @@ const product = (id: string): CatalogProduct => ({
   promoStart: null,
   promoEnd: null,
   isPromoActive: false,
+  discountPercent: null,
   inStock: true,
   category: { id: '1', name: 'Sneakers', slug: 'sneakers' },
   brand: { id: 'b1', name: 'Kepe', slug: 'kepe', logo: null },

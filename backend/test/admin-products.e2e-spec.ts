@@ -524,9 +524,15 @@ describe('Admin products & variants (CAT-04)', () => {
     await prisma.product.update({ where: { id: sourceProductId }, data: { basePrice: 30000 } });
   });
 
-  it('met à jour le promoPrice et émet un audit (200 + audit en DB)', async () => {
+  it('met à jour le promoPrice avec sa fenêtre et émet un audit (200 + audit en DB)', async () => {
+    // CAT-12 : un prix promo sans dates ne s'activerait jamais → les deux dates
+    // sont obligatoires dès qu'un promoPrice est fourni.
     const response = await adminRequest('patch', `/admin/products/${sourceProductId}`, adminToken)
-      .send({ promoPrice: 25000 })
+      .send({
+        promoPrice: 25000,
+        promoStart: '2026-01-01T00:00:00.000Z',
+        promoEnd: '2026-12-31T23:59:59.000Z',
+      })
       .expect(200);
     expect(response.body.promoPrice).toBe(25000);
     const auditLogs = await prisma.auditLog.findMany({
@@ -536,7 +542,10 @@ describe('Admin products & variants (CAT-04)', () => {
     });
     expect(auditLogs[0].before).toMatchObject({ promoPrice: null });
     expect(auditLogs[0].after).toMatchObject({ promoPrice: 25000 });
-    await prisma.product.update({ where: { id: sourceProductId }, data: { promoPrice: null } });
+    await prisma.product.update({
+      where: { id: sourceProductId },
+      data: { promoPrice: null, promoStart: null, promoEnd: null },
+    });
   });
 
   it("ne crée pas d'audit prix si aucun champ pertinent n'est fourni (200)", async () => {

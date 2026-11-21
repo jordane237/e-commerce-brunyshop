@@ -20,6 +20,7 @@ const product: CatalogProductDetail = {
   promoStart: null,
   promoEnd: null,
   isPromoActive: false,
+  discountPercent: null,
   inStock: true,
   category: { id: 'cat-1', name: 'Mocassins', slug: 'mocassins' },
   brand: { id: 'brand-1', name: 'Bruny', slug: 'bruny', logo: null },

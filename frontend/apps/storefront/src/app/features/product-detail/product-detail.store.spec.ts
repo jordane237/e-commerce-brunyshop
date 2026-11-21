@@ -18,6 +18,7 @@ const product: CatalogProductDetail = {
   promoStart: '2026-11-01T00:00:00.000Z',
   promoEnd: '2026-12-01T00:00:00.000Z',
   isPromoActive: true,
+  discountPercent: 17,
   inStock: true,
   category: { id: 'category-1', name: 'Mocassins', slug: 'mocassins' },
   brand: { id: 'brand-1', name: 'Bruny', slug: 'bruny', logo: null },

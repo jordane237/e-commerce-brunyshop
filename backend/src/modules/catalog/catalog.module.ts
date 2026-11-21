@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PricingModule } from '../../common/pricing/pricing.module';
 import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { AuditModule } from '../audit/audit.module';
@@ -17,7 +18,7 @@ import { SizeGuidesService } from './size-guides/size-guides.service';
 
 @Module({
   // CacheModule is not @Global: it must be imported to inject RedisService.
-  imports: [DatabaseModule, AuditModule, CacheModule, SettingsModule],
+  imports: [DatabaseModule, AuditModule, CacheModule, SettingsModule, PricingModule],
   controllers: [
     CatalogController,
     AdminProductsController,

@@ -2031,6 +2031,11 @@
             "type": "boolean",
             "description": "true si promoPrice est appliqué à cet instant"
           },
+          "discountPercent": {
+            "type": "number",
+            "nullable": true,
+            "description": "Pourcentage d'économie arrondi si la promotion est active, sinon null"
+          },
           "inStock": {
             "type": "boolean",
             "description": "true si au moins une variante a du stock disponible"
@@ -2065,6 +2070,7 @@
           "promoStart",
           "promoEnd",
           "isPromoActive",
+          "discountPercent",
           "inStock",
           "category",
           "brand",
@@ -2404,6 +2410,11 @@
             "type": "boolean",
             "description": "true si promoPrice est appliqué à cet instant"
           },
+          "discountPercent": {
+            "type": "number",
+            "nullable": true,
+            "description": "Pourcentage d'économie arrondi si la promotion est active, sinon null"
+          },
           "inStock": {
             "type": "boolean",
             "description": "true si au moins une variante a du stock disponible"
@@ -2432,6 +2443,7 @@
           "promoStart",
           "promoEnd",
           "isPromoActive",
+          "discountPercent",
           "inStock",
           "category",
           "brand",
@@ -2479,6 +2491,11 @@
           "isPromoActive": {
             "type": "boolean",
             "description": "true si promoPrice est appliqué à cet instant"
+          },
+          "discountPercent": {
+            "type": "number",
+            "nullable": true,
+            "description": "Pourcentage d'économie arrondi si la promotion est active, sinon null"
           },
           "inStock": {
             "type": "boolean",
@@ -2550,6 +2567,7 @@
           "promoStart",
           "promoEnd",
           "isPromoActive",
+          "discountPercent",
           "inStock",
           "category",
           "brand",

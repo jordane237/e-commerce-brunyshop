@@ -543,6 +543,22 @@ describe('AdminProductsService.create', () => {
     });
   });
 
+  it('rejette la création avec un promoPrice sans dates de promotion', async () => {
+    const { service } = makeService();
+    const dto = {
+      name: 'Produit',
+      description: 'Desc.',
+      categoryId: 'cat-1',
+      brandId: 'brand-1',
+      basePrice: 45000,
+      promoPrice: 35000,
+      variants: [{ color: 'NOIR', size: '42', stock: 10 }],
+    };
+    await expect(service.create(dto as never, ACTOR)).rejects.toMatchObject({
+      response: { code: 'PROMO_DATES_REQUIRED' },
+    });
+  });
+
   it('rejette la création avec promoStart >= promoEnd', async () => {
     const { service } = makeService();
     const dto = {

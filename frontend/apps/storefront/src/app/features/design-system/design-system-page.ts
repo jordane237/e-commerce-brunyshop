@@ -35,6 +35,7 @@ const DEMO_PRODUCT: CatalogProduct = {
   promoStart: '2026-01-01T00:00:00.000Z',
   promoEnd: '2027-01-01T00:00:00.000Z',
   isPromoActive: true,
+  discountPercent: 20,
   inStock: true,
   category: { id: 'cat-1', name: 'Mocassins & Richelieu', slug: 'mocassins-richelieu' },
   brand: { id: 'brand-1', name: 'BRUNY', slug: 'bruny', logo: null },

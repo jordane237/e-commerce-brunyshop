@@ -71,6 +71,13 @@ export class ProductSummaryDto {
   @ApiProperty({ description: 'true si promoPrice est appliqué à cet instant' })
   isPromoActive!: boolean;
 
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: "Pourcentage d'économie arrondi si la promotion est active, sinon null",
+  })
+  discountPercent!: number | null;
+
   @ApiProperty({ description: 'true si au moins une variante a du stock disponible' })
   inStock!: boolean;
 

@@ -34,7 +34,23 @@ export function isPromoActive(product: PriceableProduct, at: Date = new Date()):
   if (product.promoPrice === null || product.promoStart === null || product.promoEnd === null) {
     return false;
   }
+  // Defensive: a promotion is never active when the promo price is not strictly
+  // lower than the base price (CA #4).
+  if (product.promoPrice >= product.basePrice) {
+    return false;
+  }
   return product.promoStart.getTime() <= at.getTime() && at.getTime() <= product.promoEnd.getTime();
+}
+
+// Rounded saving percentage (CA #3), null when no promotion is active.
+export function promoDiscountPercent(
+  product: PriceableProduct,
+  at: Date = new Date(),
+): number | null {
+  if (!isPromoActive(product, at) || product.promoPrice === null || product.basePrice <= 0) {
+    return null;
+  }
+  return Math.round(((product.basePrice - product.promoPrice) / product.basePrice) * 100);
 }
 
 export function resolvePrice(
