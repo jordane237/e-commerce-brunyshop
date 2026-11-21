@@ -29,6 +29,7 @@ paths = [
   '''(^|/)coverage/''',
   '''(^|/)test-results/''',
   '''(^|/)playwright-report/''',
+  '''(^|/)findings/''',
   '''(^|/)pnpm-lock\.yaml$''',
   '''(^|/)openapi\.json$''',
   '''(^|/)\.env\.example$''',
