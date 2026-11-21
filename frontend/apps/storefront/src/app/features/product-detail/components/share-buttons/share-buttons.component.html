@@ -1,0 +1,30 @@
+<div class="share-buttons" role="group" aria-label="Partager ce produit">
+  <span class="share-buttons__label">Partager :</span>
+  <button
+    type="button"
+    class="share-buttons__btn share-buttons__btn--facebook"
+    (click)="onFacebook()"
+    aria-label="Partager sur Facebook (nouvel onglet)"
+    title="Partager sur Facebook"
+  >
+    <bruny-icon name="facebook" aria-hidden="true" />
+  </button>
+  <button
+    type="button"
+    class="share-buttons__btn share-buttons__btn--whatsapp"
+    (click)="onWhatsApp()"
+    aria-label="Partager sur WhatsApp (nouvel onglet)"
+    title="Partager sur WhatsApp"
+  >
+    <bruny-icon name="whatsapp" aria-hidden="true" />
+  </button>
+  <button
+    type="button"
+    class="share-buttons__btn share-buttons__btn--copy"
+    (click)="onCopyLink()"
+    aria-label="Copier le lien du produit"
+    title="Copier le lien"
+  >
+    <bruny-icon name="copy" aria-hidden="true" />
+  </button>
+</div>

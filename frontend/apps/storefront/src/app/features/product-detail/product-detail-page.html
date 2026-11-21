@@ -73,13 +73,9 @@
             <span class="product-detail__selected-size"> : {{ size }}</span>
             }
           </h2>
-          <a
-            class="product-detail__size-guide"
-            routerLink="/guide-des-tailles"
-            [queryParams]="{ category: product()!.category.id }"
-          >
+          <button type="button" class="product-detail__size-guide" (click)="onOpenSizeGuide()">
             Guide des tailles
-          </a>
+          </button>
         </div>
         <bruny-size-selector
           [items]="sizeItems()"
@@ -118,6 +114,14 @@
         </p>
         }
       </div>
+
+      <app-share-buttons
+        [productSlug]="product()!.slug"
+        [productName]="product()!.name"
+        [productDescription]="product()!.description"
+        [productImageUrl]="galleryImages()[0]?.url ?? product()!.images[0]?.url ?? null"
+        [productPrice]="product()!.effectivePrice"
+      />
 
       <bruny-reassurance-band [points]="reassurancePoints" ariaLabel="Nos engagements produit" />
     </section>
@@ -174,6 +178,8 @@
     (addToCart)="onAddToCart()"
   />
 </article>
+
+<app-size-guide-modal [(isOpen)]="sizeGuideOpen" [categoryId]="product()!.category.id" />
 
 <bruny-modal [open]="zoomOpen()" [title]="product()!.name" size="lg" (closed)="zoomOpen.set(false)">
   @if (zoomImage(product()!); as image) {

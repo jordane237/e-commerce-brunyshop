@@ -12,6 +12,8 @@ export interface PageMetaOptions {
   readonly ogImage?: string;
   readonly ogImageAlt?: string;
   readonly ogType?: SeoOgType;
+  readonly productPrice?: number | null;
+  readonly productPriceCurrency?: string;
   readonly noIndex?: boolean;
   readonly jsonLd?: Record<string, unknown> | null;
 }
@@ -50,6 +52,16 @@ export class SeoService {
     this.meta.updateTag({ property: 'og:type', content: options.ogType ?? 'website' });
     this.meta.updateTag({ property: 'og:site_name', content: this.config.siteName });
     this.meta.updateTag({ property: 'og:locale', content: 'fr_CM' });
+
+    const price = options.productPrice;
+    const currency = options.productPriceCurrency ?? 'XAF';
+    if (price !== null && price !== undefined) {
+      this.meta.updateTag({ property: 'product:price:amount', content: String(price) });
+      this.meta.updateTag({ property: 'product:price:currency', content: currency });
+    } else {
+      this.removeMeta('property="product:price:amount"');
+      this.removeMeta('property="product:price:currency"');
+    }
     if (image !== null && image !== '') {
       this.meta.updateTag({ property: 'og:image', content: this.absoluteUrl(image) });
       this.meta.updateTag({ name: 'twitter:image', content: this.absoluteUrl(image) });

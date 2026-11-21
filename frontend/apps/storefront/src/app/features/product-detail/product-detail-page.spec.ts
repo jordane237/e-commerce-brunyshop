@@ -4,6 +4,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogProductDetail } from '@bruny/data-access';
+import { CatalogApi } from '@bruny/data-access';
 import { APP_CONFIG, DEFAULT_APP_CONFIG } from '../../core/app-config';
 import { MetaPixelService } from '../../core/services/meta-pixel.service';
 import { SeoService } from '../../core/seo.service';
@@ -136,6 +137,14 @@ function createPage(store = createStoreMock()) {
       { provide: SeoService, useValue: seo },
       { provide: MetaPixelService, useValue: metaPixel },
       { provide: APP_CONFIG, useValue: DEFAULT_APP_CONFIG },
+      {
+        provide: CatalogApi,
+        useValue: {
+          sizeGuide: vi.fn(() => of({ table: {} })),
+          categories: () => of([]),
+          list: () => of({}),
+        },
+      },
       {
         provide: ActivatedRoute,
         useValue: { paramMap: of(convertToParamMap({ slug: 'mocassin-cuir' })) },
