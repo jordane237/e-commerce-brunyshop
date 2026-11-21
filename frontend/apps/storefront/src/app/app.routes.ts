@@ -13,6 +13,12 @@ export const appRoutes: Route[] = [
       import('./features/catalog/catalog.routes').then((module) => module.catalogRoutes),
   },
   {
+    path: 'recherche',
+    loadChildren: () =>
+      import('./features/search/search.routes').then((module) => module.searchRoutes),
+    data: { title: 'Recherche' },
+  },
+  {
     path: 'produit/:slug',
     loadChildren: () =>
       import('./features/product-detail/product-detail.routes').then(
