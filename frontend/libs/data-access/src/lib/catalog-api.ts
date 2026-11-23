@@ -29,6 +29,8 @@ export interface CatalogProduct {
   promoStart: string | null;
   promoEnd: string | null;
   isPromoActive: boolean;
+  /** Pourcentage d'économie calculé côté serveur (CAT-12), null sans promo active. */
+  discountPercent: number | null;
   inStock: boolean;
   category: { id: string; name: string; slug: string };
   brand: { id: string; name: string; slug: string; logo: string | null };
@@ -96,6 +98,7 @@ export interface CatalogProductSummary {
   promoStart: string | null;
   promoEnd: string | null;
   isPromoActive: boolean;
+  discountPercent: number | null;
   inStock: boolean;
   category: { id: string; name: string; slug: string };
   brand: { id: string; name: string; slug: string; logo: string | null };
@@ -115,6 +118,7 @@ export interface CatalogProductDetail {
   promoStart: string | null;
   promoEnd: string | null;
   isPromoActive: boolean;
+  discountPercent: number | null;
   inStock: boolean;
   category: { id: string; name: string; slug: string };
   brand: { id: string; name: string; slug: string; logo: string | null };

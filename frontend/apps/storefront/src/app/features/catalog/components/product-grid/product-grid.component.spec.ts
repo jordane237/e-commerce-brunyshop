@@ -15,6 +15,7 @@ const product: CatalogProduct = {
   promoStart: null,
   promoEnd: null,
   isPromoActive: false,
+  discountPercent: null,
   inStock: true,
   category: { id: '1', name: 'Mocassins', slug: 'mocassins' },
   brand: { id: 'b1', name: 'Kepe', slug: 'kepe', logo: null },

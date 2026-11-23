@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { PricingService } from '../../common/pricing/pricing.service';
 import { CartPricingService } from './cart-pricing.service';
 import { CartIssueCode } from './dto/cart-validation-response.dto';
 
-const service = new CartPricingService();
+const service = new CartPricingService(new PricingService());
 
 const at = new Date('2026-11-09T12:00:00.000Z');
 

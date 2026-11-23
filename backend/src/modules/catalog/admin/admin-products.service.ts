@@ -620,9 +620,7 @@ export class AdminProductsService {
 
   // ---------------------------------------------------------------- helpers
 
-  async list(
-    query: AdminProductsQueryDto,
-  ): Promise<{
+  async list(query: AdminProductsQueryDto): Promise<{
     items: AdminProductListItemDto[];
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
@@ -829,6 +827,14 @@ export class AdminProductsService {
       throw new BadRequestException({
         code: 'PROMO_WINDOW_INVALID',
         message: 'La date de début de promotion doit précéder la date de fin.',
+      });
+    }
+    // CA #1 : une promotion sans fenêtre complète ne s'activerait jamais, on
+    // refuse donc la saisie plutôt que de laisser un prix promo inopérant.
+    if (promoPrice !== null && (promoStart === null || promoEnd === null)) {
+      throw new BadRequestException({
+        code: 'PROMO_DATES_REQUIRED',
+        message: 'Les dates de début et de fin sont requises pour programmer une promotion.',
       });
     }
   }

@@ -44,8 +44,9 @@ export class ProductCardComponent {
   }
 
   get discount(): number {
-    if (!this.compareAt) return 0;
-    return Math.round((1 - this.price / this.compareAt) * 100);
+    // Pourcentage calculé côté serveur (CAT-12) : le client n'affiche que la
+    // valeur reçue, il ne recalcule pas la promotion.
+    return this.product.discountPercent ?? 0;
   }
 
   get imageUrl(): string | null {

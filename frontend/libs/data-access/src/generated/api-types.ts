@@ -754,6 +754,8 @@ export interface components {
       promoEnd: string | null;
       /** @description true si promoPrice est appliqué à cet instant */
       isPromoActive: boolean;
+      /** @description Pourcentage d'économie arrondi si la promotion est active, sinon null */
+      discountPercent: number | null;
       /** @description true si au moins une variante a du stock disponible */
       inStock: boolean;
       category: components['schemas']['ProductCategoryDto'];
@@ -911,6 +913,8 @@ export interface components {
       promoEnd: string | null;
       /** @description true si promoPrice est appliqué à cet instant */
       isPromoActive: boolean;
+      /** @description Pourcentage d'économie arrondi si la promotion est active, sinon null */
+      discountPercent: number | null;
       /** @description true si au moins une variante a du stock disponible */
       inStock: boolean;
       category: components['schemas']['ProductCategoryDto'];
@@ -941,6 +945,8 @@ export interface components {
       promoEnd: string | null;
       /** @description true si promoPrice est appliqué à cet instant */
       isPromoActive: boolean;
+      /** @description Pourcentage d'économie arrondi si la promotion est active, sinon null */
+      discountPercent: number | null;
       /** @description true si au moins une variante a du stock disponible */
       inStock: boolean;
       category: components['schemas']['ProductCategoryDto'];

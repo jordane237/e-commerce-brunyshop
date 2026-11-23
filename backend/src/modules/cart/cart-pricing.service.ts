@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { PricingService } from '../../common/pricing/pricing.service';
 import {
-  isPromoActive,
   resolvePrice,
   type PriceableProduct,
   type PriceableVariant,
@@ -40,6 +40,8 @@ export interface CouponEvaluation {
 // No client-provided amount ever participates in this computation.
 @Injectable()
 export class CartPricingService {
+  constructor(private readonly pricing: PricingService) {}
+
   calculatePrice(
     product: PriceableProduct,
     variant: PriceableVariant,
@@ -49,7 +51,7 @@ export class CartPricingService {
   }
 
   isPromoActive(product: PriceableProduct, at: Date = new Date()): boolean {
-    return isPromoActive(product, at);
+    return this.pricing.isPromoActive(product, at);
   }
 
   // Coupons never make a total negative: FIXED_AMOUNT is capped at the

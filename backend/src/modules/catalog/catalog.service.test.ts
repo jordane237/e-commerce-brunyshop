@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { PricingService } from '../../common/pricing/pricing.service';
 import type { PrismaService } from '../../infrastructure/database/database.module';
 import type { CatalogCacheService } from './cache/catalog-cache.service';
 import { CatalogService } from './catalog.service';
@@ -22,6 +23,7 @@ function makeService() {
     service: new CatalogService(
       prisma as unknown as PrismaService,
       cache as unknown as CatalogCacheService,
+      new PricingService(),
     ),
     prisma,
     cache,

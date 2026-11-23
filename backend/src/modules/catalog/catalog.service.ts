@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
-import { isPromoActive } from '../../common/pricing/product-pricing';
+import { PricingService } from '../../common/pricing/pricing.service';
 import { PrismaService } from '../../infrastructure/database/database.module';
 import { CatalogCacheService } from './cache/catalog-cache.service';
 import type {
@@ -46,6 +46,7 @@ export class CatalogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CatalogCacheService,
+    private readonly pricing: PricingService,
   ) {}
 
   async listProducts(query: ListProductsDto): Promise<ProductListResponseDto> {
@@ -223,7 +224,7 @@ export class CatalogService {
       brand.count += 1;
       brands.set(row.brand.id, brand);
       if (row.variants.some((variant) => availableStock(variant) > 0)) inStock += 1;
-      if (isPromoActive(row, now)) activePromos += 1;
+      if (this.pricing.isPromoActive(row, now)) activePromos += 1;
       for (const variant of row.variants) {
         if (availableStock(variant) <= 0) continue;
         let sizeIds = sizes.get(variant.size);

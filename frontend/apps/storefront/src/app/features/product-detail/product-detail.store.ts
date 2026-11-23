@@ -113,9 +113,10 @@ export class ProductDetailStore {
   });
 
   readonly promoPercent = computed(() => {
+    // Pourcentage fourni par l'API (CAT-12) : aucun recalcul côté client.
     const product = this.productState();
-    if (product === null || !product.isPromoActive || product.basePrice <= 0) return 0;
-    return Math.round((1 - product.effectivePrice / product.basePrice) * 100);
+    if (product === null || !product.isPromoActive) return 0;
+    return product.discountPercent ?? 0;
   });
 
   /** Prix de la couleur sélectionnée, même sans pointure (CA #2). */

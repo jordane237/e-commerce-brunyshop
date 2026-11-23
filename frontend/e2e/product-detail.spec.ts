@@ -16,6 +16,7 @@ function productResponse() {
     promoStart: '2026-11-01T00:00:00.000Z',
     promoEnd: '2026-12-01T00:00:00.000Z',
     isPromoActive: true,
+    discountPercent: 17,
     inStock: true,
     category: { id: 'category-test', name: 'Mocassins', slug: 'mocassins' },
     brand: { id: 'brand-test', name: 'Bruny', slug: 'bruny', logo: null },
@@ -130,6 +131,7 @@ function productResponse() {
         promoStart: null,
         promoEnd: null,
         isPromoActive: false,
+        discountPercent: null,
         inStock: true,
         category: { id: 'category-test', name: 'Mocassins', slug: 'mocassins' },
         brand: { id: 'brand-test', name: 'Bruny', slug: 'bruny', logo: null },
@@ -175,6 +177,7 @@ test.describe('Fiche produit CAT-10', () => {
     await expect(page.locator('.gallery__thumbnail')).toHaveCount(2);
     await expect(page.locator('.product-detail__price')).toContainText('25 000 FCFA');
     await expect(page.locator('.product-detail__price')).toContainText('30 000 FCFA');
+    await expect(page.locator('.product-detail__price .bs-badge--promo')).toContainText('17');
     await expect(page.locator('.product-detail__saving')).toContainText('5 000 FCFA');
     await expect(page.getByRole('radio', { name: /Couleur NOIR/ })).toHaveAttribute(
       'aria-checked',

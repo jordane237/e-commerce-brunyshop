@@ -15,6 +15,7 @@ const product: CatalogProduct = {
   promoStart: null,
   promoEnd: null,
   isPromoActive: true,
+  discountPercent: 10,
   inStock: true,
   category: { id: '1', name: 'Mocassins', slug: 'mocassins' },
   brand: { id: '1', name: 'Bruny', slug: 'bruny', logo: null },

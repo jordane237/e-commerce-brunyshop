@@ -1,4 +1,4 @@
-import { resolvePrice } from '../../../common/pricing/product-pricing';
+import { promoDiscountPercent, resolvePrice } from '../../../common/pricing/product-pricing';
 import type { ProductImageDto } from '../dto/product-image.dto';
 import type { ProductSummaryDto } from '../dto/product-summary.dto';
 
@@ -62,6 +62,7 @@ export function toProductSummary(product: ProductSummaryRow, now: Date): Product
     promoStart: toIso(product.promoStart),
     promoEnd: toIso(product.promoEnd),
     isPromoActive: quote.appliedPromo,
+    discountPercent: promoDiscountPercent(product, now),
     inStock: product.variants.some((variant) => availableStock(variant) > 0),
     category: {
       id: product.category.id,

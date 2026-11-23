@@ -1,6 +1,7 @@
 import type { PinoLogger } from 'nestjs-pino';
 import { describe, expect, it, vi } from 'vitest';
 
+import { PricingService } from '../../common/pricing/pricing.service';
 import type { PrismaService } from '../../infrastructure/database/database.module';
 import { CartPricingService } from './cart-pricing.service';
 import { CartStockService } from './cart-stock.service';
@@ -52,7 +53,7 @@ function makeService() {
   } as unknown as PrismaService;
   const service = new CartValidationService(
     prisma,
-    new CartPricingService(),
+    new CartPricingService(new PricingService()),
     new CartStockService(),
     { debug: vi.fn() } as unknown as PinoLogger,
   );

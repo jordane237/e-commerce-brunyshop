@@ -16,6 +16,7 @@ const PRODUCT: CatalogProduct = {
   promoStart: '2026-10-01T00:00:00.000Z',
   promoEnd: '2026-12-31T23:59:59.000Z',
   isPromoActive: true,
+  discountPercent: 23,
   inStock: true,
   category: { id: 'cat-1', name: 'Chaussures Homme', slug: 'chaussures-homme' },
   brand: { id: 'brand-1', name: 'Bruny', slug: 'bruny', logo: null },
@@ -131,7 +132,13 @@ describe('ProductCardComponent', () => {
 
   it('does not show a promo badge without a discount', async () => {
     const { nativeElement } = await create({
-      product: { ...PRODUCT, basePrice: 24500, effectivePrice: 24500, promoPrice: null },
+      product: {
+        ...PRODUCT,
+        basePrice: 24500,
+        effectivePrice: 24500,
+        promoPrice: null,
+        discountPercent: null,
+      },
     });
 
     expect(nativeElement.querySelector('.bs-badge--promo')).toBeNull();
