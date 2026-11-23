@@ -238,24 +238,6 @@ button.checkout-steps__button {
   font-size: var(--bs-font-size-sm);
 }
 
-.checkout-payment {
-  position: relative;
-}
-
-.checkout-payment__soon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--bs-color-neutral-100, #f3f4f6);
-  color: var(--bs-color-text-muted);
-  font-size: var(--bs-font-size-xs);
-  font-weight: var(--bs-font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .checkout-alert {
   padding: var(--bs-space-3);
   border: 1px solid var(--bs-color-danger);

@@ -88,3 +88,58 @@
 .bs-choice--disabled .bs-choice__label {
   color: var(--bs-color-text-muted);
 }
+
+/* Variante carte : option de livraison ou de paiement encadrée, mise en avant
+   quand elle est sélectionnée (design checkout). */
+.bs-choice--card .bs-choice__row {
+  padding: var(--bs-space-3) var(--bs-space-4);
+  border: 1px solid var(--bs-color-border);
+  border-radius: var(--bs-radius-md);
+  background: var(--bs-color-surface);
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.bs-choice--card .bs-choice__row:hover {
+  border-color: var(--bs-color-border-strong);
+}
+
+.bs-choice--card.bs-choice--checked .bs-choice__row {
+  border-color: var(--bs-color-primary);
+  background: var(--bs-color-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--bs-color-primary);
+}
+
+.bs-choice--card .bs-choice__label {
+  flex: 1;
+  font-weight: var(--bs-font-weight-semibold);
+}
+
+.bs-choice--card .bs-choice__badge {
+  flex: none;
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bs-color-primary-soft);
+  color: var(--bs-color-primary);
+  font-size: var(--bs-font-size-xs);
+  font-weight: var(--bs-font-weight-bold);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.bs-choice--card .bs-choice__message {
+  padding-left: calc(20px + var(--bs-space-3));
+}
+
+.bs-choice--card.bs-choice--disabled .bs-choice__row {
+  border-style: dashed;
+  background: var(--bs-color-neutral-50);
+}
+
+.bs-choice--card.bs-choice--disabled .bs-choice__badge {
+  background: var(--bs-color-neutral-100);
+  color: var(--bs-color-text-muted);
+}

@@ -22,8 +22,8 @@
           <p class="checkout-recap__variant">
             {{ line.color }} · {{ line.size }} · Qté {{ line.quantity }}
           </p>
+          <p class="checkout-recap__price">{{ line.unitPriceAtAdd * line.quantity | fcfa }}</p>
         </div>
-        <p class="checkout-recap__price">{{ line.unitPriceAtAdd * line.quantity | fcfa }}</p>
       </li>
     }
     @if (hiddenCount() > 0) {

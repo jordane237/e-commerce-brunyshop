@@ -210,6 +210,7 @@
                 [id]="'checkout-zone-' + zone.id"
                 [value]="zone.id"
                 [checked]="checkout.delivery().zoneId === zone.id"
+                variant="card"
                 [label]="zone.name + ' — ' + (zone.fee | fcfa)"
                 [hint]="'Environ ' + zone.estimatedDays + ' jour' + (zone.estimatedDays > 1 ? 's' : '') + ' · ' + zone.cities.join(', ')"
                 (selected)="selectZone($event)"
@@ -252,6 +253,7 @@
               [id]="'checkout-payment-cod'"
               value="COD"
               [checked]="true"
+              variant="card"
               label="Paiement à la livraison"
               hint="Vous payez en espèces lorsque vous recevez votre commande."
               (selected)="selectPayment('COD')"
@@ -262,11 +264,12 @@
               value="MOBILE_MONEY"
               [checked]="false"
               [disabled]="true"
+              variant="card"
               label="Mobile Money"
+              badge="Bientôt"
               hint="Bientôt disponible. Aucun paiement Mobile Money n’est possible pour l’instant."
               (selected)="selectPayment('MOBILE_MONEY')"
             />
-            <span class="checkout-payment__soon" aria-hidden="true">Bientôt</span>
           </fieldset>
 
           @if (checkout.submitError(); as submitError) {
