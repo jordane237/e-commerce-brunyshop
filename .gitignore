@@ -88,3 +88,6 @@ findings/
 # LibreOffice locks
 ~$*
 .~lock.*
+
+# Trivy findings (generated)
+findings/

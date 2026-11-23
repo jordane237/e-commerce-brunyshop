@@ -1,0 +1,90 @@
+<bruny-modal
+  [open]="isOpen()"
+  [title]="'Guide des tailles'"
+  size="lg"
+  [closeOnBackdrop]="true"
+  (openChange)="isOpen.set($event)"
+>
+  @if (loading()) {
+    <bruny-skeleton variant="rect" height="300px" />
+  } @else if (error() || guide() === null) {
+    <div role="alert">
+      <p>
+        {{ error() ?? 'Impossible de charger le guide des tailles. Vérifiez votre connexion.' }}
+      </p>
+      <bruny-button variant="primary" (clicked)="retry()">Réessayer</bruny-button>
+    </div>
+  } @else {
+    @if (availableTabs().length > 1) {
+      <bruny-tabs
+        [tabs]="availableTabs()"
+        [activeId]="activeTab()"
+        ariaLabel="Sections du guide des tailles"
+        (tabChange)="onTabChange($event)"
+      />
+    }
+
+    <section class="size-guide-modal__table-section">
+      <h3>Tableau de conversion</h3>
+      <table
+        class="size-guide-modal__table"
+        role="table"
+        aria-label="Tableau de conversion des tailles"
+      >
+        <caption class="sr-only">
+          Conversion des tailles EU, US, UK et centimètres
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">EU</th>
+            <th scope="col">US</th>
+            <th scope="col">UK</th>
+            <th scope="col">CM</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of currentEntries(); track entry.eu) {
+            <tr>
+              <td>{{ entry.eu }}</td>
+              <td>{{ entry.us }}</td>
+              <td>{{ entry.uk }}</td>
+              <td>{{ entry.cm }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="size-guide-modal__measure">
+      <h3>Comment mesurer votre pied</h3>
+      <ol class="size-guide-modal__steps" role="list">
+        <li class="size-guide-modal__step">
+          <span class="size-guide-modal__step-number" aria-hidden="true">1</span>
+          <div>
+            <h4>Posez une feuille de papier au sol</h4>
+            <p>Placez votre talon contre un mur, debout sur la feuille.</p>
+          </div>
+        </li>
+        <li class="size-guide-modal__step">
+          <span class="size-guide-modal__step-number" aria-hidden="true">2</span>
+          <div>
+            <h4>Marquez la pointe de votre orteil</h4>
+            <p>Le plus long, en restant bien debout.</p>
+          </div>
+        </li>
+        <li class="size-guide-modal__step">
+          <span class="size-guide-modal__step-number" aria-hidden="true">3</span>
+          <div>
+            <h4>Mesurez la distance en cm</h4>
+            <p>Reportez la mesure dans le tableau ci-dessus.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <aside class="size-guide-modal__advice" role="note">
+      <bruny-icon name="info" aria-hidden="true" />
+      <p><strong>Entre deux tailles ?</strong> Choisissez la plus grande pour plus de confort.</p>
+    </aside>
+  }
+</bruny-modal>

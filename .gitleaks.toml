@@ -34,7 +34,6 @@ paths = [
   '''(^|/)openapi\.json$''',
   '''(^|/)\.env\.example$''',
   '''(^|/)\.env\.production\.example$''',
-  '''findings''',
 ]
 
 [[allowlists]]

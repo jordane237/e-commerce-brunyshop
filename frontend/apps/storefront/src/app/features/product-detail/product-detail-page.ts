@@ -26,6 +26,8 @@ import { productSchema } from '../../core/structured-data';
 import { ColorSelectorComponent } from './components/color-selector/color-selector.component';
 import { ProductGalleryComponent } from './components/product-gallery/product-gallery.component';
 import { StickyBuyBarComponent } from './components/sticky-buy-bar/sticky-buy-bar.component';
+import { SizeGuideModalComponent } from './components/size-guide-modal/size-guide-modal.component';
+import { ShareButtonsComponent } from './components/share-buttons/share-buttons.component';
 import { ProductDetailStore } from './product-detail.store';
 
 const TABS: readonly TabItem[] = [
@@ -78,6 +80,8 @@ const REASSURANCE: readonly ReassurancePoint[] = [
     ColorSelectorComponent,
     ProductGalleryComponent,
     StickyBuyBarComponent,
+    SizeGuideModalComponent,
+    ShareButtonsComponent,
   ],
   templateUrl: './product-detail-page.html',
   styleUrl: './product-detail-page.scss',
@@ -117,6 +121,7 @@ export class ProductDetailPage {
 
   readonly activeTab = signal('description');
   readonly zoomOpen = signal(false);
+  readonly sizeGuideOpen = signal(false);
 
   readonly sizeItems = computed<SizeSelectorItem[]>(() =>
     this.sizes().map((size) => ({
@@ -171,6 +176,10 @@ export class ProductDetailPage {
     this.store.setActiveImage(index);
   }
 
+  onOpenSizeGuide(): void {
+    this.sizeGuideOpen.set(true);
+  }
+
   onAddToCart(): void {
     if (!this.store.addToCart()) return;
 
@@ -199,6 +208,7 @@ export class ProductDetailPage {
       ogImage: image?.url ?? null,
       ogImageAlt: image?.alt ?? product.name,
       ogType: 'product',
+      productPrice: product.effectivePrice,
       jsonLd: productSchema(this.config, product, path),
     });
     this.metaPixel.trackViewContent(product);
