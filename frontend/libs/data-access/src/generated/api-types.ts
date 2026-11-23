@@ -425,6 +425,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/admin/stock/variants': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Lister les variantes avec leur stock (filtrable catégorie, statut, recherche) */
+    get: operations['AdminStockController_listStockVariants_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/admin/notifications/dead-letters': {
     parameters: {
       query?: never;
@@ -1275,6 +1292,27 @@ export interface components {
     };
     PaginatedStockMovementsDto: {
       data: components['schemas']['StockMovementItemDto'][];
+      meta: Record<string, never>;
+    };
+    AdminStockVariantDto: {
+      variantId: string;
+      sku: string;
+      productId: string;
+      productName: string;
+      productSlug: string;
+      categoryId: string;
+      categoryName: string;
+      size: string;
+      color: string;
+      stock: number;
+      reservedStock: number;
+      availableStock: number;
+      lowStockThreshold: number;
+      /** @enum {string} */
+      stockStatus: 'OUT' | 'LOW' | 'IN_STOCK';
+    };
+    PaginatedAdminStockVariantsDto: {
+      data: components['schemas']['AdminStockVariantDto'][];
       meta: Record<string, never>;
     };
     CartItemInputDto: {
@@ -2699,6 +2737,35 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  AdminStockController_listStockVariants_v1: {
+    parameters: {
+      query?: {
+        /** @description Filtrer par catégorie. */
+        categoryId?: string;
+        /** @description Statut de stock. */
+        stockStatus?: 'all' | 'out' | 'low' | 'in_stock';
+        /** @description Recherche SKU / produit (insensible à la casse). */
+        search?: string;
+        page?: number;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Variantes paginées. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedAdminStockVariantsDto'];
+        };
       };
     };
   };

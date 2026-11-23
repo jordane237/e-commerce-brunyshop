@@ -1478,6 +1478,82 @@
         "tags": ["admin-stock"]
       }
     },
+    "/api/v1/admin/stock/variants": {
+      "get": {
+        "operationId": "AdminStockController_listStockVariants_v1",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer par catégorie.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "stockStatus",
+            "required": false,
+            "in": "query",
+            "description": "Statut de stock.",
+            "schema": {
+              "enum": ["all", "out", "low", "in_stock"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Recherche SKU / produit (insensible à la casse).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Variantes paginées.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAdminStockVariantsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Lister les variantes avec leur stock (filtrable catégorie, statut, recherche)",
+        "tags": ["admin-stock"]
+      }
+    },
     "/api/v1/admin/notifications/dead-letters": {
       "get": {
         "operationId": "NotificationsController_listDeadLetters_v1",
@@ -3478,6 +3554,85 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StockMovementItemDto"
+            }
+          },
+          "meta": {
+            "type": "object"
+          }
+        },
+        "required": ["data", "meta"]
+      },
+      "AdminStockVariantDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "productSlug": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "size": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "stock": {
+            "type": "number"
+          },
+          "reservedStock": {
+            "type": "number"
+          },
+          "availableStock": {
+            "type": "number"
+          },
+          "lowStockThreshold": {
+            "type": "number"
+          },
+          "stockStatus": {
+            "type": "string",
+            "enum": ["OUT", "LOW", "IN_STOCK"]
+          }
+        },
+        "required": [
+          "variantId",
+          "sku",
+          "productId",
+          "productName",
+          "productSlug",
+          "categoryId",
+          "categoryName",
+          "size",
+          "color",
+          "stock",
+          "reservedStock",
+          "availableStock",
+          "lowStockThreshold",
+          "stockStatus"
+        ]
+      },
+      "PaginatedAdminStockVariantsDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminStockVariantDto"
             }
           },
           "meta": {

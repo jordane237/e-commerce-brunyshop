@@ -33,6 +33,8 @@ import {
 } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
+import { AdminStockVariantsQueryDto } from './dto/admin-stock-variants-query.dto';
+import { PaginatedAdminStockVariantsDto } from './dto/admin-stock-variant-response.dto';
 import { StockMovementQueryDto } from './dto/stock-movement-query.dto';
 import {
   AdjustStockResponseDto,
@@ -95,5 +97,21 @@ export class AdminStockController {
   @ApiUnauthorizedResponse({ description: 'Jeton absent ou invalide.' })
   async listMovements(@Query() query: StockMovementQueryDto): Promise<PaginatedStockMovementsDto> {
     return this.stock.listMovements(query);
+  }
+
+  @Get('stock/variants')
+  @ApiOperation({
+    summary: 'Lister les variantes avec leur stock (filtrable catégorie, statut, recherche)',
+  })
+  @ApiQuery({ name: 'categoryId', required: false, type: String })
+  @ApiQuery({ name: 'stockStatus', required: false, enum: ['all', 'out', 'low', 'in_stock'] })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiOkResponse({ description: 'Variantes paginées.', type: PaginatedAdminStockVariantsDto })
+  async listStockVariants(
+    @Query() query: AdminStockVariantsQueryDto,
+  ): Promise<PaginatedAdminStockVariantsDto> {
+    return this.stock.listStockVariants(query);
   }
 }
