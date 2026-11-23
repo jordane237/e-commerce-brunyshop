@@ -536,6 +536,26 @@ export interface paths {
     patch: operations['AdminOrdersController_changeStatus_v1'];
     trace?: never;
   };
+  '/api/v1/shipping/zones': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Lister les zones de livraison disponibles
+     * @description Zones seedées (TEC-07) avec frais en XAF entier et délai estimé. Lecture seule, utilisée par le tunnel de commande. Le devis détaillé sera fourni par SHP-01.
+     */
+    get: operations['ShippingController_listZones_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/admin/media/presign': {
     parameters: {
       query?: never;
@@ -1650,6 +1670,29 @@ export interface components {
       changedAt: string;
       /** @description Historique complet, du plus récent au plus ancien */
       history: components['schemas']['OrderStatusHistoryItemDto'][];
+    };
+    DeliveryZoneDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Douala Centre */
+      name: string;
+      /**
+       * @example [
+       *       "Douala",
+       *       "Bonabéri"
+       *     ]
+       */
+      cities: string[];
+      /**
+       * @description Frais de livraison en XAF entier
+       * @example 1500
+       */
+      fee: number;
+      /**
+       * @description Délai estimé en jours ouvrés
+       * @example 1
+       */
+      estimatedDays: number;
     };
     PresignUploadDto: {
       /** @example sneakers-urbanstep-air */
@@ -3130,6 +3173,33 @@ export interface operations {
       };
       /** @description INVALID_STATUS_TRANSITION, STALE_ORDER_STATUS ou STOCK_RELEASE_FAILED */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ShippingController_listZones_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Zones triées par frais croissants */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeliveryZoneDto'][];
+        };
+      };
+      /** @description RATE_LIMIT_EXCEEDED */
+      429: {
         headers: {
           [name: string]: unknown;
         };

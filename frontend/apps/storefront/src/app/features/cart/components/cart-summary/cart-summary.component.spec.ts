@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { afterEach, describe, expect, it } from 'vitest';
+import { provideRouter, Router } from '@angular/router';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CartSummaryComponent } from './cart-summary.component';
 
 describe('CartSummaryComponent', () => {
@@ -21,7 +21,6 @@ describe('CartSummaryComponent', () => {
     fixture.componentRef.setInput('total', 50000);
     fixture.componentRef.setInput('loading', false);
     fixture.componentRef.setInput('canCheckout', true);
-    fixture.componentRef.setInput('checkoutAvailable', false);
     for (const [key, value] of Object.entries(overrides)) {
       fixture.componentRef.setInput(key, value);
     }
@@ -60,20 +59,17 @@ describe('CartSummaryComponent', () => {
     expect(button.textContent).toContain('Passer la commande');
   });
 
-  it('garde le CTA désactivé tant que le paiement n’est pas disponible', async () => {
-    const { element } = await create({ canCheckout: true, checkoutAvailable: false });
-    const button = element.querySelector('bruny-button button') as HTMLButtonElement;
-
-    expect(button.disabled).toBe(true);
-    expect(element.textContent).toContain('Le paiement sera disponible prochainement.');
-  });
-
-  it('active le CTA quand le paiement est disponible et le panier valide', async () => {
-    const { element } = await create({ canCheckout: true, checkoutAvailable: true });
+  it('active le CTA et ouvre le tunnel de commande quand le panier est valide', async () => {
+    const { fixture, element } = await create({ canCheckout: true });
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     const button = element.querySelector('bruny-button button') as HTMLButtonElement;
 
     expect(button.disabled).toBe(false);
-    expect(element.textContent).not.toContain('Le paiement sera disponible prochainement.');
+    button.click();
+    fixture.detectChanges();
+
+    expect(navigate).toHaveBeenCalledWith(['/commande']);
   });
 
   it('affiche des squelettes pendant le chargement', async () => {

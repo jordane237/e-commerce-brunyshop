@@ -1,0 +1,337 @@
+<section class="container checkout-page">
+  @if (order(); as confirmed) {
+  <section class="checkout-success" aria-labelledby="checkout-success-title" role="status">
+    <p class="eyebrow">COMMANDE ENREGISTRÉE</p>
+    <h1 [id]="'checkout-success-title'" tabindex="-1">Merci ! Votre commande est confirmée.</h1>
+    <p class="checkout-success__reference">
+      Référence : <strong>{{ confirmed.reference }}</strong>
+    </p>
+    <dl class="checkout-success__totals">
+      <div>
+        <dt>Sous-total</dt>
+        <dd>{{ confirmed.subtotal | fcfa }}</dd>
+      </div>
+      <div>
+        <dt>Livraison</dt>
+        <dd>{{ confirmed.shippingFee | fcfa }}</dd>
+      </div>
+      <div class="checkout-success__total">
+        <dt>Total à payer à la livraison</dt>
+        <dd>{{ confirmed.total | fcfa }}</dd>
+      </div>
+    </dl>
+    <p class="checkout-success__note">
+      Nous vous appelons pour confirmer votre commande. Le paiement se fait en espèces à la
+      réception.
+    </p>
+    <div class="checkout-success__actions">
+      <bruny-button variant="primary" size="lg" (click)="goToCatalog()">
+        Continuer mes achats
+      </bruny-button>
+    </div>
+  </section>
+  } @else {
+  <header class="checkout-page__header">
+    <p class="eyebrow">COMMANDE</p>
+    <h1>Finaliser ma commande</h1>
+    <p class="checkout-page__subtitle">
+      Trois étapes, sans créer de compte. Paiement à la livraison.
+    </p>
+  </header>
+
+  <nav class="checkout-steps" aria-label="Progression de la commande">
+    <ol>
+      @for (item of steps; track item.step) {
+      <li
+        class="checkout-steps__item"
+        [class.is-current]="checkout.step() === item.step"
+        [class.is-done]="checkout.step() > item.step"
+      >
+        @if (checkout.step() > item.step) {
+        <button
+          type="button"
+          class="checkout-steps__button"
+          (click)="goToStep(item.step)"
+          [attr.aria-label]="'Revenir à l’étape ' + item.label"
+        >
+          <span class="checkout-steps__badge" aria-hidden="true">✓</span>
+          <span class="checkout-steps__label">{{ item.label }}</span>
+        </button>
+        } @else {
+        <span
+          class="checkout-steps__button"
+          [attr.aria-current]="checkout.step() === item.step ? 'step' : null"
+        >
+          <span class="checkout-steps__badge" aria-hidden="true">{{ item.shortLabel }}</span>
+          <span class="checkout-steps__label">{{ item.label }}</span>
+        </span>
+        }
+      </li>
+      }
+    </ol>
+    <div class="checkout-steps__progress" aria-hidden="true">
+      <span [style.width.%]="(checkout.step() / 3) * 100"></span>
+    </div>
+  </nav>
+
+  @if (cartEmpty()) {
+  <bruny-empty-state
+    title="Votre panier est vide"
+    description="Ajoutez un article avant de passer commande."
+    actionLabel="Découvrir la boutique"
+    (actionClicked)="goToCatalog()"
+  />
+  } @else {
+  <div class="checkout-page__layout">
+    <div class="checkout-page__main">
+      <form
+        #checkoutForm
+        [formGroup]="contactForm"
+        (ngSubmit)="onContinue()"
+        novalidate
+        class="checkout-form"
+      >
+        @if (checkout.step() === 1) {
+        <section class="checkout-card" aria-labelledby="checkout-contact-title">
+          <header class="checkout-card__header">
+            <h2 [id]="'checkout-contact-title'">Vos coordonnées</h2>
+            <p>Pour vous joindre au sujet de la livraison.</p>
+          </header>
+
+          <bruny-input
+            [id]="'checkout-full-name'"
+            name="fullName"
+            label="Nom complet"
+            autocomplete="name"
+            formControlName="fullName"
+            [required]="true"
+            [error]="fullNameError() ?? ''"
+          />
+
+          <bruny-input
+            [id]="'checkout-phone'"
+            name="phone"
+            label="Numéro de téléphone"
+            type="tel"
+            inputMode="tel"
+            autocomplete="tel-national"
+            placeholder="6 71 23 45 67"
+            prefix="+237"
+            formControlName="phone"
+            [required]="true"
+            hint="9 chiffres après +237. Nous vous appelons avant la livraison."
+            [error]="phoneError() ?? ''"
+          />
+
+          <bruny-input
+            [id]="'checkout-email'"
+            name="email"
+            label="E-mail (facultatif)"
+            type="email"
+            inputMode="email"
+            autocomplete="email"
+            placeholder="vous@exemple.com"
+            formControlName="email"
+            hint="Un e-mail permet de recevoir la confirmation."
+            [error]="emailError() ?? ''"
+          />
+
+          <div class="checkout-card__actions">
+            <bruny-button type="submit" variant="primary" size="lg" [block]="true">
+              Continuer vers la livraison
+            </bruny-button>
+            <a routerLink="/panier" class="checkout-card__link">Revenir au panier</a>
+          </div>
+        </section>
+        }
+      </form>
+
+      @if (checkout.step() === 2) {
+      <section class="checkout-card" aria-labelledby="checkout-delivery-title">
+        <header class="checkout-card__header">
+          <h2 [id]="'checkout-delivery-title'">Livraison</h2>
+          <p>Où devons-nous livrer votre commande ?</p>
+        </header>
+
+        <form [formGroup]="deliveryForm" novalidate class="checkout-form">
+          <bruny-input
+            [id]="'checkout-city'"
+            name="city"
+            label="Ville"
+            autocomplete="address-level2"
+            formControlName="city"
+            [required]="true"
+            hint="Douala, Yaoundé, Bafoussam…"
+            [error]="cityError() ?? ''"
+          />
+
+          <bruny-input
+            [id]="'checkout-district'"
+            name="district"
+            label="Quartier"
+            autocomplete="address-level3"
+            formControlName="district"
+            [required]="true"
+            placeholder="Akwa, Bonamoussadi…"
+            [error]="districtError() ?? ''"
+          />
+
+          <bruny-input
+            [id]="'checkout-landmark'"
+            name="landmark"
+            label="Point de repère"
+            autocomplete="off"
+            formControlName="landmark"
+            [required]="true"
+            placeholder="Face à la pharmacie, près du carrefour…"
+            hint="Un repère précis aide le livreur à vous trouver rapidement."
+            [error]="landmarkError() ?? ''"
+          />
+
+          <fieldset class="checkout-zones">
+            <legend>Mode de livraison</legend>
+
+            @if (checkout.zonesLoading()) {
+            <p role="status" aria-live="polite">Chargement des modes de livraison…</p>
+            } @else if (checkout.zonesError(); as zonesError) {
+            <div class="checkout-zones__error" role="alert">
+              <p>{{ zonesError }}</p>
+              <button type="button" (click)="retryZones()">Réessayer</button>
+            </div>
+            } @else if (checkout.zones().length === 0) {
+            <p role="status">
+              Aucun mode de livraison n’est disponible pour le moment. Contactez-nous.
+            </p>
+            } @else {
+            <div class="checkout-zones__list">
+              @for (zone of checkout.zones(); track zone.id) {
+              <bruny-radio
+                name="deliveryZone"
+                [id]="'checkout-zone-' + zone.id"
+                [value]="zone.id"
+                [checked]="checkout.delivery().zoneId === zone.id"
+                [label]="zone.name + ' — ' + (zone.fee | fcfa)"
+                [hint]="'Environ ' + zone.estimatedDays + ' jour' + (zone.estimatedDays > 1 ? 's' : '') + ' · ' + zone.cities.join(', ')"
+                (selected)="selectZone($event)"
+              />
+              }
+            </div>
+            @if (zoneError(); as error) {
+            <p class="checkout-zones__error-text" role="alert">{{ error }}</p>
+            } }
+          </fieldset>
+        </form>
+
+        <div class="checkout-card__actions">
+          <bruny-button
+            variant="primary"
+            size="lg"
+            [block]="true"
+            [disabled]="checkout.zonesLoading() || checkout.zones().length === 0"
+            (click)="onContinue()"
+          >
+            Continuer vers le paiement
+          </bruny-button>
+          <button type="button" class="checkout-card__link" (click)="onBack()">
+            Retour aux coordonnées
+          </button>
+        </div>
+      </section>
+      } @if (checkout.step() === 3) {
+      <section class="checkout-card" aria-labelledby="checkout-payment-title">
+        <header class="checkout-card__header">
+          <h2 [id]="'checkout-payment-title'">Paiement</h2>
+          <p>Choisissez comment régler votre commande.</p>
+        </header>
+
+        <form [formGroup]="paymentForm" novalidate class="checkout-form">
+          <fieldset class="checkout-payment">
+            <legend>Moyen de paiement</legend>
+            <bruny-radio
+              name="paymentMethod"
+              [id]="'checkout-payment-cod'"
+              value="COD"
+              [checked]="true"
+              label="Paiement à la livraison"
+              hint="Vous payez en espèces lorsque vous recevez votre commande."
+              (selected)="selectPayment('COD')"
+            />
+            <bruny-radio
+              name="paymentMethod"
+              [id]="'checkout-payment-momo'"
+              value="MOBILE_MONEY"
+              [checked]="false"
+              [disabled]="true"
+              label="Mobile Money"
+              hint="Bientôt disponible. Aucun paiement Mobile Money n’est possible pour l’instant."
+              (selected)="selectPayment('MOBILE_MONEY')"
+            />
+            <span class="checkout-payment__soon" aria-hidden="true">Bientôt</span>
+          </fieldset>
+
+          @if (checkout.submitError(); as submitError) {
+          <div class="checkout-alert" role="alert">{{ submitError }}</div>
+          }
+
+          <bruny-cgv-checkbox
+            inputId="checkout-cgv"
+            [control]="paymentForm.controls.termsAccepted"
+            [error]="termsError()"
+          />
+
+          @if (captchaEnabled()) {
+          <bruny-captcha
+            [siteKey]="siteKey()"
+            [control]="paymentForm.controls.turnstileToken"
+            action="checkout"
+          />
+          }
+
+          <div class="checkout-card__actions">
+            <bruny-button
+              type="submit"
+              variant="primary"
+              size="lg"
+              [block]="true"
+              [loading]="checkout.submitting()"
+              [disabled]="checkout.submitting() || captchaUnavailable()"
+              (click)="onSubmit()"
+            >
+              {{ checkout.submitting() ? 'Envoi de la commande…' : 'Confirmer ma commande' }}
+            </bruny-button>
+            <button
+              type="button"
+              class="checkout-card__link"
+              [disabled]="checkout.submitting()"
+              (click)="onBack()"
+            >
+              Retour à la livraison
+            </button>
+            <p class="checkout-card__legal">
+              En confirmant, vous acceptez les
+              <a routerLink="/cgv">conditions générales de vente</a>, la
+              <a routerLink="/retours">politique de retour</a> et la
+              <a routerLink="/politique-confidentialite">politique de confidentialité</a>.
+            </p>
+          </div>
+        </form>
+      </section>
+      }
+    </div>
+
+    <div class="checkout-page__aside">
+      <app-checkout-recap
+        [lines]="recapLines()"
+        [subtotal]="subtotal()"
+        [discount]="checkout.discount()"
+        [shippingFee]="shippingFee()"
+        [total]="total()"
+        [zoneName]="zoneName()"
+        [zoneDays]="zoneDays()"
+        [loading]="checkout.cart.loading()"
+        [compact]="true"
+      />
+    </div>
+  </div>
+  } }
+</section>

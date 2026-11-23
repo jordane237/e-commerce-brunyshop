@@ -105,7 +105,7 @@ test('conserve le panier invité, ouvre le mini-panier après ajout et le revali
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('.bruny-drawer__close')).toBeFocused();
   await expect(dialog.locator('.mini-cart__line-info a')).not.toBeEmpty();
-  await expect(dialog.getByRole('button', { name: 'Passer la commande' })).toBeDisabled();
+  await expect(dialog.getByRole('button', { name: 'Passer la commande' })).toBeEnabled();
   expect(
     await page.evaluate(() =>
       document.documentElement.classList.contains('cdk-global-scrollblock'),
@@ -137,14 +137,17 @@ test('conserve le panier invité, ouvre le mini-panier après ajout et le revali
   const continueShopping = dialog.getByRole('button', { name: 'Continuer mes achats' });
   await continueShopping.focus();
   await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Passer la commande' })).toBeFocused();
+  await page.keyboard.press('Tab');
   await expect(dialog.locator('.bruny-drawer__close')).toBeFocused();
 
   await dialog.getByRole('link', { name: 'Voir le panier' }).click();
   await expect(page).toHaveURL(/\/panier$/);
   await expect(page.getByRole('heading', { name: 'Mon panier' })).toBeVisible();
   await expect(page.locator('.cart-line')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Passer la commande' })).toBeDisabled();
-  await expect(page.getByText('Le paiement sera disponible prochainement.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Passer la commande' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Passer la commande' }).click();
+  await expect(page).toHaveURL(/\/commande$/);
 });
 
 test('affiche le récapitulatif, la réassurance et borne la quantité au stock', async ({ page }) => {

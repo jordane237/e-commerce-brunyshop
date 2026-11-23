@@ -30,6 +30,11 @@ export const appRoutes: Route[] = [
     loadChildren: () => import('./features/cart/cart.routes').then((module) => module.cartRoutes),
   },
   {
+    path: 'commande',
+    loadChildren: () =>
+      import('./features/checkout/checkout.routes').then((module) => module.checkoutRoutes),
+  },
+  {
     path: 'connexion',
     loadComponent: () =>
       import('./features/auth/login/login.component').then((module) => module.LoginComponent),

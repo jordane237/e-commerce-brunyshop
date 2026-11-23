@@ -69,6 +69,12 @@ export class MiniCartComponent {
     this.open.set(false);
   }
 
+  goToCheckout(): void {
+    if (this.cart.isEmpty()) return;
+    this.close();
+    void this.router.navigate(['/commande']);
+  }
+
   continueShopping(): void {
     this.close();
     void this.router.navigate(['/boutique']);

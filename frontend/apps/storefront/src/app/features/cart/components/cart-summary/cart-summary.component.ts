@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { FcfaPipe } from '@bruny/util';
 import { ButtonComponent, SkeletonComponent } from '@bruny/ui';
 
@@ -12,12 +12,17 @@ import { ButtonComponent, SkeletonComponent } from '@bruny/ui';
   styleUrl: './cart-summary.component.scss',
 })
 export class CartSummaryComponent {
+  private readonly router = inject(Router);
+
   readonly subtotal = input.required<number>();
   readonly discount = input<number>(0);
   readonly shippingFee = input<number | null>(null);
   readonly total = input.required<number>();
   readonly loading = input<boolean>(false);
   readonly canCheckout = input<boolean>(true);
-  /** La page de commande (DSG-04) n'existe pas encore : le CTA reste désactivé. */
-  readonly checkoutAvailable = input<boolean>(false);
+
+  goToCheckout(): void {
+    if (!this.canCheckout()) return;
+    void this.router.navigate(['/commande']);
+  }
 }
