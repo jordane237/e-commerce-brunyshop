@@ -59,8 +59,41 @@ export class OrderAttemptService {
     }
   }
 
+  private readonly trackingLimit = 10;
+  private readonly TRACKING_TTL_SECONDS = 60 * 60;
+
   buildKey(phone: string): string {
     return `order:attempts:${sha256hex(normalizePhone(phone))}`;
+  }
+
+  async isTrackingRateLimited(identifierHash: string): Promise<boolean> {
+    const key = `order:track:attempts:${identifierHash}`;
+    try {
+      const raw = await this.redisService.redis.get(key);
+      const count = parseInt((raw as string | null) ?? '0', 10);
+      return count >= this.trackingLimit;
+    } catch (error: unknown) {
+      this.logger.warn(
+        { cause: error instanceof Error ? error.message : String(error) },
+        'Compteur anti-abus suivi indisponible, requête autorisée',
+      );
+      return false;
+    }
+  }
+
+  async recordTrackingAttempt(identifierHash: string): Promise<void> {
+    const key = `order:track:attempts:${identifierHash}`;
+    try {
+      const count = await this.redisService.redis.incr(key);
+      if (count === 1) {
+        await this.redisService.redis.expire(key, this.TRACKING_TTL_SECONDS);
+      }
+    } catch (error: unknown) {
+      this.logger.warn(
+        { cause: error instanceof Error ? error.message : String(error) },
+        'Compteur anti-abus suivi indisponible, tentative non enregistrée',
+      );
+    }
   }
 
   get limitPerHour(): number {

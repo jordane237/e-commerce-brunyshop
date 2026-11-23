@@ -75,3 +75,55 @@ describe('OrderAttemptService', () => {
     await expect(service.assertWithinLimit('+237699000001')).resolves.toBeUndefined();
   });
 });
+
+describe('OrderAttemptService tracking (ORD-05)', () => {
+  it('pose INCR et TTL sur recordTrackingAttempt', async () => {
+    const counters = new Map<string, number>();
+    const redis = {
+      incr: vi.fn(async (key: string) => {
+        const next = (counters.get(key) ?? 0) + 1;
+        counters.set(key, next);
+        return next;
+      }),
+      expire: vi.fn(async () => 1),
+      get: vi.fn(async (key: string) => String(counters.get(key) ?? 0)),
+    };
+    const config = { get: vi.fn(() => ({ orders: { rateLimitPerHour: 10 } })) };
+    const service = new OrderAttemptService(
+      config as unknown as never,
+      { redis } as unknown as never,
+    );
+
+    await service.recordTrackingAttempt('hash-1');
+    expect(redis.incr).toHaveBeenCalled();
+    expect(redis.expire).toHaveBeenCalledWith('order:track:attempts:hash-1', 3600);
+  });
+
+  it('isTrackingRateLimited true après 10 tentatives', async () => {
+    const redis = {
+      incr: vi.fn(),
+      expire: vi.fn(),
+      get: vi.fn().mockResolvedValue('10'),
+    };
+    const config = { get: vi.fn(() => ({ orders: { rateLimitPerHour: 10 } })) };
+    const service = new OrderAttemptService(
+      config as unknown as never,
+      { redis } as unknown as never,
+    );
+
+    await expect(service.isTrackingRateLimited('hash-1')).resolves.toBe(true);
+  });
+
+  it('hash de l’identifiant (pas de PII en clair)', async () => {
+    const redis = { incr: vi.fn(), expire: vi.fn(), get: vi.fn() };
+    const config = { get: vi.fn(() => ({ orders: { rateLimitPerHour: 10 } })) };
+    const service = new OrderAttemptService(
+      config as unknown as never,
+      { redis } as unknown as never,
+    );
+
+    // isTrackingRateLimited utilise la clé fournie telle quelle (hash attendu).
+    await service.isTrackingRateLimited('a'.repeat(64));
+    expect(redis.get).toHaveBeenCalledWith(`order:track:attempts:${'a'.repeat(64)}`);
+  });
+});

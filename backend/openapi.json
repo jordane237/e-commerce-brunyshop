@@ -1817,6 +1817,42 @@
         "tags": ["admin-orders"]
       }
     },
+    "/api/v1/orders/track": {
+      "post": {
+        "operationId": "OrderTrackingController_track_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Commande trouvée ou combinaison incorrecte (réponse uniforme)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackOrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Format invalide (référence ou téléphone)"
+          },
+          "429": {
+            "description": "Trop de tentatives"
+          }
+        },
+        "summary": "Suivre une commande avec référence + téléphone",
+        "tags": ["orders"]
+      }
+    },
     "/api/v1/shipping/zones": {
       "get": {
         "description": "Zones seedées (TEC-07) avec frais en XAF entier et délai estimé. Lecture seule, utilisée par le tunnel de commande. Le devis détaillé sera fourni par SHP-01.",
@@ -4361,6 +4397,167 @@
           }
         },
         "required": ["id", "reference", "previousStatus", "status", "changedAt", "history"]
+      },
+      "TrackOrderDto": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "example": "BRN-2611-7K3F",
+            "description": "Numéro de commande (format BRN-XXXX-XXXX)."
+          },
+          "phone": {
+            "type": "string",
+            "example": "+237612345678",
+            "description": "Téléphone associé à la commande (+237XXXXXXXXX)."
+          }
+        },
+        "required": ["reference", "phone"]
+      },
+      "TrackOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Mocassin Cuir Glacé"
+          },
+          "size": {
+            "type": "string",
+            "example": "41"
+          },
+          "color": {
+            "type": "string",
+            "example": "Noir"
+          },
+          "quantity": {
+            "type": "number",
+            "example": 1
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Prix unitaire (XAF)",
+            "example": 24500
+          },
+          "lineTotal": {
+            "type": "number",
+            "description": "Total de la ligne (XAF)",
+            "example": 24500
+          }
+        },
+        "required": ["name", "size", "color", "quantity", "unitPrice", "lineTotal"]
+      },
+      "TrackOrderTimelineEntryDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PENDING_CONFIRMATION", "CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED"]
+          },
+          "label": {
+            "type": "string",
+            "example": "En préparation"
+          },
+          "date": {
+            "type": "object",
+            "nullable": true,
+            "example": "2026-11-10T14:32:00.000Z"
+          },
+          "isCurrent": {
+            "type": "boolean"
+          },
+          "isCompleted": {
+            "type": "boolean"
+          }
+        },
+        "required": ["status", "label", "date", "isCurrent", "isCompleted"]
+      },
+      "TrackOrderOrderDto": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "example": "BRN-2611-7K3F"
+          },
+          "status": {
+            "type": "string",
+            "example": "PENDING_CONFIRMATION"
+          },
+          "statusLabel": {
+            "type": "string",
+            "example": "En attente de confirmation"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrackOrderItemDto"
+            }
+          },
+          "subtotal": {
+            "type": "number",
+            "description": "Sous-total (XAF)",
+            "example": 52500
+          },
+          "discount": {
+            "type": "number",
+            "description": "Remise (XAF)",
+            "example": 0
+          },
+          "shippingFee": {
+            "type": "number",
+            "description": "Frais de livraison (XAF)",
+            "example": 0
+          },
+          "total": {
+            "type": "number",
+            "description": "Total à régler (XAF)",
+            "example": 52500
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-10T14:32:00.000Z"
+          },
+          "timeline": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrackOrderTimelineEntryDto"
+            }
+          },
+          "shippingCity": {
+            "type": "string",
+            "description": "Ville de livraison uniquement (pas l’adresse complète)",
+            "example": "Douala"
+          },
+          "estimatedDelivery": {
+            "type": "string",
+            "description": "Date estimée de livraison (ISO 8601)",
+            "example": "2026-11-11T14:32:00.000Z"
+          }
+        },
+        "required": [
+          "reference",
+          "status",
+          "statusLabel",
+          "items",
+          "subtotal",
+          "discount",
+          "shippingFee",
+          "total",
+          "createdAt",
+          "timeline"
+        ]
+      },
+      "TrackOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "found": {
+            "type": "boolean",
+            "example": false
+          },
+          "order": {
+            "$ref": "#/components/schemas/TrackOrderOrderDto"
+          }
+        },
+        "required": ["found"]
       },
       "DeliveryZoneDto": {
         "type": "object",

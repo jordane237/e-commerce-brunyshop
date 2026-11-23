@@ -33,4 +33,8 @@ export const ORDER_AUDIT_ACTIONS = {
   ORDER_RATE_LIMITED: 'ORDER_RATE_LIMITED',
   // ORD-02 : chaque transition de statut laisse une trace d'audit.
   ORDER_STATUS_CHANGED: 'ORDER_STATUS_CHANGED',
+  // ORD-05 : suivi public de commande.
+  ORDER_TRACKED: 'ORDER_TRACKED',
+  ORDER_TRACK_ATTEMPT: 'ORDER_TRACK_ATTEMPT',
+  ORDER_TRACK_RATE_LIMITED: 'ORDER_TRACK_RATE_LIMITED',
 } as const;
