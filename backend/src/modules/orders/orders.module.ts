@@ -7,6 +7,8 @@ import { CartModule } from '../cart/cart.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AdminOrdersController } from './admin-orders.controller';
+import { OrderTrackingController } from './order-tracking.controller';
+import { OrderTrackingService } from './order-tracking.service';
 import { OrderCreatedListener } from './listeners/order-created.listener';
 import { OrderAttemptService } from './order-attempt.service';
 import { OrderWorkflowService } from './order-workflow.service';
@@ -23,9 +25,10 @@ import { OrderReferenceGenerator } from './reference/order-reference.generator';
     AuditModule,
     NotificationsModule,
   ],
-  controllers: [OrdersController, AdminOrdersController],
+  controllers: [OrdersController, AdminOrdersController, OrderTrackingController],
   providers: [
     OrdersService,
+    OrderTrackingService,
     OrderReferenceGenerator,
     OrderAttemptService,
     OrderCreatedListener,

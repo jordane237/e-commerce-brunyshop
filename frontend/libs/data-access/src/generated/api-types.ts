@@ -536,6 +536,23 @@ export interface paths {
     patch: operations['AdminOrdersController_changeStatus_v1'];
     trace?: never;
   };
+  '/api/v1/orders/track': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Suivre une commande avec référence + téléphone */
+    post: operations['OrderTrackingController_track_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/shipping/zones': {
     parameters: {
       query?: never;
@@ -1670,6 +1687,95 @@ export interface components {
       changedAt: string;
       /** @description Historique complet, du plus récent au plus ancien */
       history: components['schemas']['OrderStatusHistoryItemDto'][];
+    };
+    TrackOrderDto: {
+      /**
+       * @description Numéro de commande (format BRN-XXXX-XXXX).
+       * @example BRN-2611-7K3F
+       */
+      reference: string;
+      /**
+       * @description Téléphone associé à la commande (+237XXXXXXXXX).
+       * @example +237612345678
+       */
+      phone: string;
+    };
+    TrackOrderItemDto: {
+      /** @example Mocassin Cuir Glacé */
+      name: string;
+      /** @example 41 */
+      size: string;
+      /** @example Noir */
+      color: string;
+      /** @example 1 */
+      quantity: number;
+      /**
+       * @description Prix unitaire (XAF)
+       * @example 24500
+       */
+      unitPrice: number;
+      /**
+       * @description Total de la ligne (XAF)
+       * @example 24500
+       */
+      lineTotal: number;
+    };
+    TrackOrderTimelineEntryDto: {
+      /** @enum {string} */
+      status: 'PENDING_CONFIRMATION' | 'CONFIRMED' | 'PREPARING' | 'SHIPPED' | 'DELIVERED';
+      /** @example En préparation */
+      label: string;
+      /** @example 2026-11-10T14:32:00.000Z */
+      date: Record<string, never> | null;
+      isCurrent: boolean;
+      isCompleted: boolean;
+    };
+    TrackOrderOrderDto: {
+      /** @example BRN-2611-7K3F */
+      reference: string;
+      /** @example PENDING_CONFIRMATION */
+      status: string;
+      /** @example En attente de confirmation */
+      statusLabel: string;
+      items: components['schemas']['TrackOrderItemDto'][];
+      /**
+       * @description Sous-total (XAF)
+       * @example 52500
+       */
+      subtotal: number;
+      /**
+       * @description Remise (XAF)
+       * @example 0
+       */
+      discount: number;
+      /**
+       * @description Frais de livraison (XAF)
+       * @example 0
+       */
+      shippingFee: number;
+      /**
+       * @description Total à régler (XAF)
+       * @example 52500
+       */
+      total: number;
+      /** @example 2026-11-10T14:32:00.000Z */
+      createdAt: string;
+      timeline: components['schemas']['TrackOrderTimelineEntryDto'][];
+      /**
+       * @description Ville de livraison uniquement (pas l’adresse complète)
+       * @example Douala
+       */
+      shippingCity?: string;
+      /**
+       * @description Date estimée de livraison (ISO 8601)
+       * @example 2026-11-11T14:32:00.000Z
+       */
+      estimatedDelivery?: string;
+    };
+    TrackOrderResponseDto: {
+      /** @example false */
+      found: boolean;
+      order?: components['schemas']['TrackOrderOrderDto'];
     };
     DeliveryZoneDto: {
       /** Format: uuid */
@@ -3173,6 +3279,44 @@ export interface operations {
       };
       /** @description INVALID_STATUS_TRANSITION, STALE_ORDER_STATUS ou STOCK_RELEASE_FAILED */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrderTrackingController_track_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TrackOrderDto'];
+      };
+    };
+    responses: {
+      /** @description Commande trouvée ou combinaison incorrecte (réponse uniforme) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TrackOrderResponseDto'];
+        };
+      };
+      /** @description Format invalide (référence ou téléphone) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Trop de tentatives */
+      429: {
         headers: {
           [name: string]: unknown;
         };
