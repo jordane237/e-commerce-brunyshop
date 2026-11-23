@@ -7,7 +7,11 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { Prisma, type StockMovementReason } from '../../generated/prisma/client';
+import {
+  Prisma,
+  type StockAdjustmentMotif,
+  type StockMovementReason,
+} from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/database/database.module';
 import { InventoryErrorCode } from './inventory.errors';
 import { StockLowEvent } from './events/stock-low.event';
@@ -184,6 +188,62 @@ export class InventoryService {
       reservedStock: variant.reservedStock,
       available: Math.max(0, variant.stock - variant.reservedStock),
     };
+  }
+
+  async adjustStockManually(
+    tx: Prisma.TransactionClient,
+    variantId: string,
+    newStock: number,
+    userId: string,
+    motif: StockAdjustmentMotif,
+    notes?: string,
+  ): Promise<{ newStock: number; before: number; delta: number; movementId: string }> {
+    if (!Number.isInteger(newStock) || newStock < 0) {
+      throw new BadRequestException({
+        code: InventoryErrorCode.INVALID_STOCK,
+        message: 'Le stock doit être supérieur ou égal à 0.',
+        errors: [{ field: 'newStock', message: 'Stock invalide.' }],
+      });
+    }
+
+    const variant = await tx.productVariant.findUnique({
+      where: { id: variantId },
+      select: { id: true, stock: true },
+    });
+    if (variant === null) {
+      throw new NotFoundException({
+        code: InventoryErrorCode.VARIANT_NOT_FOUND,
+        message: 'Variante introuvable.',
+        errors: [{ field: 'variantId', message: 'Variante introuvable.' }],
+      });
+    }
+
+    const before = variant.stock;
+    const delta = newStock - before;
+    if (delta === 0) {
+      return { newStock: before, before, delta: 0, movementId: '' };
+    }
+
+    await tx.productVariant.update({
+      where: { id: variantId },
+      data: { stock: newStock, version: { increment: 1 } },
+    });
+
+    const movement = await tx.stockMovement.create({
+      data: {
+        variantId,
+        delta,
+        reason: 'ADJUSTMENT',
+        motif,
+        notes: notes ?? null,
+        before,
+        after: newStock,
+        userId,
+        orderId: null,
+      },
+    });
+
+    return { newStock, before, delta, movementId: movement.id };
   }
 
   // A failed UPDATE can mean "sold out" or "variant removed while the order

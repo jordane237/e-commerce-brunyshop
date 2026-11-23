@@ -1326,6 +1326,158 @@
         "tags": ["admin-stock"]
       }
     },
+    "/api/v1/admin/variants/{id}/stock-adjust": {
+      "post": {
+        "operationId": "AdminStockController_adjustStock_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID de la variante",
+            "schema": {
+              "example": "uuid-variant",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustStockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stock ajusté.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustStockResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation échouée (motif manquant, stock < 0, etc.)."
+          },
+          "401": {
+            "description": "Jeton absent ou invalide."
+          },
+          "403": {
+            "description": "Rôle insuffisant."
+          },
+          "404": {
+            "description": "Variante introuvable (VARIANT_NOT_FOUND)."
+          },
+          "429": {
+            "description": "Rate limit dépassé."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Ajuster manuellement le stock d’une variante (motif requis)",
+        "tags": ["admin-stock"]
+      }
+    },
+    "/api/v1/admin/stock-movements": {
+      "get": {
+        "operationId": "AdminStockController_listMovements_v1",
+        "parameters": [
+          {
+            "name": "variantId",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer par variante.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Date de début (ISO 8601, inclus).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Date de fin (ISO 8601, inclus).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "motif",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer par motif.",
+            "schema": {
+              "enum": ["RECEPTION", "INVENTAIRE", "CASSE", "RETOUR", "AUTRE"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mouvements paginés.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedStockMovementsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent ou invalide."
+          },
+          "403": {
+            "description": "Rôle insuffisant."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Historique des mouvements de stock (filtrable par variante et période)",
+        "tags": ["admin-stock"]
+      }
+    },
     "/api/v1/admin/notifications/dead-letters": {
       "get": {
         "operationId": "NotificationsController_listDeadLetters_v1",
@@ -3187,6 +3339,152 @@
             "$ref": "#/components/schemas/SizeGuideTableDto"
           }
         }
+      },
+      "AdjustStockDto": {
+        "type": "object",
+        "properties": {
+          "newStock": {
+            "type": "number",
+            "minimum": 0,
+            "example": 10,
+            "description": "Nouveau stock cible (>= 0)."
+          },
+          "motif": {
+            "type": "string",
+            "enum": ["RECEPTION", "INVENTAIRE", "CASSE", "RETOUR", "AUTRE"],
+            "example": "RECEPTION",
+            "description": "Motif obligatoire de l’ajustement."
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Notes libres (optionnelles)."
+          }
+        },
+        "required": ["newStock", "motif"]
+      },
+      "AdjustStockResponseDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "before": {
+            "type": "number"
+          },
+          "after": {
+            "type": "number"
+          },
+          "delta": {
+            "type": "number"
+          },
+          "motif": {
+            "type": "string",
+            "enum": ["RECEPTION", "INVENTAIRE", "CASSE", "RETOUR", "AUTRE"]
+          },
+          "movementId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "adjustedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["variantId", "before", "after", "delta", "motif", "movementId", "adjustedAt"]
+      },
+      "StockMovementItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variantSku": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "size": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "delta": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "motif": {
+            "type": "string",
+            "enum": ["RECEPTION", "INVENTAIRE", "CASSE", "RETOUR", "AUTRE"],
+            "nullable": true
+          },
+          "notes": {
+            "type": "object",
+            "nullable": true
+          },
+          "before": {
+            "type": "number"
+          },
+          "after": {
+            "type": "number"
+          },
+          "userId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "userName": {
+            "type": "object",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "variantId",
+          "variantSku",
+          "productName",
+          "size",
+          "color",
+          "delta",
+          "reason",
+          "before",
+          "after",
+          "createdAt"
+        ]
+      },
+      "PaginatedStockMovementsDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockMovementItemDto"
+            }
+          },
+          "meta": {
+            "type": "object"
+          }
+        },
+        "required": ["data", "meta"]
       },
       "CartItemInputDto": {
         "type": "object",

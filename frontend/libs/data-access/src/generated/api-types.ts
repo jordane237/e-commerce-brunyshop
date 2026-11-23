@@ -391,6 +391,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/admin/variants/{id}/stock-adjust': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Ajuster manuellement le stock d’une variante (motif requis) */
+    post: operations['AdminStockController_adjustStock_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/stock-movements': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Historique des mouvements de stock (filtrable par variante et période) */
+    get: operations['AdminStockController_listMovements_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/admin/notifications/dead-letters': {
     parameters: {
       query?: never;
@@ -1186,6 +1220,62 @@ export interface components {
       name?: string;
       description?: string;
       table?: components['schemas']['SizeGuideTableDto'];
+    };
+    AdjustStockDto: {
+      /**
+       * @description Nouveau stock cible (>= 0).
+       * @example 10
+       */
+      newStock: number;
+      /**
+       * @description Motif obligatoire de l’ajustement.
+       * @example RECEPTION
+       * @enum {string}
+       */
+      motif: 'RECEPTION' | 'INVENTAIRE' | 'CASSE' | 'RETOUR' | 'AUTRE';
+      /** @description Notes libres (optionnelles). */
+      notes?: string;
+    };
+    AdjustStockResponseDto: {
+      /** Format: uuid */
+      variantId: string;
+      before: number;
+      after: number;
+      delta: number;
+      /** @enum {string} */
+      motif: 'RECEPTION' | 'INVENTAIRE' | 'CASSE' | 'RETOUR' | 'AUTRE';
+      /** Format: uuid */
+      movementId: string;
+      /** Format: date-time */
+      adjustedAt: string;
+    };
+    StockMovementItemDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      variantId: string;
+      variantSku: string;
+      productName: string;
+      size: string;
+      color: string;
+      delta: number;
+      reason: string;
+      /** @enum {string|null} */
+      motif?: 'RECEPTION' | 'INVENTAIRE' | 'CASSE' | 'RETOUR' | 'AUTRE' | null;
+      notes?: Record<string, never> | null;
+      before: number;
+      after: number;
+      /** Format: uuid */
+      userId?: Record<string, never> | null;
+      userName?: Record<string, never> | null;
+      /** Format: uuid */
+      orderId?: Record<string, never> | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    PaginatedStockMovementsDto: {
+      data: components['schemas']['StockMovementItemDto'][];
+      meta: Record<string, never>;
     };
     CartItemInputDto: {
       /**
@@ -2488,6 +2578,113 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Jeton absent ou invalide. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminStockController_adjustStock_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID de la variante */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdjustStockDto'];
+      };
+    };
+    responses: {
+      /** @description Stock ajusté. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdjustStockResponseDto'];
+        };
+      };
+      /** @description Validation échouée (motif manquant, stock < 0, etc.). */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent ou invalide. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Variante introuvable (VARIANT_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rate limit dépassé. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminStockController_listMovements_v1: {
+    parameters: {
+      query?: {
+        /** @description Filtrer par variante. */
+        variantId?: string;
+        /** @description Date de début (ISO 8601, inclus). */
+        from?: string;
+        /** @description Date de fin (ISO 8601, inclus). */
+        to?: string;
+        /** @description Filtrer par motif. */
+        motif?: 'RECEPTION' | 'INVENTAIRE' | 'CASSE' | 'RETOUR' | 'AUTRE';
+        page?: number;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Mouvements paginés. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedStockMovementsDto'];
+        };
       };
       /** @description Jeton absent ou invalide. */
       401: {

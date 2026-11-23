@@ -626,6 +626,11 @@ model StockMovement {
   // Signed change: negative = decrement.
   delta     Int
   reason    StockMovementReason
+  // Motif précis pour les ajustements manuels (STK-02). Null pour les
+  // mouvements automatiques (PURCHASE, RESTOCK, etc.).
+  motif     StockAdjustmentMotif?
+  // Notes libres optionnelles (obligatoires si motif = AUTRE, côté UI).
+  notes     String?
   orderId   String?
   // Author of the movement. Nullable for guest checkout: the order carries
   // the customer identity, while the movement keeps orderId for traceability.
@@ -640,7 +645,9 @@ model StockMovement {
   user    User?          @relation(fields: [userId], references: [id])
 
   @@index([variantId])
+  @@index([variantId, createdAt])
   @@index([orderId])
+  @@index([motif])
 }
 
 enum StockMovementReason {
@@ -651,6 +658,14 @@ enum StockMovementReason {
   CANCELLATION
   ADJUSTMENT
   RETURN
+}
+
+enum StockAdjustmentMotif {
+  RECEPTION
+  INVENTAIRE
+  CASSE
+  RETOUR
+  AUTRE
 }
 
 model AuditLog {
