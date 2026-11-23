@@ -82,6 +82,9 @@ frontend/.angular/
 frontend/test-results/
 frontend/playwright-report/
 
+# Trivy findings (generated)
+findings/
+
 # LibreOffice locks
 ~$*
 .~lock.*

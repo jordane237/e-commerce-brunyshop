@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/client';
-import { StockMovementReason } from '../../generated/prisma/client';
+import { StockAdjustmentMotif, StockMovementReason } from '../../generated/prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PrismaService } from '../../infrastructure/database/database.module';
@@ -8,14 +8,14 @@ import { InventoryService } from './inventory.service';
 
 interface TransactionMock {
   $queryRaw: ReturnType<typeof vi.fn>;
-  productVariant: { findUnique: ReturnType<typeof vi.fn> };
+  productVariant: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
   stockMovement: { create: ReturnType<typeof vi.fn> };
 }
 
 function transactionMock(): TransactionMock {
   return {
     $queryRaw: vi.fn(),
-    productVariant: { findUnique: vi.fn() },
+    productVariant: { findUnique: vi.fn(), update: vi.fn().mockResolvedValue({}) },
     stockMovement: { create: vi.fn().mockResolvedValue({ id: 'movement-1' }) },
   };
 }
@@ -166,5 +166,104 @@ describe('InventoryService decrementStockAtomically (STK-01)', () => {
       reservedStock: 5,
       available: 0,
     });
+  });
+});
+
+describe('InventoryService adjustStockManually (STK-02)', () => {
+  it('refuse un stock négatif', async () => {
+    const tx = transactionMock();
+    const inventory = serviceWith();
+    await expect(
+      inventory.adjustStockManually(
+        tx as unknown as Prisma.TransactionClient,
+        'variant-1',
+        -1,
+        'user-1',
+        StockAdjustmentMotif.RECEPTION,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(tx.productVariant.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('404 si la variante est introuvable', async () => {
+    const tx = transactionMock();
+    tx.productVariant.findUnique.mockResolvedValue(null);
+    const inventory = serviceWith();
+    await expect(
+      inventory.adjustStockManually(
+        tx as unknown as Prisma.TransactionClient,
+        'variant-1',
+        7,
+        'user-1',
+        StockAdjustmentMotif.RECEPTION,
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('ne crée pas de mouvement si delta = 0', async () => {
+    const tx = transactionMock();
+    tx.productVariant.findUnique.mockResolvedValue({ id: 'variant-1', stock: 5 });
+    const inventory = serviceWith();
+    const result = await inventory.adjustStockManually(
+      tx as unknown as Prisma.TransactionClient,
+      'variant-1',
+      5,
+      'user-1',
+      StockAdjustmentMotif.INVENTAIRE,
+    );
+    expect(result).toEqual({ newStock: 5, before: 5, delta: 0, movementId: '' });
+    expect(tx.productVariant.update).not.toHaveBeenCalled();
+    expect(tx.stockMovement.create).not.toHaveBeenCalled();
+  });
+
+  it('crée un mouvement avec delta positif et motif', async () => {
+    const tx = transactionMock();
+    tx.productVariant.findUnique.mockResolvedValue({ id: 'variant-1', stock: 5 });
+    tx.stockMovement.create.mockResolvedValue({ id: 'movement-1' });
+    const inventory = serviceWith();
+    const result = await inventory.adjustStockManually(
+      tx as unknown as Prisma.TransactionClient,
+      'variant-1',
+      10,
+      'user-1',
+      StockAdjustmentMotif.RECEPTION,
+      'Réception fournisseur',
+    );
+    expect(result).toEqual({ newStock: 10, before: 5, delta: 5, movementId: 'movement-1' });
+    expect(tx.productVariant.update).toHaveBeenCalledWith({
+      where: { id: 'variant-1' },
+      data: { stock: 10, version: { increment: 1 } },
+    });
+    expect(tx.stockMovement.create).toHaveBeenCalledWith({
+      data: {
+        variantId: 'variant-1',
+        delta: 5,
+        reason: 'ADJUSTMENT',
+        motif: StockAdjustmentMotif.RECEPTION,
+        notes: 'Réception fournisseur',
+        before: 5,
+        after: 10,
+        userId: 'user-1',
+        orderId: null,
+      },
+    });
+  });
+
+  it('crée un mouvement avec delta négatif', async () => {
+    const tx = transactionMock();
+    tx.productVariant.findUnique.mockResolvedValue({ id: 'variant-1', stock: 10 });
+    tx.stockMovement.create.mockResolvedValue({ id: 'movement-2' });
+    const inventory = serviceWith();
+    const result = await inventory.adjustStockManually(
+      tx as unknown as Prisma.TransactionClient,
+      'variant-1',
+      3,
+      'user-1',
+      StockAdjustmentMotif.CASSE,
+    );
+    expect(result).toMatchObject({ newStock: 3, before: 10, delta: -7, movementId: 'movement-2' });
+    expect(tx.stockMovement.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ delta: -7, notes: null }) }),
+    );
   });
 });
