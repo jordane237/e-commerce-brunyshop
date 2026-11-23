@@ -1,10 +1,14 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogApi, CatalogFacets, CatalogProduct } from '@bruny/data-access';
+import { catchError, EMPTY, map, switchMap } from 'rxjs';
+import { Subject } from 'rxjs';
 import {
   CATALOG_PAGE_SIZE,
   CatalogFilters,
   countActiveFilters,
   DEFAULT_CATALOG_FILTERS,
+  withFilterPatch,
 } from './catalog-query';
 
 export interface CatalogMeta {
@@ -31,6 +35,10 @@ export class CatalogStore {
   private requestId = 0;
   /** Mémorise le mode du dernier chargement pour que `retry()` le respecte. */
   private lastAppend = false;
+  private readonly loadRequests$ = new Subject<{
+    filters: CatalogFilters;
+    append: boolean;
+  }>();
 
   private readonly filtersState = signal<CatalogFilters>({ ...DEFAULT_CATALOG_FILTERS });
   private readonly productsState = signal<CatalogProduct[]>([]);
@@ -56,53 +64,68 @@ export class CatalogStore {
   );
   readonly activeFilterCount = computed(() => countActiveFilters(this.filtersState()));
 
+  constructor() {
+    this.loadRequests$
+      .pipe(
+        switchMap(({ filters, append }) => {
+          const requestId = ++this.requestId;
+          this.lastAppend = append;
+          this.filtersState.set(filters);
+          this.errorState.set(null);
+          this.loadingState.set(!append);
+          this.loadingMoreState.set(append);
+
+          return this.api
+            .list({
+              category: filters.category,
+              brand: filters.brand,
+              size: filters.size,
+              color: filters.color,
+              minPrice: filters.minPrice,
+              maxPrice: filters.maxPrice,
+              inStock: filters.inStock,
+              promo: filters.promo,
+              q: filters.q,
+              sort: filters.sort,
+              page: filters.page,
+              limit: CATALOG_PAGE_SIZE,
+            })
+            .pipe(
+              map((response) => ({ response, append, requestId })),
+              catchError(() => {
+                if (requestId !== this.requestId) return EMPTY;
+                this.errorState.set(CATALOG_ERROR);
+                this.loadingState.set(false);
+                this.loadingMoreState.set(false);
+                return EMPTY;
+              }),
+            );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ response, append, requestId }) => {
+        if (requestId !== this.requestId) return;
+        this.productsState.update((current) =>
+          append ? [...current, ...response.items] : response.items,
+        );
+        this.metaState.set(response.pagination);
+        this.facetsState.set(response.facets);
+        this.loadingState.set(false);
+        this.loadingMoreState.set(false);
+      });
+  }
+
   /**
    * Charge une page. `append` est utilisé par « Voir plus » : la nouvelle page
    * s'ajoute à la liste, alors qu'une navigation classique la remplace.
    */
   load(filters: CatalogFilters, append = false): void {
-    const requestId = ++this.requestId;
-    this.lastAppend = append;
-    this.filtersState.set(filters);
-    this.errorState.set(null);
-    this.loadingState.set(!append);
-    this.loadingMoreState.set(append);
+    this.loadRequests$.next({ filters, append });
+  }
 
-    this.api
-      .list({
-        category: filters.category,
-        brand: filters.brand,
-        size: filters.size,
-        color: filters.color,
-        minPrice: filters.minPrice,
-        maxPrice: filters.maxPrice,
-        inStock: filters.inStock,
-        promo: filters.promo,
-        q: filters.q,
-        sort: filters.sort,
-        page: filters.page,
-        limit: CATALOG_PAGE_SIZE,
-      })
-      .subscribe({
-        next: (response) => {
-          if (requestId !== this.requestId) return;
-          this.productsState.update((current) =>
-            append ? [...current, ...response.items] : response.items,
-          );
-          this.metaState.set(response.pagination);
-          this.facetsState.set(response.facets);
-          this.loadingState.set(false);
-          this.loadingMoreState.set(false);
-        },
-        error: () => {
-          if (requestId !== this.requestId) return;
-          // En ajout, on conserve les produits déjà affichés et on expose
-          // l'erreur au lieu de vider la grille sous les yeux du client.
-          this.errorState.set(CATALOG_ERROR);
-          this.loadingState.set(false);
-          this.loadingMoreState.set(false);
-        },
-      });
+  /** Applique un patch de filtre en repartant de l'état courant (page 1 sauf patch explicite). */
+  setFilters(patch: Partial<CatalogFilters>): void {
+    this.load(withFilterPatch(this.filtersState(), patch));
   }
 
   retry(): void {

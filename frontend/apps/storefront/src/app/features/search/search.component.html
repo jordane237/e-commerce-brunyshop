@@ -1,0 +1,91 @@
+<section class="search-page">
+  <nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <ol class="breadcrumb__list">
+      <li><a href="/">Accueil</a></li>
+      <li aria-hidden="true" class="breadcrumb__separator">›</li>
+      <li aria-current="page">Recherche</li>
+    </ol>
+  </nav>
+
+  <h1 class="search-page__title">Rechercher un produit</h1>
+
+  <section class="search-bar" role="search" aria-label="Recherche de produits">
+    <label for="search-input" class="sr-only"
+      >Rechercher un produit, une marque ou une catégorie</label
+    >
+    <div class="search-bar__wrapper">
+      <span class="search-bar__icon" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+      </span>
+      <input
+        id="search-input"
+        type="search"
+        class="search-bar__input"
+        placeholder="Nom, marque, catégorie"
+        [formControl]="searchControl"
+        autocomplete="off"
+        aria-label="Rechercher un produit, une marque ou une catégorie"
+        role="searchbox"
+      />
+      @if (query()) {
+        <button
+          type="button"
+          class="search-bar__clear"
+          (click)="onClear()"
+          aria-label="Effacer la recherche"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="search-results" aria-busy="true" aria-label="Chargement des résultats">
+      <bruny-product-grid [products]="[]" [loading]="true" (add)="onAdd($event)" />
+    </div>
+  } @else if (error()) {
+    <div class="search-error" role="alert">
+      <p>{{ error() }}</p>
+      <bruny-button variant="primary" (clicked)="onRetry()">Réessayer</bruny-button>
+    </div>
+  } @else if (isEmpty()) {
+    <section class="search-empty" role="status">
+      <bruny-empty-state
+        [title]="'Aucun résultat pour « ' + query() + ' »'"
+        [description]="'Essayez un autre mot-clé ou parcourez le catalogue.'"
+        [actionLabel]="'Voir le catalogue'"
+        (actionClicked)="goToCatalog()"
+      />
+      @if (suggestions().length > 0) {
+        <div class="search-suggestions">
+          <h2 class="search-suggestions__title">Nouveautés</h2>
+          <ul class="search-suggestions__grid" role="list">
+            @for (product of suggestions(); track product.id) {
+              <li class="search-suggestions__item" role="listitem">
+                <bruny-product-card [product]="product" [showAdd]="true" (add)="onAdd(product)" />
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+  } @else {
+    <section class="search-results" aria-live="polite">
+      <p class="search-results__count" role="status">
+        {{ meta()?.total ?? 0 }} produit(s) trouvé(s) pour « {{ query() }} »
+      </p>
+      <bruny-product-grid [products]="products()" [loading]="false" (add)="onAdd($event)" />
+    </section>
+  }
+</section>
