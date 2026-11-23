@@ -16,7 +16,7 @@ Branche : `feature/STK-05-admin-stock-screen` (base `working`, STK-02 mergé en 
 | 8 | Export OpenAPI | `pnpm -C backend openapi:export` | ✅ 34 paths |
 | 9 | Régénération des types API | `pnpm api:generate` | ✅ |
 | 10 | Idempotence export + génération | deux passes, `sha256sum` comparés | ✅ `openapi.json` et `api-types.ts` stables |
-| 11 | `pnpm api:check` / `pnpm openapi:check` | — | ⚠️ échouent **avant commit** car ces scripts font `git diff --exit-code` ; à rejouer sur arbre propre (voir §Commit) |
+| 11 | `pnpm api:check` / `pnpm openapi:check` | — | ✅ sur arbre propre après commit (ces scripts font `git diff --exit-code`, ils échouent par construction tant que le delta n’est pas committé) |
 | 12 | Audit dépendances prod | `pnpm audit --prod --audit-level=high` | ✅ 0 high/critical (3 low, 6 moderate préexistantes) |
 | 13 | Gitleaks local | `gitleaks detect` | ⚠️ non vérifié : binaire absent de la machine ; contrôle assuré par la CI |
 
@@ -38,6 +38,10 @@ Rejeu isolé de ces 6 fichiers : **27/27 verts**. Conclusion : flakiness de time
 | RBAC | `@Roles('STOCK_MANAGER','ADMIN','SUPER_ADMIN')` + `roleGuard(navRoles('stock'))` | ✅ couvert par l’e2e (401/403) |
 | Montants XAF entiers | Stock/seuils en `number` entiers, aucun flottant monétaire introduit | ✅ |
 | Microtextes FR | Libellés FR centralisés dans les templates | ✅ |
+
+## Commit
+
+`4cca96e` — `feat(admin): add stock management screen with filters, adjustments, history and CSV export [STK-05]` sur `feature/STK-05-admin-stock-screen`.
 
 ## Limites connues
 
