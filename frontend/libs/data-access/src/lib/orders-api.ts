@@ -8,7 +8,7 @@ type CreateOrderBody = NonNullable<
   paths['/api/v1/orders']['post']['requestBody']
 >['content']['application/json'];
 
-type CreateOrderResponse =
+export type CreateOrderResponse =
   paths['/api/v1/orders']['post']['responses']['201']['content']['application/json'];
 
 /**

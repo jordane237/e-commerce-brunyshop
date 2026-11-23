@@ -1,0 +1,81 @@
+<aside class="checkout-recap" aria-labelledby="checkout-recap-title">
+  <header class="checkout-recap__header">
+    <h2 id="checkout-recap-title">Votre commande</h2>
+    <p class="checkout-recap__count">{{ itemCount() }} article{{ itemCount() > 1 ? 's' : '' }}</p>
+  </header>
+
+  <ul class="checkout-recap__lines">
+    @for (line of visibleLines(); track line.variantId) {
+      <li class="checkout-recap__line">
+        @if (line.imageUrl) {
+          <img
+            class="checkout-recap__thumb"
+            [src]="line.imageUrl"
+            [alt]="line.imageAlt ?? line.productName"
+            width="56"
+            height="70"
+            loading="lazy"
+          />
+        }
+        <div class="checkout-recap__info">
+          <p class="checkout-recap__name">{{ line.productName }}</p>
+          <p class="checkout-recap__variant">
+            {{ line.color }} · {{ line.size }} · Qté {{ line.quantity }}
+          </p>
+        </div>
+        <p class="checkout-recap__price">{{ line.unitPriceAtAdd * line.quantity | fcfa }}</p>
+      </li>
+    }
+    @if (hiddenCount() > 0) {
+      <li class="checkout-recap__more">
+        + {{ hiddenCount() }} autre{{ hiddenCount() > 1 ? 's' : '' }} article{{
+          hiddenCount() > 1 ? 's' : ''
+        }}
+      </li>
+    }
+  </ul>
+
+  @if (loading()) {
+    <bruny-skeleton variant="text" />
+    <bruny-skeleton variant="text" />
+  } @else {
+    <dl class="checkout-recap__totals">
+      <div>
+        <dt>Sous-total</dt>
+        <dd>{{ subtotal() | fcfa }}</dd>
+      </div>
+      @if (discount() > 0) {
+        <div class="checkout-recap__discount">
+          <dt>Remise</dt>
+          <dd>− {{ discount() | fcfa }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Livraison</dt>
+        <dd>
+          @if (shippingFee() !== null) {
+            {{ shippingFee() | fcfa }}
+          } @else {
+            À l'étape livraison
+          }
+        </dd>
+      </div>
+      @if (zoneName(); as zone) {
+        <p class="checkout-recap__zone">
+          {{ zone }}
+          @if (zoneDays(); as days) {
+            <span>· environ {{ days }} jour{{ days > 1 ? 's' : '' }}</span>
+          }
+        </p>
+      }
+      <div class="checkout-recap__total">
+        <dt>Total</dt>
+        <dd>{{ total() | fcfa }}</dd>
+      </div>
+    </dl>
+  }
+
+  <p class="checkout-recap__note">
+    Prix et frais recalculés par le serveur à la validation. Paiement à la livraison.
+  </p>
+</aside>

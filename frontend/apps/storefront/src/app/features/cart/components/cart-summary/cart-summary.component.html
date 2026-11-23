@@ -34,13 +34,11 @@
     <bruny-button
       variant="primary"
       [block]="true"
-      [disabled]="!canCheckout() || !checkoutAvailable()"
+      [disabled]="!canCheckout()"
+      (click)="goToCheckout()"
     >
       Passer la commande
     </bruny-button>
-    @if (!checkoutAvailable()) {
-      <p class="cart-summary__note" role="note">Le paiement sera disponible prochainement.</p>
-    }
     <a routerLink="/boutique" class="cart-summary__continue">Continuer mes achats</a>
   }
 </aside>

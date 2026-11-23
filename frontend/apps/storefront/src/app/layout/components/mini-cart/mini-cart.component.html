@@ -103,10 +103,13 @@
         (click)="continueShopping()"
         >Continuer mes achats</bruny-button
       >
-      <bruny-button class="mini-cart__primary" variant="primary" [block]="true" [disabled]="true"
+      <bruny-button
+        class="mini-cart__primary"
+        variant="primary"
+        [block]="true"
+        (click)="goToCheckout()"
         >Passer la commande</bruny-button
       >
-      <p class="mini-cart__note">Le paiement sera disponible prochainement.</p>
     }
   </div>
 </bruny-drawer>

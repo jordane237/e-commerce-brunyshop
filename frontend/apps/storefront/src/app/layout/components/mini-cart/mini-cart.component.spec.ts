@@ -154,8 +154,7 @@ describe('MiniCartComponent', () => {
     expect(element?.textContent).toContain('Total');
     expect(
       (element?.querySelector('.mini-cart__primary .bs-button') as HTMLButtonElement).disabled,
-    ).toBe(true);
-    expect(element?.textContent).toContain('Le paiement sera disponible prochainement.');
+    ).toBe(false);
     expect(cart.validate).toHaveBeenCalledOnce();
   });
 

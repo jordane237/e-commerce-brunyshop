@@ -1817,6 +1817,33 @@
         "tags": ["admin-orders"]
       }
     },
+    "/api/v1/shipping/zones": {
+      "get": {
+        "description": "Zones seedées (TEC-07) avec frais en XAF entier et délai estimé. Lecture seule, utilisée par le tunnel de commande. Le devis détaillé sera fourni par SHP-01.",
+        "operationId": "ShippingController_listZones_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Zones triées par frais croissants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryZoneDto"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMIT_EXCEEDED"
+          }
+        },
+        "summary": "Lister les zones de livraison disponibles",
+        "tags": ["shipping"]
+      }
+    },
     "/api/v1/admin/media/presign": {
       "post": {
         "description": "Approche presign + confirm : le client PUT directement le fichier sur MinIO/S3 via l'URL signée, puis appelle /admin/media/confirm. Le Content-Type et la taille déclarés ici ne sont jamais considérés comme une validation : le confirm re-télécharge le fichier et vérifie les magic bytes et la taille réelles. Le fichier est renommé (UUID) et stocké hors de tout dossier exécutable.",
@@ -4334,6 +4361,37 @@
           }
         },
         "required": ["id", "reference", "previousStatus", "status", "changedAt", "history"]
+      },
+      "DeliveryZoneDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Douala Centre"
+          },
+          "cities": {
+            "example": ["Douala", "Bonabéri"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fee": {
+            "type": "number",
+            "description": "Frais de livraison en XAF entier",
+            "example": 1500
+          },
+          "estimatedDays": {
+            "type": "number",
+            "description": "Délai estimé en jours ouvrés",
+            "example": 1
+          }
+        },
+        "required": ["id", "name", "cities", "fee", "estimatedDays"]
       },
       "PresignUploadDto": {
         "type": "object",
