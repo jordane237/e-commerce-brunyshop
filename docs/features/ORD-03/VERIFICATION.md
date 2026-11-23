@@ -60,7 +60,14 @@ Non validé / hors périmètre :
   e2e `cart.spec.ts` (navigation vers `/commande`, ordre de tabulation du
   tiroir avec le nouveau bouton).
 
-## 4. Limites connues
+## 4. Vérification visuelle mobile
+
+Captures Playwright aux largeurs **390 px** (étapes 1, 2 et 3) et **360 px**
+(étape 1) : aucun débordement horizontal, les trois libellés du stepper
+s'affichent en entier, le récapitulatif tient sur deux lignes (nombre
+d'articles + total) et le formulaire commence dans le premier écran.
+
+## 5. Limites connues
 
 1. `GET /shipping/zones` est un endpoint intérimaire ; le devis par adresse
    (SHP-01) le remplacera.

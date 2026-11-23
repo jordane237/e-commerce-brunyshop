@@ -121,3 +121,43 @@
     position: static;
   }
 }
+
+/* Sur mobile, le récapitulatif devient une ligne de synthèse : le total reste
+   visible, les lignes et notes détaillées sont masquées pour ne pas repousser
+   le formulaire sous la ligne de flottaison. */
+@media (max-width: 680px) {
+  .checkout-recap {
+    padding: var(--bs-space-3, 0.75rem) var(--bs-space-4, 1rem);
+  }
+
+  .checkout-recap__header {
+    align-items: center;
+    margin-bottom: var(--bs-space-2, 0.5rem);
+  }
+
+  .checkout-recap__header h2 {
+    font-size: var(--bs-font-size-md, 1rem);
+  }
+
+  .checkout-recap__count {
+    font-size: var(--bs-font-size-xs, 0.75rem);
+  }
+
+  .checkout-recap__lines,
+  .checkout-recap__zone,
+  .checkout-recap__note,
+  .checkout-recap__totals > div:not(.checkout-recap__total) {
+    display: none;
+  }
+
+  .checkout-recap__totals {
+    border-top: 0;
+  }
+
+  .checkout-recap__total {
+    align-items: baseline;
+    padding-block: 0;
+    border-top: 0;
+    font-size: var(--bs-font-size-md, 1rem);
+  }
+}

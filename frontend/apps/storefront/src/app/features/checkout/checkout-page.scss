@@ -319,18 +319,89 @@ button.checkout-steps__button {
 
 @media (max-width: 680px) {
   .checkout-page {
-    padding-block: var(--bs-space-5) var(--bs-space-10);
+    padding-block: var(--bs-space-4) var(--bs-space-10);
   }
 
-  .checkout-card {
-    padding: var(--bs-space-4);
+  .checkout-page__header {
+    margin-bottom: var(--bs-space-4);
+  }
+
+  .checkout-page__header h1 {
+    font-size: 1.65rem;
+  }
+
+  .checkout-page__subtitle {
+    font-size: var(--bs-font-size-sm);
+  }
+
+  .checkout-steps {
+    margin-bottom: var(--bs-space-4);
+  }
+
+  .checkout-steps ol {
+    gap: var(--bs-space-2);
+  }
+
+  .checkout-steps__button {
+    gap: 6px;
+  }
+
+  .checkout-steps__badge {
+    width: 24px;
+    height: 24px;
+    font-size: var(--bs-font-size-xs);
   }
 
   .checkout-steps__label {
     font-size: var(--bs-font-size-xs);
   }
 
-  .checkout-steps ol {
+  .checkout-page__layout {
+    gap: var(--bs-space-4);
+  }
+
+  .checkout-card {
+    padding: var(--bs-space-3) var(--bs-space-4);
+  }
+
+  .checkout-card__header {
+    margin-bottom: var(--bs-space-3);
+  }
+
+  .checkout-form {
+    gap: var(--bs-space-3);
+  }
+
+  .checkout-card__actions {
     gap: var(--bs-space-2);
+    margin-top: var(--bs-space-4);
+  }
+
+  .checkout-success {
+    padding: var(--bs-space-4) 0;
+  }
+
+  .checkout-success__totals {
+    padding: var(--bs-space-3) var(--bs-space-4);
+  }
+}
+
+/* Petits écrans : les trois libellés doivent tenir sans troncature. */
+@media (max-width: 400px) {
+  .checkout-steps ol {
+    gap: var(--bs-space-1, 0.25rem);
+  }
+
+  .checkout-steps__button {
+    gap: 4px;
+  }
+
+  .checkout-steps__badge {
+    width: 22px;
+    height: 22px;
+  }
+
+  .checkout-steps__label {
+    font-size: 0.6875rem;
   }
 }
