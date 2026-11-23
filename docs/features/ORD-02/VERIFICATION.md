@@ -77,19 +77,19 @@ Workflows réels inspectés : `.github/workflows/ci.yml` (`quality`, `build`, `e
 `security`, `openapi-check`, `api-client`, `ci-success`) et
 `.github/workflows/docker-scan.yml` (`build-and-scan`).
 
-| Job | Résultat local | Détail |
+| Job | Résultat | Détail |
 | --- | --- | --- |
-| `quality` (lint + typecheck + unit) | PASS | Lint backend/frontend ✅, typecheck ✅, 297 tests unitaires ✅ |
-| `build` | PASS (partiel) | `pnpm -C backend build` ✅ ; builds frontend non relancés (aucun code frontend modifié, typecheck ✅) |
-| `e2e` | PASS | 251 tests e2e backend ✅ sur PostgreSQL + Redis réels |
-| `security` (gitleaks + audit) | PARTIEL | `pnpm audit --prod --audit-level=high` exécuté plus tard dans la session ; gitleaks non installé localement (binaire absent) |
-| `openapi-check` | À vérifier après commit | Le script fait `git diff --exit-code` : il ne peut passer que sur arbre propre |
-| `api-client` | À vérifier après commit | Idem (`pnpm api:check` commence par `git diff --exit-code`) |
-| `ci-success` | NOT RUN | Agrégateur distant |
-| `docker-scan` | NOT RUN | Non déclenché par cette branche localement |
+| `quality` (lint + typecheck + unit) | PASS | ✅ distant (run 156) et local |
+| `build` (backend + frontend) | PASS | ✅ distant : `pnpm build` complet, frontend inclus |
+| `e2e` (backend + Playwright) | PASS | ✅ distant : PostgreSQL + Redis + Chromium ; local 251 tests e2e |
+| `security` (gitleaks + audit) | PASS | ✅ distant (gitleaks inclus) ; local `pnpm audit --prod --audit-level=high` = 0 high/critical (3 low, 6 moderate préexistantes) |
+| `openapi-check` | PASS | ✅ distant + local sur arbre propre (35 chemins) |
+| `api-client` | PASS | ✅ distant + local (`pnpm api:check` sur arbre propre) |
+| `ci-success` | PASS | ✅ agrégateur vert |
+| `docker-scan` | NOT RUN | Workflow planifié / déclenché indépendamment ; non requis par ce ticket, aucun Dockerfile modifié |
 
-Les jobs `openapi-check` / `api-client` et les workflows distants sont vérifiés
-après le commit et le push (voir la section « Suivi » ajoutée ci-dessous).
+Run GitHub Actions : **156**, commit `2ee09c5`, branche
+`feature/ORD-02-order-state-machine`, **7 checks verts / 7**.
 
 ---
 
@@ -101,3 +101,5 @@ après le commit et le push (voir la section « Suivi » ajoutée ci-dessous).
   Un remboursement après annulation se traite sur `Payment.paymentStatus`.
 - `EXCHANGED` reste sans transition (aucune règle métier fournie).
 - Pas de test de charge ; seule la concurrence fonctionnelle (2 requêtes) est testée.
+- `gh` n'est pas installé localement : les résultats CI ont été lus via l'API GitHub publique (`check-runs` du commit).
+- Écart de contrat avec DSG-06 : le ticket impose `/admin/orders/:id/status`, les maquettes mentionnent `:reference`. Le choix du ticket est appliqué et documenté.
