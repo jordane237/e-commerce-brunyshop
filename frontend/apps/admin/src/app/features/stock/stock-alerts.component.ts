@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { AdminStockApi, StockAlert } from '@bruny/data-access';
 
 @Component({
   selector: 'app-stock-alerts',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe],
+  imports: [],
   template: `
     <section class="stock-alerts">
       <h1>Alertes de stock</h1>

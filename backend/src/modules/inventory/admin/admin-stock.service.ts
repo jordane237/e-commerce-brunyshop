@@ -6,6 +6,11 @@ import { AuditLogService } from '../../audit/audit.service';
 import { InventoryService } from '../inventory.service';
 import { STOCK_AUDIT_ACTIONS } from '../stock-audit.actions';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
+import { AdminStockVariantsQueryDto } from './dto/admin-stock-variants-query.dto';
+import {
+  AdminStockVariantDto,
+  PaginatedAdminStockVariantsDto,
+} from './dto/admin-stock-variant-response.dto';
 import { StockMovementQueryDto } from './dto/stock-movement-query.dto';
 import {
   AdjustStockResponseDto,
@@ -140,6 +145,91 @@ export class AdminStockService {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async listStockVariants(
+    query: AdminStockVariantsQueryDto,
+  ): Promise<PaginatedAdminStockVariantsDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+
+    const baseWhere: Prisma.ProductVariantWhereInput = {};
+    if (query.categoryId) {
+      baseWhere.product = { categoryId: query.categoryId };
+    }
+    if (query.search) {
+      baseWhere.OR = [
+        { sku: { contains: query.search, mode: 'insensitive' } },
+        { product: { name: { contains: query.search, mode: 'insensitive' } } },
+      ];
+    }
+    if (query.stockStatus === 'out') {
+      baseWhere.stock = 0;
+    }
+
+    const inMemoryFilter = query.stockStatus === 'low' || query.stockStatus === 'in_stock';
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.productVariant.findMany({
+        where: baseWhere,
+        ...(inMemoryFilter ? {} : { skip: (page - 1) * limit, take: limit }),
+        orderBy: [{ product: { name: 'asc' } }, { size: 'asc' }],
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              categoryId: true,
+              category: { select: { id: true, name: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.productVariant.count({ where: baseWhere }),
+    ]);
+
+    let data: AdminStockVariantDto[] = items.map((v) => {
+      const low = v.lowStockThreshold ?? 0;
+      const available = v.stock - v.reservedStock;
+      let status: 'OUT' | 'LOW' | 'IN_STOCK' = 'IN_STOCK';
+      if (v.stock === 0) status = 'OUT';
+      else if (low > 0 && v.stock <= low) status = 'LOW';
+      return {
+        variantId: v.id,
+        sku: v.sku,
+        productId: v.product.id,
+        productName: v.product.name,
+        productSlug: v.product.slug,
+        categoryId: v.product.categoryId,
+        categoryName: v.product.category.name,
+        size: v.size,
+        color: v.color,
+        stock: v.stock,
+        reservedStock: v.reservedStock,
+        availableStock: available,
+        lowStockThreshold: low,
+        stockStatus: status,
+      };
+    });
+
+    if (query.stockStatus === 'low') data = data.filter((v) => v.stockStatus === 'LOW');
+    else if (query.stockStatus === 'in_stock')
+      data = data.filter((v) => v.stockStatus === 'IN_STOCK');
+    else if (query.stockStatus === 'out') data = data.filter((v) => v.stockStatus === 'OUT');
+
+    const totalFiltered = inMemoryFilter ? data.length : total;
+    const paged = inMemoryFilter ? data.slice((page - 1) * limit, page * limit) : data;
+
+    return {
+      data: paged,
+      meta: {
+        total: totalFiltered,
+        page,
+        limit,
+        totalPages: Math.ceil(totalFiltered / limit),
       },
     };
   }
