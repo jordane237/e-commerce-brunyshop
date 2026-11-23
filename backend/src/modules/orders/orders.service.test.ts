@@ -97,6 +97,7 @@ function setup(options: { valid?: boolean; issue?: unknown } = {}) {
     },
     order: { create: vi.fn().mockResolvedValue(orderRecord()) },
     payment: { create: vi.fn().mockResolvedValue({ id: 'payment-1' }) },
+    orderStatusHistory: { create: vi.fn().mockResolvedValue({ id: 'history-1' }) },
     shipment: { create: vi.fn().mockResolvedValue({ id: 'shipment-1' }) },
   };
 
