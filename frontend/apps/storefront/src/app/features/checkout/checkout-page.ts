@@ -292,7 +292,9 @@ export class CheckoutPage {
       termsAccepted: this.paymentForm.controls.termsAccepted.value,
     });
 
-    void this.checkout.submit(this.paymentForm.controls.turnstileToken.value);
+    void this.checkout.submit(this.paymentForm.controls.turnstileToken.value).then((order) => {
+      if (order !== null) void this.router.navigate(['/confirmation']);
+    });
   }
 
   goToCatalog(): void {

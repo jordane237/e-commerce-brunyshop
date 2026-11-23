@@ -35,6 +35,12 @@ export const appRoutes: Route[] = [
       import('./features/checkout/checkout.routes').then((module) => module.checkoutRoutes),
   },
   {
+    path: 'confirmation',
+    loadComponent: () =>
+      import('./features/confirmation/confirmation-page').then((module) => module.ConfirmationPage),
+    data: { title: 'Commande confirmée' },
+  },
+  {
     path: 'connexion',
     loadComponent: () =>
       import('./features/auth/login/login.component').then((module) => module.LoginComponent),

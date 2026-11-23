@@ -1,0 +1,165 @@
+<section class="confirmation-page">
+  <div class="confirmation-shell">
+    @if (order(); as order) {
+    <div class="confirmation-hero">
+      <span class="confirmation-hero__badge" aria-hidden="true">✓</span>
+      <div>
+        <p class="confirmation-hero__eyebrow">Commande enregistrée</p>
+        <h1>Votre commande est confirmée</h1>
+        <p class="confirmation-hero__text">
+          Merci {{ checkout.contact().fullName || 'pour votre commande' }}. Votre commande est prise
+          en compte par notre atelier.
+        </p>
+      </div>
+    </div>
+
+    <div class="confirmation-reference">
+      <p class="confirmation-reference__label">Numéro de commande</p>
+      <div class="confirmation-reference__row">
+        <strong class="confirmation-reference__value">{{ order.reference }}</strong>
+        <button
+          type="button"
+          class="confirmation-reference__copy"
+          (click)="copyReference()"
+          [attr.aria-label]="'Copier le numéro de commande ' + order.reference"
+        >
+          {{ copied() ? 'Copié' : 'Copier' }}
+        </button>
+      </div>
+      @if (copied()) {
+      <p
+        class="confirmation-reference__feedback confirmation-reference__feedback--success"
+        role="status"
+      >
+        Numéro de commande copié.
+      </p>
+      } @if (copyError()) {
+      <p
+        class="confirmation-reference__feedback confirmation-reference__feedback--error"
+        role="alert"
+      >
+        Copie impossible. Copiez le numéro manuellement.
+      </p>
+      }
+    </div>
+
+    <div class="confirmation-ticket">
+      <p class="confirmation-ticket__title">Ticket de commande #{{ order.reference }}</p>
+      <p class="confirmation-ticket__meta">
+        {{ order.createdAt | date: 'dd/MM/yyyy à HH:mm' }} · {{ items().length }} article(s)
+      </p>
+    </div>
+
+    <div class="confirmation-block">
+      <h2>Votre commande</h2>
+      <ul class="confirmation-items">
+        @for (line of items(); track line.variantId) {
+        <li class="confirmation-item">
+          <div class="confirmation-item__media">
+            @if (line.imageUrl) {
+            <img [src]="line.imageUrl" [alt]="line.productName" loading="lazy" />
+            } @else {
+            <span aria-hidden="true">👟</span>
+            }
+          </div>
+          <div class="confirmation-item__info">
+            <p class="confirmation-item__name">{{ line.productName }}</p>
+            <p class="confirmation-item__variant">
+              {{ line.color }} · {{ line.size }} · Qté {{ line.quantity }}
+            </p>
+          </div>
+          <p class="confirmation-item__price">{{ line.unitPriceAtAdd * line.quantity | fcfa }}</p>
+        </li>
+        }
+      </ul>
+
+      <dl class="confirmation-totals">
+        <div>
+          <dt>Sous-total</dt>
+          <dd>{{ order.subtotal | fcfa }}</dd>
+        </div>
+        @if (order.discount > 0) {
+        <div>
+          <dt>Remise</dt>
+          <dd>-{{ order.discount | fcfa }}</dd>
+        </div>
+        }
+        <div>
+          <dt>Livraison</dt>
+          <dd>{{ order.shippingFee | fcfa }}</dd>
+        </div>
+        <div class="confirmation-totals__total">
+          <dt>Total à payer</dt>
+          <dd>{{ order.total | fcfa }}</dd>
+        </div>
+      </dl>
+      <p class="confirmation-note">
+        Paiement à la livraison. Prix et frais confirmés par le serveur.
+      </p>
+    </div>
+
+    <div class="confirmation-block">
+      <h2>Livraison</h2>
+      <dl class="confirmation-delivery">
+        <div>
+          <dt>Destinataire</dt>
+          <dd>{{ order ? checkout.contact().fullName : '' }}</dd>
+        </div>
+        <div>
+          <dt>Téléphone</dt>
+          <dd>{{ checkout.contact().phone }}</dd>
+        </div>
+        <div>
+          <dt>Ville</dt>
+          <dd>{{ checkout.delivery().city }}</dd>
+        </div>
+        <div>
+          <dt>Quartier</dt>
+          <dd>{{ checkout.delivery().district }}</dd>
+        </div>
+        <div>
+          <dt>Point de repère</dt>
+          <dd>{{ checkout.delivery().landmark }}</dd>
+        </div>
+        <div>
+          <dt>Mode de paiement</dt>
+          <dd>Paiement à la livraison</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="confirmation-block">
+      <h2>Prochaines étapes</h2>
+      <ol class="confirmation-steps">
+        <li>Votre commande est enregistrée et en attente de préparation.</li>
+        <li>Notre équipe vous contacte pour confirmer la livraison et le créneau.</li>
+        <li>Vous payez à la réception, après avoir essayé vos articles.</li>
+      </ol>
+    </div>
+
+    <div class="confirmation-actions">
+      @if (whatsappLink(); as link) {
+      <a
+        class="confirmation-actions__whatsapp"
+        [href]="link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Confirmer sur WhatsApp
+      </a>
+      }
+      <a class="confirmation-actions__secondary" routerLink="/contact"> Suivre ma commande </a>
+      <button type="button" class="confirmation-actions__ghost" (click)="goToCatalog()">
+        Retour à la boutique
+      </button>
+    </div>
+    } @else {
+    <bruny-empty-state
+      title="Commande introuvable"
+      description="Cette page est accessible uniquement après la validation d'une commande. Si vous avez rechargé la page, la commande reste enregistrée : contactez-nous avec votre référence."
+      actionLabel="Retour à la boutique"
+      (actionClicked)="goToCatalog()"
+    />
+    }
+  </div>
+</section>
