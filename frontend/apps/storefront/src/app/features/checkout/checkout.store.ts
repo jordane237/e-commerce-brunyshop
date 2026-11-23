@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { readApiError, ToastService } from '@bruny/core';
 import { CartStore } from '../../core/cart/cart.store';
+import type { CartLine } from '../../core/cart/cart.model';
 import {
   OrdersApi,
   ShippingApi,
@@ -60,6 +61,7 @@ export class CheckoutStore {
   private readonly submittingState = signal(false);
   private readonly submitErrorState = signal<string | null>(null);
   private readonly orderState = signal<CreateOrderResponse | null>(null);
+  private readonly submittedItemsState = signal<CartLine[]>([]);
 
   readonly step = this.stepState.asReadonly();
   readonly contact = this.contactState.asReadonly();
@@ -71,6 +73,7 @@ export class CheckoutStore {
   readonly submitting = this.submittingState.asReadonly();
   readonly submitError = this.submitErrorState.asReadonly();
   readonly order = this.orderState.asReadonly();
+  readonly submittedItems = this.submittedItemsState.asReadonly();
 
   readonly selectedZone = computed(() => {
     const zoneId = this.deliveryState().zoneId;
@@ -208,6 +211,7 @@ export class CheckoutStore {
       const order = await firstValueFrom(
         this.ordersApi.create(payload, this.idempotencyKeyState()),
       );
+      this.submittedItemsState.set(this.cart.lines());
       this.orderState.set(order);
       this.cart.clear();
       this.clearDraftStorage();
