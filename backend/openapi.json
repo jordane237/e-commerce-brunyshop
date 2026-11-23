@@ -1755,6 +1755,68 @@
         "tags": ["orders"]
       }
     },
+    "/api/v1/admin/orders/{id}/status": {
+      "patch": {
+        "description": "La transition doit être autorisée par la table centrale. Le livreur ne peut constater que la livraison (SHIPPED → DELIVERED/DELIVERY_FAILED, DELIVERY_FAILED → SHIPPED). Toute transition interdite renvoie 409 ; un rôle non habilité renvoie 403. Le changement, son historique et son audit sont écrits dans une seule transaction, et une annulation restitue le stock.",
+        "operationId": "AdminOrdersController_changeStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID de la commande",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transition appliquée ; historique complet renvoyé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderStatusChangeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Statut cible inconnu (VALIDATION_ERROR)"
+          },
+          "401": {
+            "description": "UNAUTHORIZED"
+          },
+          "403": {
+            "description": "FORBIDDEN_STATUS_TRANSITION ou rôle hors périmètre"
+          },
+          "404": {
+            "description": "ORDER_NOT_FOUND"
+          },
+          "409": {
+            "description": "INVALID_STATUS_TRANSITION, STALE_ORDER_STATUS ou STOCK_RELEASE_FAILED"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Changer le statut d’une commande selon la machine à états (ORD-02)",
+        "tags": ["admin-orders"]
+      }
+    },
     "/api/v1/admin/media/presign": {
       "post": {
         "description": "Approche presign + confirm : le client PUT directement le fichier sur MinIO/S3 via l'URL signée, puis appelle /admin/media/confirm. Le Content-Type et la taille déclarés ici ne sont jamais considérés comme une validation : le confirm re-télécharge le fichier et vérifie les magic bytes et la taille réelles. Le fichier est renommé (UUID) et stocké hors de tout dossier exécutable.",
@@ -4091,6 +4153,169 @@
           "total",
           "createdAt"
         ]
+      },
+      "UpdateOrderStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_CONFIRMATION",
+              "AWAITING_PAYMENT",
+              "CONFIRMED",
+              "PAID",
+              "PREPARING",
+              "SHIPPED",
+              "DELIVERED",
+              "DELIVERY_FAILED",
+              "CANCELLED",
+              "RETURN_REQUESTED",
+              "RETURNED",
+              "REFUNDED",
+              "EXCHANGED"
+            ],
+            "description": "Statut cible ; la transition doit être autorisée par la machine à états."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Motif de la transition (annulation, échec de livraison, retour…)",
+            "maxLength": 200
+          },
+          "note": {
+            "type": "string",
+            "description": "Note libre pour l’historique",
+            "maxLength": 1000
+          }
+        },
+        "required": ["status"]
+      },
+      "OrderStatusHistoryItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fromStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_CONFIRMATION",
+              "AWAITING_PAYMENT",
+              "CONFIRMED",
+              "PAID",
+              "PREPARING",
+              "SHIPPED",
+              "DELIVERED",
+              "DELIVERY_FAILED",
+              "CANCELLED",
+              "RETURN_REQUESTED",
+              "RETURNED",
+              "REFUNDED",
+              "EXCHANGED"
+            ],
+            "nullable": true,
+            "description": "Null pour la création"
+          },
+          "toStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_CONFIRMATION",
+              "AWAITING_PAYMENT",
+              "CONFIRMED",
+              "PAID",
+              "PREPARING",
+              "SHIPPED",
+              "DELIVERED",
+              "DELIVERY_FAILED",
+              "CANCELLED",
+              "RETURN_REQUESTED",
+              "RETURNED",
+              "REFUNDED",
+              "EXCHANGED"
+            ]
+          },
+          "reason": {
+            "type": "object",
+            "nullable": true
+          },
+          "note": {
+            "type": "object",
+            "nullable": true
+          },
+          "userId": {
+            "type": "object",
+            "nullable": true
+          },
+          "userName": {
+            "type": "object",
+            "nullable": true,
+            "description": "Nom complet de l’acteur"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-23T15:00:00.000Z"
+          }
+        },
+        "required": ["id", "toStatus", "createdAt"]
+      },
+      "OrderStatusChangeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "example": "BRN-2611-7K3F"
+          },
+          "previousStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_CONFIRMATION",
+              "AWAITING_PAYMENT",
+              "CONFIRMED",
+              "PAID",
+              "PREPARING",
+              "SHIPPED",
+              "DELIVERED",
+              "DELIVERY_FAILED",
+              "CANCELLED",
+              "RETURN_REQUESTED",
+              "RETURNED",
+              "REFUNDED",
+              "EXCHANGED"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_CONFIRMATION",
+              "AWAITING_PAYMENT",
+              "CONFIRMED",
+              "PAID",
+              "PREPARING",
+              "SHIPPED",
+              "DELIVERED",
+              "DELIVERY_FAILED",
+              "CANCELLED",
+              "RETURN_REQUESTED",
+              "RETURNED",
+              "REFUNDED",
+              "EXCHANGED"
+            ]
+          },
+          "changedAt": {
+            "type": "string",
+            "example": "2026-11-23T15:00:00.000Z"
+          },
+          "history": {
+            "description": "Historique complet, du plus récent au plus ancien",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderStatusHistoryItemDto"
+            }
+          }
+        },
+        "required": ["id", "reference", "previousStatus", "status", "changedAt", "history"]
       },
       "PresignUploadDto": {
         "type": "object",

@@ -516,6 +516,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/admin/orders/{id}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Changer le statut d’une commande selon la machine à états (ORD-02)
+     * @description La transition doit être autorisée par la table centrale. Le livreur ne peut constater que la livraison (SHIPPED → DELIVERED/DELIVERY_FAILED, DELIVERY_FAILED → SHIPPED). Toute transition interdite renvoie 409 ; un rôle non habilité renvoie 403. Le changement, son historique et son audit sont écrits dans une seule transaction, et une annulation restitue le stock.
+     */
+    patch: operations['AdminOrdersController_changeStatus_v1'];
+    trace?: never;
+  };
   '/api/v1/admin/media/presign': {
     parameters: {
       query?: never;
@@ -1517,6 +1537,113 @@ export interface components {
       total: number;
       /** @example 2026-11-11T12:00:00.000Z */
       createdAt: string;
+    };
+    UpdateOrderStatusDto: {
+      /**
+       * @description Statut cible ; la transition doit être autorisée par la machine à états.
+       * @enum {string}
+       */
+      status:
+        | 'PENDING_CONFIRMATION'
+        | 'AWAITING_PAYMENT'
+        | 'CONFIRMED'
+        | 'PAID'
+        | 'PREPARING'
+        | 'SHIPPED'
+        | 'DELIVERED'
+        | 'DELIVERY_FAILED'
+        | 'CANCELLED'
+        | 'RETURN_REQUESTED'
+        | 'RETURNED'
+        | 'REFUNDED'
+        | 'EXCHANGED';
+      /** @description Motif de la transition (annulation, échec de livraison, retour…) */
+      reason?: string;
+      /** @description Note libre pour l’historique */
+      note?: string;
+    };
+    OrderStatusHistoryItemDto: {
+      id: string;
+      /**
+       * @description Null pour la création
+       * @enum {string|null}
+       */
+      fromStatus?:
+        | 'PENDING_CONFIRMATION'
+        | 'AWAITING_PAYMENT'
+        | 'CONFIRMED'
+        | 'PAID'
+        | 'PREPARING'
+        | 'SHIPPED'
+        | 'DELIVERED'
+        | 'DELIVERY_FAILED'
+        | 'CANCELLED'
+        | 'RETURN_REQUESTED'
+        | 'RETURNED'
+        | 'REFUNDED'
+        | 'EXCHANGED'
+        | null;
+      /** @enum {string} */
+      toStatus:
+        | 'PENDING_CONFIRMATION'
+        | 'AWAITING_PAYMENT'
+        | 'CONFIRMED'
+        | 'PAID'
+        | 'PREPARING'
+        | 'SHIPPED'
+        | 'DELIVERED'
+        | 'DELIVERY_FAILED'
+        | 'CANCELLED'
+        | 'RETURN_REQUESTED'
+        | 'RETURNED'
+        | 'REFUNDED'
+        | 'EXCHANGED';
+      reason?: Record<string, never> | null;
+      note?: Record<string, never> | null;
+      userId?: Record<string, never> | null;
+      /** @description Nom complet de l’acteur */
+      userName?: Record<string, never> | null;
+      /** @example 2026-11-23T15:00:00.000Z */
+      createdAt: string;
+    };
+    OrderStatusChangeResponseDto: {
+      id: string;
+      /** @example BRN-2611-7K3F */
+      reference: string;
+      /** @enum {string} */
+      previousStatus:
+        | 'PENDING_CONFIRMATION'
+        | 'AWAITING_PAYMENT'
+        | 'CONFIRMED'
+        | 'PAID'
+        | 'PREPARING'
+        | 'SHIPPED'
+        | 'DELIVERED'
+        | 'DELIVERY_FAILED'
+        | 'CANCELLED'
+        | 'RETURN_REQUESTED'
+        | 'RETURNED'
+        | 'REFUNDED'
+        | 'EXCHANGED';
+      /** @enum {string} */
+      status:
+        | 'PENDING_CONFIRMATION'
+        | 'AWAITING_PAYMENT'
+        | 'CONFIRMED'
+        | 'PAID'
+        | 'PREPARING'
+        | 'SHIPPED'
+        | 'DELIVERED'
+        | 'DELIVERY_FAILED'
+        | 'CANCELLED'
+        | 'RETURN_REQUESTED'
+        | 'RETURNED'
+        | 'REFUNDED'
+        | 'EXCHANGED';
+      /** @example 2026-11-23T15:00:00.000Z */
+      changedAt: string;
+      /** @description Historique complet, du plus récent au plus ancien */
+      history: components['schemas']['OrderStatusHistoryItemDto'][];
     };
     PresignUploadDto: {
       /** @example sneakers-urbanstep-air */
@@ -2935,6 +3062,68 @@ export interface operations {
       };
       /** @description CAPTCHA_UNAVAILABLE (service indisponible) */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminOrdersController_changeStatus_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Identifiant UUID de la commande */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateOrderStatusDto'];
+      };
+    };
+    responses: {
+      /** @description Transition appliquée ; historique complet renvoyé */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrderStatusChangeResponseDto'];
+        };
+      };
+      /** @description Statut cible inconnu (VALIDATION_ERROR) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description FORBIDDEN_STATUS_TRANSITION ou rôle hors périmètre */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ORDER_NOT_FOUND */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description INVALID_STATUS_TRANSITION, STALE_ORDER_STATUS ou STOCK_RELEASE_FAILED */
+      409: {
         headers: {
           [name: string]: unknown;
         };

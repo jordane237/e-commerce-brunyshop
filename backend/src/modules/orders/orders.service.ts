@@ -323,6 +323,16 @@ export class OrdersService {
           },
         });
 
+        // ORD-02 : la création est la première entrée de la timeline.
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: order.id,
+            fromStatus: null,
+            toStatus: order.status,
+            userId: actor?.id ?? null,
+          },
+        });
+
         await tx.payment.create({
           data: {
             orderId: order.id,

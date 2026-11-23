@@ -111,8 +111,9 @@ model User {
   wishlists       Wishlist[]
   stockMovements  StockMovement[]
   auditLogs       AuditLog[]
-  driverShipments Shipment[]
-  backupCodes     BackupCode[]
+  driverShipments    Shipment[]
+  orderStatusChanges OrderStatusHistory[]
+  backupCodes        BackupCode[]
   notifications   Notification[]
   contactMessagesHandled ContactMessage[] @relation("ContactMessageHandler")
 }
@@ -411,11 +412,12 @@ model Order {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  user     User?         @relation(fields: [userId], references: [id])
-  items    OrderItem[]
-  payments Payment[]
-  shipment Shipment?
-  coupons  OrderCoupon[]
+  user          User?                @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+  payments      Payment[]
+  shipment      Shipment?
+  coupons       OrderCoupon[]
+  statusHistory OrderStatusHistory[]
 
   @@index([userId])
   @@index([status])
@@ -473,6 +475,26 @@ model OrderItem {
 
   @@index([orderId])
   @@index([variantId])
+}
+
+// ORD-02 : journal des transitions de statut. Append-only : chaque entree
+// conserve le statut precedent, le nouveau, l'acteur et l'horodatage.
+model OrderStatusHistory {
+  id         String      @id @default(uuid())
+  orderId    String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  // Motif fourni par l'acteur (annulation, echec de livraison, retour...).
+  reason     String?
+  note       String?
+  userId     String?
+  createdAt  DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([userId])
 }
 
 model Payment {

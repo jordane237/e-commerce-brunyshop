@@ -31,4 +31,6 @@ export const ORDER_CREATED_EVENT = 'order.created';
 export const ORDER_AUDIT_ACTIONS = {
   ORDER_CREATED: 'ORDER_CREATED',
   ORDER_RATE_LIMITED: 'ORDER_RATE_LIMITED',
+  // ORD-02 : chaque transition de statut laisse une trace d'audit.
+  ORDER_STATUS_CHANGED: 'ORDER_STATUS_CHANGED',
 } as const;
