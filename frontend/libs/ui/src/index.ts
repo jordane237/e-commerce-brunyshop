@@ -29,4 +29,5 @@ export * from './lib/spinner/spinner.component';
 export * from './lib/table/table.component';
 export * from './lib/table-of-contents/table-of-contents.component';
 export * from './lib/toast/toast.component';
+export * from './lib/timeline/timeline.component';
 export * from './lib/toggle/toggle.component';

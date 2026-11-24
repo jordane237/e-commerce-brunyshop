@@ -103,6 +103,14 @@ export const appRoutes: Route[] = [
     data: { title: 'Retours et échanges' },
   },
   {
+    path: 'suivi',
+    loadChildren: () =>
+      import('./features/order-tracking/order-tracking.routes').then(
+        (module) => module.ORDER_TRACKING_ROUTES,
+      ),
+    data: { title: 'Suivre ma commande' },
+  },
+  {
     path: 'guide-des-tailles',
     loadComponent: () =>
       import('./features/info/size-guide/size-guide.component').then(

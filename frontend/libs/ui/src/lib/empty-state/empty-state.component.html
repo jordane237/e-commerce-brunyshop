@@ -4,7 +4,7 @@
     <p class="empty-state__description">{{ description() }}</p>
   }
   @if (actionLabel()) {
-    <bruny-button variant="primary" (clicked)="actionClicked.emit()">{{
+    <bruny-button variant="primary" (click)="actionClicked.emit()">{{
       actionLabel()
     }}</bruny-button>
   }

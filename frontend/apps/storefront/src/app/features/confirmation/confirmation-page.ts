@@ -8,6 +8,7 @@ import { FcfaPipe } from '@bruny/util';
 import { SeoService } from '../../core/seo.service';
 import { WhatsAppService } from '../../core/services/whatsapp.service';
 import { CheckoutStore } from '../checkout/checkout.store';
+import { toOrderPhone } from '../checkout/checkout.model';
 
 @Component({
   selector: 'app-confirmation-page',
@@ -28,6 +29,16 @@ export class ConfirmationPage {
 
   readonly order = this.checkout.order;
   readonly items = this.checkout.submittedItems;
+
+  readonly trackingPhone = computed(() => {
+    const phone = this.checkout.contact().phone;
+    if (!phone) return '';
+    try {
+      return toOrderPhone(phone);
+    } catch {
+      return '';
+    }
+  });
 
   readonly whatsappLink = computed(() => {
     const order = this.order();
