@@ -65,6 +65,14 @@ export async function seedMisc(prisma: PrismaClient): Promise<void> {
     });
   }
 
+  // PAY-01 : seuil configurable (XAF) au-delà duquel la confirmation COD est obligatoire.
+  // upsert idempotent : ne pas écraser une valeur déjà configurée par l'admin.
+  await prisma.setting.upsert({
+    where: { key: 'order.codConfirmationThreshold' },
+    create: { key: 'order.codConfirmationThreshold', value: 100000 },
+    update: {},
+  });
+
   // --- Panier du client + commande de test -------------------------
   // On résout les IDs des entités déjà créées (clients, produits,
   // variantes, commandes). Le client de démonstration est
