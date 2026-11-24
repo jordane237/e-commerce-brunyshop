@@ -536,6 +536,40 @@ export interface paths {
     patch: operations['AdminOrdersController_changeStatus_v1'];
     trace?: never;
   };
+  '/api/v1/admin/orders/{id}/confirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirmer une commande COD (appel ou WhatsApp) (PAY-01) */
+    post: operations['AdminOrdersController_confirm_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/shipments/{id}/collect-cod': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Enregistrer l'encaissement COD à la livraison (PAY-01) */
+    patch: operations['AdminShipmentsController_collectCod_v1'];
+    trace?: never;
+  };
   '/api/v1/orders/track': {
     parameters: {
       query?: never;
@@ -1580,6 +1614,12 @@ export interface components {
       total: number;
       /** @example 2026-11-11T12:00:00.000Z */
       createdAt: string;
+      /** @example 2026-11-11T12:05:00.000Z */
+      confirmedAt?: Record<string, never> | null;
+      confirmedBy?: Record<string, never> | null;
+      /** @enum {string|null} */
+      confirmationMethod?: 'CALL' | 'WHATSAPP' | null;
+      confirmationNotes?: Record<string, never> | null;
     };
     UpdateOrderStatusDto: {
       /**
@@ -1687,6 +1727,32 @@ export interface components {
       changedAt: string;
       /** @description Historique complet, du plus récent au plus ancien */
       history: components['schemas']['OrderStatusHistoryItemDto'][];
+    };
+    ConfirmOrderDto: {
+      /**
+       * @description Méthode de confirmation (appel ou WhatsApp)
+       * @enum {string}
+       */
+      method: 'CALL' | 'WHATSAPP';
+      /** @description Notes libres de confirmation */
+      notes?: string;
+    };
+    CollectCodDto: {
+      /** @description Montant encaissé (XAF) */
+      amount: number;
+      /** @description Date/heure d'encaissement (ISO). Par défaut : maintenant. */
+      collectedAt?: string;
+    };
+    ShipmentResponseDto: {
+      id: string;
+      orderId: string;
+      /** @enum {string} */
+      status: 'PENDING' | 'ASSIGNED' | 'IN_TRANSIT' | 'DELIVERED' | 'FAILED' | 'RETURNED';
+      deliveredAt?: Record<string, never> | null;
+      codCollected: boolean;
+      codCollectedAt?: Record<string, never> | null;
+      codCollectedBy?: Record<string, never> | null;
+      codAmount?: Record<string, never> | null;
     };
     TrackOrderDto: {
       /**
@@ -3279,6 +3345,81 @@ export interface operations {
       };
       /** @description INVALID_STATUS_TRANSITION, STALE_ORDER_STATUS ou STOCK_RELEASE_FAILED */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminOrdersController_confirm_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Identifiant UUID de la commande */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConfirmOrderDto'];
+      };
+    };
+    responses: {
+      /** @description Commande confirmée */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrderResponseDto'];
+        };
+      };
+    };
+  };
+  AdminShipmentsController_collectCod_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Identifiant UUID de la livraison */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CollectCodDto'];
+      };
+    };
+    responses: {
+      /** @description Encaissement enregistré */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShipmentResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description FORBIDDEN */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description SHIPMENT_NOT_FOUND */
+      404: {
         headers: {
           [name: string]: unknown;
         };

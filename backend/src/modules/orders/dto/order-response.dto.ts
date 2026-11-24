@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { PaymentMethod } from '../../../generated/prisma/client';
+import { OrderConfirmationMethod, PaymentMethod } from '../../../generated/prisma/client';
 
 export class OrderResponseDto {
   @ApiProperty()
@@ -32,4 +32,16 @@ export class OrderResponseDto {
 
   @ApiProperty({ example: '2026-11-11T12:00:00.000Z' })
   createdAt!: string;
+
+  @ApiPropertyOptional({ example: '2026-11-11T12:05:00.000Z', nullable: true })
+  confirmedAt?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  confirmedBy?: string | null;
+
+  @ApiPropertyOptional({ enum: OrderConfirmationMethod, nullable: true })
+  confirmationMethod?: OrderConfirmationMethod | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  confirmationNotes?: string | null;
 }

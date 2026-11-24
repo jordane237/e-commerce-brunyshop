@@ -105,14 +105,16 @@ model User {
   roles           UserRole[]
   addresses       Address[]
   orders          Order[]
+  ordersConfirmed Order[] @relation("OrderConfirmer")
   carts           Cart[]
   refreshTokens   RefreshToken[]
   reviews         Review[]
   wishlists       Wishlist[]
   stockMovements  StockMovement[]
   auditLogs       AuditLog[]
-  driverShipments    Shipment[]
-  orderStatusChanges OrderStatusHistory[]
+  driverShipments        Shipment[]
+  shipmentsCodCollected  Shipment[] @relation("ShipmentCodCollector")
+  orderStatusChanges     OrderStatusHistory[]
   backupCodes        BackupCode[]
   notifications   Notification[]
   contactMessagesHandled ContactMessage[] @relation("ContactMessageHandler")
@@ -398,6 +400,12 @@ model Order {
   total       Int
   paymentMethod PaymentMethod
   paymentStatus PaymentStatus @default(PENDING)
+  // PAY-01 : confirmation COD (appel ou WhatsApp) avant expédition.
+  confirmedAt           DateTime?                 @map("confirmed_at")
+  confirmedBy           String?                   @map("confirmed_by")
+  confirmer             User?                     @relation("OrderConfirmer", fields: [confirmedBy], references: [id], onDelete: SetNull)
+  confirmationMethod    OrderConfirmationMethod?  @map("confirmation_method")
+  confirmationNotes     String?                   @db.VarChar(500) @map("confirmation_notes")
   // Frozen delivery address (JSON): later address edits never alter history.
   addressSnapshot Json?
   // Acquisition context (UTM / referrer snapshot).
@@ -423,6 +431,8 @@ model Order {
   @@index([status])
   @@index([guestPhone])
   @@index([deletedAt])
+  @@index([confirmedAt])
+  @@index([confirmationMethod])
 }
 
 enum OrderStatus {
@@ -455,6 +465,11 @@ enum PaymentStatus {
   SUCCEEDED
   FAILED
   REFUNDED
+}
+
+enum OrderConfirmationMethod {
+  CALL
+  WHATSAPP
 }
 
 model OrderItem {
@@ -529,6 +544,10 @@ model Shipment {
   deliveredAt    DateTime?
   // Cash collected on delivery (COD) handed over.
   codCollected   Boolean        @default(false)
+  codCollectedAt DateTime?      @map("cod_collected_at")
+  codCollectedBy String?        @map("cod_collected_by")
+  codCollector   User?          @relation("ShipmentCodCollector", fields: [codCollectedBy], references: [id], onDelete: SetNull)
+  codAmount      Int?           @map("cod_amount")
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -539,6 +558,7 @@ model Shipment {
   @@unique([orderId])
   @@index([zoneId])
   @@index([driverId])
+  @@index([codCollectedAt])
 }
 
 enum ShipmentStatus {

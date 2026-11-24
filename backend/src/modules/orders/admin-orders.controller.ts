@@ -8,6 +8,7 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -30,8 +31,11 @@ import {
 } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { ConfirmOrderDto } from './dto/confirm-order.dto';
 import { OrderStatusChangeResponseDto } from './dto/order-status-history.dto';
+import { OrderResponseDto } from './dto/order-response.dto';
 import { OrderWorkflowService } from './order-workflow.service';
+import { OrderConfirmationService } from './order-confirmation.service';
 import { ORDER_STATUS_ACTOR_ROLES } from './order-status';
 
 @ApiTags('admin-orders')
@@ -40,7 +44,10 @@ import { ORDER_STATUS_ACTOR_ROLES } from './order-status';
 @Controller('admin/orders')
 @Throttle({ default: { limit: 60, ttl: 60_000 } })
 export class AdminOrdersController {
-  constructor(private readonly workflow: OrderWorkflowService) {}
+  constructor(
+    private readonly workflow: OrderWorkflowService,
+    private readonly confirmation: OrderConfirmationService,
+  ) {}
 
   @Patch(':id/status')
   @HttpCode(HttpStatus.OK)
@@ -63,19 +70,46 @@ export class AdminOrdersController {
   @ApiConflictResponse({
     description: 'INVALID_STATUS_TRANSITION, STALE_ORDER_STATUS ou STOCK_RELEASE_FAILED',
   })
-  changeStatus(
+  async changeStatus(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdateOrderStatusDto,
     @CurrentUser() user: AuthenticatedUser,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string | undefined,
   ): Promise<OrderStatusChangeResponseDto> {
+    // PAY-01 : blocage de la préparation sans confirmation enregistrée.
+    await this.confirmation.validateStatusTransition(id, dto.status);
     return this.workflow.changeStatus(
       id,
       dto,
       { userId: user.id, roles: user.roles },
       {
         ...(ip !== undefined ? { ip } : {}),
+        ...(userAgent !== undefined ? { userAgent } : {}),
+      },
+    );
+  }
+
+  @Post(':id/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Roles('ORDER_MANAGER', 'ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Confirmer une commande COD (appel ou WhatsApp) (PAY-01)' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'Identifiant UUID de la commande' })
+  @ApiBody({ type: ConfirmOrderDto })
+  @ApiOkResponse({ type: OrderResponseDto, description: 'Commande confirmée' })
+  async confirm(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: ConfirmOrderDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string | undefined,
+  ): Promise<OrderResponseDto> {
+    return this.confirmation.confirmOrder(
+      id,
+      { method: dto.method, ...(dto.notes !== undefined ? { notes: dto.notes } : {}) },
+      user,
+      {
+        ...(ip !== undefined ? { ipAddress: ip } : {}),
         ...(userAgent !== undefined ? { userAgent } : {}),
       },
     );

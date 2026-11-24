@@ -1817,6 +1817,107 @@
         "tags": ["admin-orders"]
       }
     },
+    "/api/v1/admin/orders/{id}/confirm": {
+      "post": {
+        "operationId": "AdminOrdersController_confirm_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID de la commande",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Commande confirmée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Confirmer une commande COD (appel ou WhatsApp) (PAY-01)",
+        "tags": ["admin-orders"]
+      }
+    },
+    "/api/v1/admin/shipments/{id}/collect-cod": {
+      "patch": {
+        "operationId": "AdminShipmentsController_collectCod_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID de la livraison",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectCodDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Encaissement enregistré",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED"
+          },
+          "403": {
+            "description": "FORBIDDEN"
+          },
+          "404": {
+            "description": "SHIPMENT_NOT_FOUND"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Enregistrer l'encaissement COD à la livraison (PAY-01)",
+        "tags": ["admin-shipments"]
+      }
+    },
     "/api/v1/orders/track": {
       "post": {
         "operationId": "OrderTrackingController_track_v1",
@@ -4220,6 +4321,24 @@
           "createdAt": {
             "type": "string",
             "example": "2026-11-11T12:00:00.000Z"
+          },
+          "confirmedAt": {
+            "type": "object",
+            "example": "2026-11-11T12:05:00.000Z",
+            "nullable": true
+          },
+          "confirmedBy": {
+            "type": "object",
+            "nullable": true
+          },
+          "confirmationMethod": {
+            "type": "string",
+            "enum": ["CALL", "WHATSAPP"],
+            "nullable": true
+          },
+          "confirmationNotes": {
+            "type": "object",
+            "nullable": true
           }
         },
         "required": [
@@ -4397,6 +4516,72 @@
           }
         },
         "required": ["id", "reference", "previousStatus", "status", "changedAt", "history"]
+      },
+      "ConfirmOrderDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": ["CALL", "WHATSAPP"],
+            "description": "Méthode de confirmation (appel ou WhatsApp)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes libres de confirmation",
+            "maxLength": 500
+          }
+        },
+        "required": ["method"]
+      },
+      "CollectCodDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Montant encaissé (XAF)",
+            "minimum": 0
+          },
+          "collectedAt": {
+            "type": "string",
+            "description": "Date/heure d'encaissement (ISO). Par défaut : maintenant."
+          }
+        },
+        "required": ["amount"]
+      },
+      "ShipmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "ASSIGNED", "IN_TRANSIT", "DELIVERED", "FAILED", "RETURNED"]
+          },
+          "deliveredAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "codCollected": {
+            "type": "boolean"
+          },
+          "codCollectedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "codCollectedBy": {
+            "type": "object",
+            "nullable": true
+          },
+          "codAmount": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": ["id", "orderId", "status", "codCollected"]
       },
       "TrackOrderDto": {
         "type": "object",
