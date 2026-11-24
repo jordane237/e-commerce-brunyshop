@@ -5,6 +5,7 @@ import { AuditModule } from '../audit/audit.module';
 import { AdminDeliveryZonesController } from './admin/admin-delivery-zones.controller';
 import { AdminDeliveryZonesService } from './admin/admin-delivery-zones.service';
 import { ShippingController } from './shipping.controller';
+import { ShippingQuoteService } from './shipping-quote.service';
 import { ShippingService } from './shipping.service';
 
 /**
@@ -14,7 +15,7 @@ import { ShippingService } from './shipping.service';
 @Module({
   imports: [DatabaseModule, AuditModule],
   controllers: [ShippingController, AdminDeliveryZonesController],
-  providers: [ShippingService, AdminDeliveryZonesService],
-  exports: [ShippingService, AdminDeliveryZonesService],
+  providers: [ShippingService, ShippingQuoteService, AdminDeliveryZonesService],
+  exports: [ShippingService, ShippingQuoteService, AdminDeliveryZonesService],
 })
 export class ShippingModule {}

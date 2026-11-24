@@ -39,6 +39,7 @@ import {
 import { OrderAttemptService } from './order-attempt.service';
 import { OrderErrorCode } from './orders.errors';
 import { OrderReferenceGenerator } from './reference/order-reference.generator';
+import { resolveDeliveryZone } from '../../common/shipping/delivery-zones';
 
 const variantSelection = {
   id: true,
@@ -699,44 +700,8 @@ export class OrdersService {
     city: string,
     deliveryZoneId: string | undefined,
   ): Promise<{ id: string; fee: number }> {
-    const normalizedCity = normalizeCity(city);
-
-    if (deliveryZoneId !== undefined) {
-      const zone = await tx.deliveryZone.findUnique({
-        where: { id: deliveryZoneId },
-        select: { id: true, fee: true, cities: true, isActive: true },
-      });
-      if (zone === null || !zone.isActive) {
-        throw new BadRequestException({
-          code: OrderErrorCode.DELIVERY_ZONE_NOT_FOUND,
-          message: 'Cette zone de livraison n’existe plus. Choisissez une autre adresse.',
-          errors: [{ field: 'deliveryZoneId', message: 'Zone introuvable.' }],
-        });
-      }
-      if (!zone.cities.some((value) => normalizeCity(value) === normalizedCity)) {
-        throw new BadRequestException({
-          code: OrderErrorCode.DELIVERY_ZONE_MISMATCH,
-          message: `La ville ${city.trim()} ne fait pas partie de la zone choisie.`,
-          errors: [{ field: 'address.city', message: 'Ville hors de la zone sélectionnée.' }],
-        });
-      }
-      return { id: zone.id, fee: zone.fee };
-    }
-
-    const zones = await tx.deliveryZone.findMany({
-      where: { isActive: true },
-      select: { id: true, fee: true, cities: true },
-    });
-    const zone = zones.find((candidate) =>
-      candidate.cities.some((value) => normalizeCity(value) === normalizedCity),
-    );
-    if (zone === undefined) {
-      throw new BadRequestException({
-        code: OrderErrorCode.DELIVERY_ZONE_NOT_FOUND,
-        message: `Nous ne livrons pas encore à ${city.trim()}.`,
-        errors: [{ field: 'address.city', message: 'Ville non desservie.' }],
-      });
-    }
+    // SHP-02 : même logique que POST /shipping/quote.
+    const zone = await resolveDeliveryZone(tx, city, deliveryZoneId);
     return { id: zone.id, fee: zone.fee };
   }
 
@@ -789,10 +754,6 @@ export class OrdersService {
       createdAt: order.createdAt.toISOString(),
     };
   }
-}
-
-function normalizeCity(city: string): string {
-  return city.trim().toLocaleLowerCase('fr');
 }
 
 // L'instantané d'adresse est un JSON libre côté Prisma : on ne lit que le nom
