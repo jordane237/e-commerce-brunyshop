@@ -11,6 +11,13 @@ type CreateOrderBody = NonNullable<
 export type CreateOrderResponse =
   paths['/api/v1/orders']['post']['responses']['201']['content']['application/json'];
 
+type TrackOrderBody = NonNullable<
+  paths['/api/v1/orders/track']['post']['requestBody']
+>['content']['application/json'];
+
+export type TrackOrderResponse =
+  paths['/api/v1/orders/track']['post']['responses']['200']['content']['application/json'];
+
 /**
  * Client typé de `POST /api/v1/orders` (ORD-01).
  *
@@ -25,6 +32,12 @@ export class OrdersApi {
   create(payload: CreateOrderBody, idempotencyKey: string): Observable<CreateOrderResponse> {
     return this.http.post<CreateOrderResponse>(`${this.baseUrl}/orders`, payload, {
       headers: { 'Idempotency-Key': idempotencyKey },
+    });
+  }
+
+  track(payload: TrackOrderBody): Observable<TrackOrderResponse> {
+    return this.http.post<TrackOrderResponse>(`${this.baseUrl}/orders/track`, payload, {
+      headers: { 'X-Skip-Error-Toast': 'true' },
     });
   }
 }

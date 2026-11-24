@@ -1,0 +1,156 @@
+<section class="tracking-page">
+  <div class="tracking-shell">
+    @if (!found() && !isEmpty()) {
+      <header class="tracking-header">
+        <h1>Suivre ma commande</h1>
+        <p class="tracking-intro">
+          Saisissez votre numéro de commande et le téléphone utilisé lors de l'achat pour suivre
+          l'état de votre livraison.
+        </p>
+      </header>
+
+      <form class="tracking-form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <bruny-input
+          label="Numéro de commande"
+          name="reference"
+          type="text"
+          placeholder="BRN-2611-7K3F"
+          hint="Format : BRN-XXXX-XXXX"
+          autocomplete="off"
+          formControlName="reference"
+          [error]="referenceError() ?? ''"
+        />
+        <bruny-input
+          label="Téléphone"
+          name="phone"
+          type="tel"
+          inputMode="tel"
+          placeholder="+237 6 XX XX XX XX"
+          autocomplete="tel"
+          formControlName="phone"
+          [error]="phoneError() ?? ''"
+        />
+        <bruny-button
+          type="submit"
+          variant="primary"
+          [block]="true"
+          [loading]="loading()"
+          [disabled]="form.invalid || loading()"
+        >
+          Suivre ma commande
+        </bruny-button>
+      </form>
+    }
+
+    @if (loading()) {
+      <bruny-skeleton variant="rect" height="240px" />
+    } @else if (error()) {
+      <div class="tracking-error" role="alert">
+        <p>{{ error() }}</p>
+        <bruny-button variant="primary" (click)="onSubmit()">Réessayer</bruny-button>
+      </div>
+    } @else if (isEmpty()) {
+      <section class="tracking-empty" role="status">
+        <bruny-empty-state
+          title="Référence introuvable ou numéro incorrect"
+          description="Vérifiez votre numéro de commande et le téléphone associé à votre commande."
+          actionLabel="Réessayer"
+          (actionClicked)="onReset()"
+        />
+      </section>
+    } @else if (found() && order(); as order) {
+      <section class="tracking-result" aria-live="polite">
+        <header class="tracking-result__header">
+          <div>
+            <p class="tracking-result__label">Commande</p>
+            <p class="tracking-result__reference">{{ order.reference }}</p>
+          </div>
+          <bruny-status-badge
+            [label]="order.statusLabel"
+            [variant]="getStatusVariant(order.status)"
+          />
+        </header>
+
+        <bruny-timeline [entries]="timelineEntries()" />
+
+        <section class="tracking-result__items">
+          <h2>Articles</h2>
+          <ul role="list">
+            @for (item of order.items; track item.name + item.size + item.color) {
+              <li class="tracking-item">
+                <div>
+                  <p class="tracking-item__name">{{ item.name }}</p>
+                  <p class="tracking-item__variant">
+                    {{ item.size }} · {{ item.color }} · Qté : {{ item.quantity }}
+                  </p>
+                </div>
+                <p class="tracking-item__price">{{ item.lineTotal | fcfa }}</p>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="tracking-result__summary">
+          <dl>
+            <div>
+              <dt>Sous-total</dt>
+              <dd>{{ order.subtotal | fcfa }}</dd>
+            </div>
+            @if (order.discount > 0) {
+              <div>
+                <dt>Remise</dt>
+                <dd>− {{ order.discount | fcfa }}</dd>
+              </div>
+            }
+            <div>
+              <dt>Livraison</dt>
+              <dd>{{ order.shippingFee | fcfa }}</dd>
+            </div>
+            <div class="tracking-result__total">
+              <dt>Total</dt>
+              <dd>{{ order.total | fcfa }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        @if (order.shippingCity || order.estimatedDelivery) {
+          <section class="tracking-result__delivery">
+            @if (order.shippingCity) {
+              <p>
+                Livraison à : <strong>{{ order.shippingCity }}</strong>
+              </p>
+            }
+            @if (order.estimatedDelivery) {
+              <p>Date estimée : {{ order.estimatedDelivery | date: 'd MMMM yyyy' }}</p>
+            }
+          </section>
+        }
+
+        <section class="tracking-result__actions">
+          <a
+            class="tracking-result__whatsapp"
+            [href]="whatsappHelpUrl()"
+            target="_blank"
+            rel="noopener noreferrer"
+            [attr.aria-label]="
+              'Besoin d\u2019aide sur la commande ' +
+              order.reference +
+              ' ? Contactez-nous sur WhatsApp (nouvel onglet)'
+            "
+          >
+            <bruny-icon name="whatsapp" aria-hidden="true" />
+            Besoin d'aide ? Contactez-nous sur WhatsApp
+          </a>
+
+          @if (canRequestExchange()) {
+            <a routerLink="/retours" class="tracking-result__exchange"> Demander un échange </a>
+          }
+        </section>
+
+        <button type="button" class="tracking-result__reset" (click)="onReset()">
+          Rechercher une autre commande
+        </button>
+      </section>
+    }
+  </div>
+</section>

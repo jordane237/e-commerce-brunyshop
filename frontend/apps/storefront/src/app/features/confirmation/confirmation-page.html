@@ -148,7 +148,13 @@
         Confirmer sur WhatsApp
       </a>
       }
-      <a class="confirmation-actions__secondary" routerLink="/contact"> Suivre ma commande </a>
+      <a
+        class="confirmation-actions__secondary"
+        [routerLink]="['/suivi']"
+        [queryParams]="{ reference: order.reference, phone: trackingPhone() }"
+      >
+        Suivre ma commande
+      </a>
       <button type="button" class="confirmation-actions__ghost" (click)="goToCatalog()">
         Retour à la boutique
       </button>
