@@ -285,9 +285,10 @@ export class EnvVariables {
   @IsString()
   public WHATSAPP_TOKEN?: string;
 
-  // Payments
+  // Payments (PAY-02)
   @IsOptional()
   @IsString()
+  @IsIn(['fake', 'campay', 'cinetpay', 'flutterwave', 'notchpay'])
   public PAYMENT_PROVIDER?: string;
 
   @IsOptional()
