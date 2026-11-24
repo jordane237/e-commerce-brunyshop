@@ -178,6 +178,19 @@ export default tseslint.config(
       ],
     },
   },
+  // Exception : shipping admin audite les mutations de zones de livraison via
+  // le service exporté par AuditModule.
+  {
+    files: ['src/modules/shipping/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [{ group: crossModulePatterns(['audit']), message: CROSS_MODULE_MESSAGE }],
+        },
+      ],
+    },
+  },
   // Exception : orders compose les modules cart (recalcul des prix/validation),
   // inventory (décrément atomique), audit (traçabilité ORDER_CREATED) et
   // notifications (accusé de réception order.created) via leurs services exportés.

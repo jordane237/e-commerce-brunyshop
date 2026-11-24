@@ -570,15 +570,23 @@ enum ShipmentStatus {
   RETURNED
 }
 
+enum DeliveryMode {
+  HOME
+  RELAY
+  PICKUP
+}
+
 model DeliveryZone {
-  id            String   @id @default(uuid())
-  name          String
+  id            String          @id @default(uuid())
+  name          String          @unique
+  description   String?
   cities        String[]
-  // Delivery fee in integer XAF.
   fee           Int
   estimatedDays Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  modes         DeliveryMode[]  @default([HOME])
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   shipments Shipment[]
 }

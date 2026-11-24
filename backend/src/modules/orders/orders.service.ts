@@ -692,8 +692,8 @@ export class OrdersService {
   }
 
   // A zone is identified either by the id chosen in P10 (preferred) or by the
-  // delivery city. DeliveryZone carries no active flag, so existence is the
-  // only server-side availability check.
+  // delivery city. Inactive zones are never eligible for a new order, even if
+  // their id is sent explicitly (SHP-01).
   private async findDeliveryZone(
     tx: Prisma.TransactionClient,
     city: string,
@@ -704,9 +704,9 @@ export class OrdersService {
     if (deliveryZoneId !== undefined) {
       const zone = await tx.deliveryZone.findUnique({
         where: { id: deliveryZoneId },
-        select: { id: true, fee: true, cities: true },
+        select: { id: true, fee: true, cities: true, isActive: true },
       });
-      if (zone === null) {
+      if (zone === null || !zone.isActive) {
         throw new BadRequestException({
           code: OrderErrorCode.DELIVERY_ZONE_NOT_FOUND,
           message: 'Cette zone de livraison n’existe plus. Choisissez une autre adresse.',
@@ -724,6 +724,7 @@ export class OrdersService {
     }
 
     const zones = await tx.deliveryZone.findMany({
+      where: { isActive: true },
       select: { id: true, fee: true, cities: true },
     });
     const zone = zones.find((candidate) =>

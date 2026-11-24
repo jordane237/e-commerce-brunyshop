@@ -53,6 +53,15 @@ export const appRoutes: Route[] = [
           import('./features/shipments/shipments.routes').then((module) => module.SHIPMENTS_ROUTES),
       },
       {
+        path: 'zones-livraison',
+        canActivate: [roleGuard(navRoles('delivery-zones'))],
+        data: { title: 'Zones de livraison', breadcrumb: 'Zones de livraison' },
+        loadChildren: () =>
+          import('./features/delivery-zones/delivery-zones.routes').then(
+            (module) => module.DELIVERY_ZONES_ROUTES,
+          ),
+      },
+      {
         path: 'clients',
         canActivate: [roleGuard(navRoles('customers'))],
         data: { title: 'Clients', breadcrumb: 'Clients' },

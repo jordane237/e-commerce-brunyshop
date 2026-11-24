@@ -25,4 +25,12 @@ export class DeliveryZoneDto {
 
   @ApiProperty({ description: 'Délai estimé en jours ouvrés', example: 1 })
   estimatedDays!: number;
+
+  @ApiProperty({
+    enum: ['HOME', 'RELAY', 'PICKUP'],
+    isArray: true,
+    example: ['HOME'],
+    description: 'Modes de livraison proposés pour la zone.',
+  })
+  modes!: string[];
 }

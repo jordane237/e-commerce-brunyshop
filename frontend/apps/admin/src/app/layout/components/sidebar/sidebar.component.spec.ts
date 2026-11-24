@@ -36,7 +36,7 @@ describe('AdminSidebarComponent', () => {
     expect(labels).toContain('Tableau de bord');
     expect(labels).toContain('Audit');
     expect(labels).toContain('Paramètres');
-    expect(fixture.nativeElement.querySelectorAll('.sidebar__item')).toHaveLength(11);
+    expect(fixture.nativeElement.querySelectorAll('.sidebar__item')).toHaveLength(12);
   });
 
   it('limits a STOCK_MANAGER to dashboard, products and stock', async () => {
