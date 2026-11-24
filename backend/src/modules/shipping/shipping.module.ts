@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 
 import { DatabaseModule } from '../../infrastructure/database/database.module';
+import { AuditModule } from '../audit/audit.module';
+import { AdminDeliveryZonesController } from './admin/admin-delivery-zones.controller';
+import { AdminDeliveryZonesService } from './admin/admin-delivery-zones.service';
 import { ShippingController } from './shipping.controller';
 import { ShippingService } from './shipping.service';
 
@@ -9,9 +12,9 @@ import { ShippingService } from './shipping.service';
  * SHP-01 étendra ce module avec les tarifs administrables et le devis (quote).
  */
 @Module({
-  imports: [DatabaseModule],
-  controllers: [ShippingController],
-  providers: [ShippingService],
-  exports: [ShippingService],
+  imports: [DatabaseModule, AuditModule],
+  controllers: [ShippingController, AdminDeliveryZonesController],
+  providers: [ShippingService, AdminDeliveryZonesService],
+  exports: [ShippingService, AdminDeliveryZonesService],
 })
 export class ShippingModule {}

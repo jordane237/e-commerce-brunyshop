@@ -13,6 +13,8 @@ export interface DeliveryZoneDto {
   fee: number;
   /** Délai estimé en jours ouvrés. */
   estimatedDays: number;
+  /** Modes de livraison proposés pour la zone. */
+  modes: string[];
 }
 
 /**

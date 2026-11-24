@@ -18,14 +18,16 @@ describe('ShippingService', () => {
         cities: ['Douala', 'Bonabéri'],
         fee: 1500,
         estimatedDays: 1,
+        modes: ['HOME'],
       },
     ]);
 
     const zones = await service.listZones();
 
     expect(findMany).toHaveBeenCalledWith({
+      where: { isActive: true },
       orderBy: [{ fee: 'asc' }, { name: 'asc' }],
-      select: { id: true, name: true, cities: true, fee: true, estimatedDays: true },
+      select: { id: true, name: true, cities: true, fee: true, estimatedDays: true, modes: true },
     });
     expect(zones).toEqual([
       {
@@ -34,6 +36,7 @@ describe('ShippingService', () => {
         cities: ['Douala', 'Bonabéri'],
         fee: 1500,
         estimatedDays: 1,
+        modes: ['HOME'],
       },
     ]);
   });

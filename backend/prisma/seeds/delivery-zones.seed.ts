@@ -6,20 +6,45 @@
 import type { PrismaClient } from '../../src/generated/prisma/client';
 
 const ZONES = [
-  { name: 'Douala Centre', cities: ['Douala', 'Bonabéri'], fee: 1500, estimatedDays: 1 },
+  {
+    name: 'Douala Centre',
+    cities: ['Douala', 'Bonabéri'],
+    fee: 1500,
+    estimatedDays: 1,
+    modes: ['HOME', 'RELAY'] as const,
+    isActive: true,
+  },
   {
     name: 'Douala Périphérie',
     cities: ['Bonadoum', 'Ndogpassi', 'Akwa', 'Yabeta'],
     fee: 2500,
     estimatedDays: 2,
+    modes: ['HOME'] as const,
+    isActive: true,
   },
-  { name: 'Yaoundé', cities: ['Yaoundé'], fee: 3000, estimatedDays: 3 },
-  { name: 'Bafoussam', cities: ['Bafoussam'], fee: 4000, estimatedDays: 4 },
+  {
+    name: 'Yaoundé',
+    cities: ['Yaoundé'],
+    fee: 3000,
+    estimatedDays: 3,
+    modes: ['HOME', 'RELAY', 'PICKUP'] as const,
+    isActive: true,
+  },
+  {
+    name: 'Bafoussam',
+    cities: ['Bafoussam'],
+    fee: 4000,
+    estimatedDays: 4,
+    modes: ['HOME'] as const,
+    isActive: true,
+  },
   {
     name: 'Autres régions',
     cities: ['Bamenda', 'Buea', 'Limbe', 'Garoua', 'Ngaoundéré', 'Maroua'],
     fee: 5000,
     estimatedDays: 5,
+    modes: ['HOME'] as const,
+    isActive: true,
   },
 ];
 
@@ -35,10 +60,12 @@ export async function seedDeliveryZones(prisma: PrismaClient): Promise<void> {
           cities: zone.cities,
           fee: zone.fee,
           estimatedDays: zone.estimatedDays,
+          modes: [...zone.modes],
+          isActive: zone.isActive,
         },
       });
     } else {
-      await prisma.deliveryZone.create({ data: zone });
+      await prisma.deliveryZone.create({ data: { ...zone, modes: [...zone.modes] } });
     }
   }
 }

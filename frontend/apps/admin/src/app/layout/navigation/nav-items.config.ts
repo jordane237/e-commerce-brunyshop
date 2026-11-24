@@ -61,6 +61,13 @@ export const ADMIN_NAV_ITEMS: readonly NavItem[] = [
     mobilePriority: 30,
   },
   {
+    id: 'delivery-zones',
+    label: 'Zones de livraison',
+    icon: 'map-pin',
+    route: '/zones-livraison',
+    roles: ['SUPER_ADMIN', 'ADMIN'],
+  },
+  {
     id: 'my-deliveries',
     label: 'Mes livraisons',
     icon: 'navigation',

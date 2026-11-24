@@ -15,8 +15,9 @@ export class ShippingService {
 
   async listZones(): Promise<DeliveryZoneDto[]> {
     const zones = await this.prisma.deliveryZone.findMany({
+      where: { isActive: true },
       orderBy: [{ fee: 'asc' }, { name: 'asc' }],
-      select: { id: true, name: true, cities: true, fee: true, estimatedDays: true },
+      select: { id: true, name: true, cities: true, fee: true, estimatedDays: true, modes: true },
     });
 
     return zones.map((zone) => ({
@@ -25,6 +26,7 @@ export class ShippingService {
       cities: zone.cities,
       fee: zone.fee,
       estimatedDays: zone.estimatedDays,
+      modes: zone.modes,
     }));
   }
 }

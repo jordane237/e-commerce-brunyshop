@@ -327,6 +327,7 @@ describe('OrdersService (ORD-01)', () => {
       id: 'zone-1',
       fee: 1500,
       cities: ['Yaoundé'],
+      isActive: true,
     });
 
     await expect(
