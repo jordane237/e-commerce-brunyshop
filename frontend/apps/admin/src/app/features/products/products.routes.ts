@@ -1,5 +1,7 @@
 import { Route } from '@angular/router';
 
+import { PendingChangesGuard } from './product-form/pending-changes.guard';
+
 export const PRODUCTS_ROUTES: Route[] = [
   {
     path: '',
@@ -9,14 +11,16 @@ export const PRODUCTS_ROUTES: Route[] = [
   },
   {
     path: 'nouveau',
+    canDeactivate: [PendingChangesGuard],
     loadComponent: () =>
-      import('../shared/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+      import('./product-form/product-form.component').then((m) => m.ProductFormComponent),
     data: { title: 'Nouveau produit', breadcrumb: 'Nouveau produit' },
   },
   {
     path: ':id/modifier',
+    canDeactivate: [PendingChangesGuard],
     loadComponent: () =>
-      import('../shared/placeholder/placeholder-page').then((m) => m.PlaceholderPage),
+      import('./product-form/product-form.component').then((m) => m.ProductFormComponent),
     data: { title: 'Modifier le produit', breadcrumb: 'Modifier le produit' },
   },
 ];

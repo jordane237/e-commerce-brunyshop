@@ -246,6 +246,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/admin/catalog/options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Catégories et marques disponibles pour le formulaire produit */
+    get: operations['AdminCatalogOptionsController_getOptions_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/admin/products': {
     parameters: {
       query?: never;
@@ -274,7 +291,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Détail complet d’un produit (admin) */
+    get: operations['AdminProductsController_findOne_v1'];
     put?: never;
     post?: never;
     /**
@@ -605,6 +623,63 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/api/v1/shipping/quote': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Obtenir un devis de livraison
+     * @description Retourne les frais, le délai estimé et les modes disponibles pour une ville. Si la ville n'est pas desservie, retourne available=false avec une alternative WhatsApp.
+     */
+    post: operations['ShippingController_quote_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/delivery-zones': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Lister les zones de livraison (administration) */
+    get: operations['AdminDeliveryZonesController_list_v1'];
+    put?: never;
+    /** Créer une zone de livraison */
+    post: operations['AdminDeliveryZonesController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/delivery-zones/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consulter une zone de livraison */
+    get: operations['AdminDeliveryZonesController_get_v1'];
+    put?: never;
+    post?: never;
+    /** Supprimer une zone de livraison non utilisée */
+    delete: operations['AdminDeliveryZonesController_remove_v1'];
+    options?: never;
+    head?: never;
+    /** Modifier une zone de livraison */
+    patch: operations['AdminDeliveryZonesController_update_v1'];
     trace?: never;
   };
   '/api/v1/admin/media/presign': {
@@ -1059,9 +1134,103 @@ export interface components {
       /** @description Produits similaires : même catégorie, prix effectif à ±50 %, 6 par défaut (fallback même catégorie sans contrainte de prix) */
       similarProducts: components['schemas']['ProductSummaryDto'][];
     };
+    AdminCategoryOptionDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+      /** Format: uuid */
+      parentId: string | null;
+    };
+    AdminBrandOptionDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+    };
+    AdminCatalogOptionsDto: {
+      categories: components['schemas']['AdminCategoryOptionDto'][];
+      brands: components['schemas']['AdminBrandOptionDto'][];
+    };
     PaginatedAdminProductsDto: {
       items: Record<string, never>[];
       meta: Record<string, never>;
+    };
+    AdminProductCategoryDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+    };
+    AdminProductBrandDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+      logo: string | null;
+    };
+    AdminProductVariantDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example BARRAGEF-AIRMAX90-42-NOIR */
+      sku: string;
+      /** @example NOIR */
+      color: string;
+      /** @example 42 */
+      size: string;
+      /** @description Prix spécifique XAF (null sinon) */
+      price: number | null;
+      /** @description Stock physique */
+      stock: number;
+      /** @description Stock réservé par des commandes en cours */
+      reservedStock: number;
+      /** @description Seuil d’alerte de stock bas */
+      lowStockThreshold: number;
+      /** @description Version d’optimistic locking */
+      version: number;
+    };
+    AdminProductImageDto: {
+      /** Format: uuid */
+      id: string;
+      url: string;
+      alt: string | null;
+      position: number;
+      /** @description Couleur concernée (null = commune) */
+      variantColor: string | null;
+    };
+    AdminProductDetailDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      slug: string;
+      description: string;
+      /** @enum {string} */
+      status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+      /** @description Prix de base XAF (entier) */
+      basePrice: number;
+      promoPrice: number | null;
+      /** Format: date-time */
+      promoStart: string | null;
+      /** Format: date-time */
+      promoEnd: string | null;
+      /** @description Prix appliqué aujourd’hui (promo active ou prix de base) */
+      effectivePrice: number;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+      /** Format: uuid */
+      categoryId: string;
+      /** Format: uuid */
+      brandId: string;
+      category: components['schemas']['AdminProductCategoryDto'];
+      brand: components['schemas']['AdminProductBrandDto'];
+      /** @description Suppression logique (null si actif) */
+      deletedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      variants: components['schemas']['AdminProductVariantDto'][];
+      images: components['schemas']['AdminProductImageDto'][];
     };
     CreateProductImageDto: {
       /** @example https://cdn.brunyshop.cm/products/air-max-noir.jpg */
@@ -1145,82 +1314,6 @@ export interface components {
        */
       sizes?: string[];
     };
-    AdminProductCategoryDto: {
-      /** Format: uuid */
-      id: string;
-      name: string;
-      slug: string;
-    };
-    AdminProductBrandDto: {
-      /** Format: uuid */
-      id: string;
-      name: string;
-      slug: string;
-      logo: string | null;
-    };
-    AdminProductVariantDto: {
-      /** Format: uuid */
-      id: string;
-      /** @example BARRAGEF-AIRMAX90-42-NOIR */
-      sku: string;
-      /** @example NOIR */
-      color: string;
-      /** @example 42 */
-      size: string;
-      /** @description Prix spécifique XAF (null sinon) */
-      price: number | null;
-      /** @description Stock physique */
-      stock: number;
-      /** @description Stock réservé par des commandes en cours */
-      reservedStock: number;
-      /** @description Seuil d’alerte de stock bas */
-      lowStockThreshold: number;
-      /** @description Version d’optimistic locking */
-      version: number;
-    };
-    AdminProductImageDto: {
-      /** Format: uuid */
-      id: string;
-      url: string;
-      alt: string | null;
-      position: number;
-      /** @description Couleur concernée (null = commune) */
-      variantColor: string | null;
-    };
-    AdminProductDetailDto: {
-      /** Format: uuid */
-      id: string;
-      name: string;
-      slug: string;
-      description: string;
-      /** @enum {string} */
-      status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-      /** @description Prix de base XAF (entier) */
-      basePrice: number;
-      promoPrice: number | null;
-      /** Format: date-time */
-      promoStart: string | null;
-      /** Format: date-time */
-      promoEnd: string | null;
-      /** @description Prix appliqué aujourd’hui (promo active ou prix de base) */
-      effectivePrice: number;
-      seoTitle?: string | null;
-      seoDescription?: string | null;
-      /** Format: uuid */
-      categoryId: string;
-      /** Format: uuid */
-      brandId: string;
-      category: components['schemas']['AdminProductCategoryDto'];
-      brand: components['schemas']['AdminProductBrandDto'];
-      /** @description Suppression logique (null si actif) */
-      deletedAt: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      variants: components['schemas']['AdminProductVariantDto'][];
-      images: components['schemas']['AdminProductImageDto'][];
-    };
     UpdateProductDto: {
       name?: string;
       slug?: string;
@@ -1232,11 +1325,11 @@ export interface components {
       /** @enum {string} */
       status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
       basePrice?: number;
-      promoPrice?: number | null;
+      promoPrice?: Record<string, never> | null;
       /** Format: date-time */
-      promoStart?: string | null;
+      promoStart?: Record<string, never> | null;
       /** Format: date-time */
-      promoEnd?: string | null;
+      promoEnd?: Record<string, never> | null;
       seoTitle?: string;
       seoDescription?: string;
     };
@@ -1865,6 +1958,183 @@ export interface components {
        * @example 1
        */
       estimatedDays: number;
+      /**
+       * @description Modes de livraison proposés pour la zone.
+       * @example [
+       *       "HOME"
+       *     ]
+       */
+      modes: ('HOME' | 'RELAY' | 'PICKUP')[];
+    };
+    ShippingQuoteRequestDto: {
+      /**
+       * @description Ville pour laquelle le client demande un devis.
+       * @example Douala
+       */
+      city: string;
+      /**
+       * Format: uuid
+       * @description Zone choisie dans le tunnel ; si présente, elle doit couvrir la ville.
+       */
+      deliveryZoneId?: string;
+    };
+    ShippingQuoteZoneDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Douala Centre */
+      name: string;
+      /**
+       * @description Frais de livraison en XAF entier
+       * @example 1500
+       */
+      fee: number;
+      /**
+       * @description Délai estimé en jours ouvrés
+       * @example 1
+       */
+      estimatedDays: number;
+      /**
+       * @example [
+       *       "HOME"
+       *     ]
+       */
+      modes: ('HOME' | 'RELAY' | 'PICKUP')[];
+    };
+    ShippingQuoteWhatsAppDto: {
+      /** @example +237679176296 */
+      phone: string;
+      /** @example https://wa.me/237679176296?text=... */
+      url: string;
+      /** @example Bonjour, je souhaite savoir si la livraison est disponible pour Douala. */
+      message: string;
+    };
+    ShippingQuoteDto: {
+      /** @description Indique si la livraison est disponible pour la ville. */
+      available: boolean;
+      /** @example Douala */
+      city: string;
+      zone?: components['schemas']['ShippingQuoteZoneDto'] | null;
+      /**
+       * @description Frais de livraison en XAF entier
+       * @example 1500
+       */
+      fee?: Record<string, never> | null;
+      /**
+       * @description Délai estimé en jours ouvrés
+       * @example 1
+       */
+      estimatedDays?: Record<string, never> | null;
+      /**
+       * @example [
+       *       "HOME"
+       *     ]
+       */
+      modes: ('HOME' | 'RELAY' | 'PICKUP')[];
+      message?: Record<string, never> | null;
+      whatsapp?: components['schemas']['ShippingQuoteWhatsAppDto'] | null;
+      whatsappUrl?: Record<string, never> | null;
+      whatsappMessage?: Record<string, never> | null;
+      whatsappPhone?: Record<string, never> | null;
+    };
+    AdminDeliveryZoneDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example Douala Centre */
+      name: string;
+      /** @example Zone couvrant le centre-ville de Douala. */
+      description: Record<string, never> | null;
+      /**
+       * @example [
+       *       "Douala",
+       *       "Bonabéri"
+       *     ]
+       */
+      cities: string[];
+      /**
+       * @description Frais de livraison en XAF entier
+       * @example 1500
+       */
+      fee: number;
+      /**
+       * @description Délai estimé en jours ouvrés
+       * @example 1
+       */
+      estimatedDays: number;
+      /**
+       * @example [
+       *       "HOME",
+       *       "RELAY"
+       *     ]
+       */
+      modes: ('HOME' | 'RELAY' | 'PICKUP')[];
+      /** @example true */
+      isActive: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateDeliveryZoneDto: {
+      /** @example Douala Centre */
+      name: string;
+      /** @example Zone couvrant le centre-ville de Douala. */
+      description?: string;
+      /**
+       * @example [
+       *       "Douala",
+       *       "Bonabéri"
+       *     ]
+       */
+      cities: string[];
+      /**
+       * @description Frais de livraison en XAF entier
+       * @example 1500
+       */
+      fee: number;
+      /**
+       * @description Délai estimé en jours ouvrés
+       * @example 1
+       */
+      estimatedDays: number;
+      /**
+       * @example [
+       *       "HOME",
+       *       "RELAY"
+       *     ]
+       */
+      modes: ('HOME' | 'RELAY' | 'PICKUP')[];
+      /** @default true */
+      isActive: boolean;
+    };
+    UpdateDeliveryZoneDto: {
+      /** @example Douala Centre */
+      name?: string;
+      /** @example Zone couvrant le centre-ville de Douala. */
+      description?: Record<string, never> | null;
+      /**
+       * @example [
+       *       "Douala",
+       *       "Bonabéri"
+       *     ]
+       */
+      cities?: string[];
+      /**
+       * @description Frais de livraison en XAF entier
+       * @example 1500
+       */
+      fee?: number;
+      /**
+       * @description Délai estimé en jours ouvrés
+       * @example 1
+       */
+      estimatedDays?: number;
+      /**
+       * @example [
+       *       "HOME"
+       *     ]
+       */
+      modes?: ('HOME' | 'RELAY' | 'PICKUP')[];
+      isActive?: boolean;
     };
     PresignUploadDto: {
       /** @example sneakers-urbanstep-air */
@@ -2569,6 +2839,40 @@ export interface operations {
       };
     };
   };
+  AdminCatalogOptionsController_getOptions_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Options de saisie. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminCatalogOptionsDto'];
+        };
+      };
+      /** @description Jeton absent, invalide ou expiré. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   AdminProductsController_list_v1: {
     parameters: {
       query?: {
@@ -2667,6 +2971,36 @@ export interface operations {
       };
       /** @description Plus de 60 requêtes en 60 secondes (RATE_LIMIT_EXCEEDED). */
       429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminProductsController_findOne_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Identifiant UUID du produit. */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Détail du produit. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminProductDetailDto'];
+        };
+      };
+      /** @description Produit introuvable (PRODUCT_NOT_FOUND). */
+      404: {
         headers: {
           [name: string]: unknown;
         };
@@ -3485,6 +3819,173 @@ export interface operations {
       };
       /** @description RATE_LIMIT_EXCEEDED */
       429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ShippingController_quote_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ShippingQuoteRequestDto'];
+      };
+    };
+    responses: {
+      /** @description Devis de livraison */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShippingQuoteDto'];
+        };
+      };
+      /** @description RATE_LIMIT_EXCEEDED */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminDeliveryZonesController_list_v1: {
+    parameters: {
+      query?: {
+        /** @description Recherche sur le nom ou les villes */
+        search?: string;
+        isActive?: 'true' | 'false';
+        mode?: 'HOME' | 'RELAY' | 'PICKUP';
+        /** @description Filtre par ville desservie */
+        city?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminDeliveryZoneDto'][];
+        };
+      };
+    };
+  };
+  AdminDeliveryZonesController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateDeliveryZoneDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminDeliveryZoneDto'];
+        };
+      };
+    };
+  };
+  AdminDeliveryZonesController_get_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminDeliveryZoneDto'];
+        };
+      };
+      /** @description Zone introuvable (DELIVERY_ZONE_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminDeliveryZonesController_remove_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Zone supprimée. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Zone introuvable (DELIVERY_ZONE_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminDeliveryZonesController_update_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateDeliveryZoneDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminDeliveryZoneDto'];
+        };
+      };
+      /** @description Zone introuvable (DELIVERY_ZONE_NOT_FOUND). */
+      404: {
         headers: {
           [name: string]: unknown;
         };

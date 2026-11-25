@@ -75,6 +75,19 @@ export class AdminProductsController {
     return this.admin.list(query);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Détail complet d’un produit (admin)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Identifiant UUID du produit.',
+    example: 'a1b2c3d4-0000-4000-8000-000000000001',
+  })
+  @ApiOkResponse({ description: 'Détail du produit.', type: AdminProductDetailDto })
+  @ApiNotFoundResponse({ description: 'Produit introuvable (PRODUCT_NOT_FOUND).' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.admin.findOne(id);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({

@@ -188,9 +188,19 @@ export class AdminProductsService {
     const existing = await this.findProductOrThrow(id);
 
     const basePrice = dto.basePrice ?? existing.basePrice;
-    const promoPrice = dto.promoPrice ?? existing.promoPrice;
-    const promoStart = dto.promoStart ? new Date(dto.promoStart) : existing.promoStart;
-    const promoEnd = dto.promoEnd ? new Date(dto.promoEnd) : existing.promoEnd;
+    const promoPrice = dto.promoPrice === undefined ? existing.promoPrice : dto.promoPrice;
+    const promoStart =
+      dto.promoStart === undefined
+        ? existing.promoStart
+        : dto.promoStart === null
+          ? null
+          : new Date(dto.promoStart);
+    const promoEnd =
+      dto.promoEnd === undefined
+        ? existing.promoEnd
+        : dto.promoEnd === null
+          ? null
+          : new Date(dto.promoEnd);
     const status: ProductStatusValue = dto.status ?? existing.status;
 
     this.assertPromoRules(basePrice, promoPrice, promoStart, promoEnd);
@@ -619,6 +629,11 @@ export class AdminProductsService {
   }
 
   // ---------------------------------------------------------------- helpers
+
+  async findOne(id: string): Promise<AdminProductDetailDto> {
+    const product = await this.findProductOrThrow(id);
+    return toAdminProductDetail(product);
+  }
 
   async list(query: AdminProductsQueryDto): Promise<{
     items: AdminProductListItemDto[];

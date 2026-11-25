@@ -5,6 +5,8 @@ import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { AuditModule } from '../audit/audit.module';
 import { SettingsModule } from '../settings/settings.module';
 import { CatalogCacheService } from './cache/catalog-cache.service';
+import { AdminCatalogOptionsController } from './admin/admin-catalog-options.controller';
+import { AdminCatalogOptionsService } from './admin/admin-catalog-options.service';
 import { AdminProductsController } from './admin/admin-products.controller';
 import { AdminProductsService } from './admin/admin-products.service';
 import { SlugGeneratorService } from './admin/slug/slug-generator.service';
@@ -21,6 +23,7 @@ import { SizeGuidesService } from './size-guides/size-guides.service';
   imports: [DatabaseModule, AuditModule, CacheModule, SettingsModule, PricingModule],
   controllers: [
     CatalogController,
+    AdminCatalogOptionsController,
     AdminProductsController,
     SizeGuidesController,
     AdminSizeGuidesController,
@@ -30,6 +33,7 @@ import { SizeGuidesService } from './size-guides/size-guides.service';
     CatalogCacheService,
     ProductDetailService,
     SizeGuidesService,
+    AdminCatalogOptionsService,
     AdminProductsService,
     SlugGeneratorService,
     SkuGeneratorService,

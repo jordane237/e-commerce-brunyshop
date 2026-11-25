@@ -1,0 +1,737 @@
+<div class="product-form-page">
+  @if (loading()) {
+    <div class="form-state" role="status">
+      <span class="form-state__spinner" aria-hidden="true"></span>
+      <p>Chargement du produit…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="form-state form-state--error" role="alert">
+      <h1>Produit indisponible</h1>
+      <p>{{ loadError() }}</p>
+      <div class="form-state__actions">
+        <bruny-button variant="secondary" (click)="retryLoad()">Réessayer</bruny-button>
+        <bruny-button (click)="goBack()">Retour aux produits</bruny-button>
+      </div>
+    </div>
+  } @else {
+    <header class="product-form-header">
+      <div class="product-form-header__title">
+        <button type="button" class="back-link" (click)="goBack()" aria-label="Retour aux produits">
+          <span aria-hidden="true">←</span> Produits
+        </button>
+        <div class="product-form-header__heading">
+          <h1>{{ title() }}</h1>
+          <bruny-status-badge [status]="status()" />
+        </div>
+        @if (isEdit()) {
+          <p class="product-form-header__slug">/{{ productForm.controls.slug.value }}</p>
+        }
+      </div>
+
+      <div class="product-form-header__actions">
+        @if (isEdit()) {
+          <bruny-button variant="ghost" (click)="openDuplicate()">Dupliquer</bruny-button>
+        }
+        <bruny-button variant="secondary" (click)="openPreview()">Aperçu</bruny-button>
+        <bruny-button
+          variant="secondary"
+          [loading]="saving() === 'draft'"
+          [disabled]="saving() !== null"
+          (click)="save('draft')"
+        >
+          @if (isEdit()) {
+            Enregistrer
+          } @else {
+            Enregistrer le brouillon
+          }
+        </bruny-button>
+        @if (!isPublished()) {
+          <bruny-button
+            [loading]="saving() === 'publish'"
+            [disabled]="saving() !== null"
+            (click)="save('publish')"
+          >
+            Publier
+          </bruny-button>
+        }
+      </div>
+    </header>
+
+    @if (optionsError()) {
+      <div class="form-alert form-alert--warning" role="alert">
+        <p>{{ optionsError() }}</p>
+        <button type="button" (click)="retryLoad()">Réessayer</button>
+      </div>
+    }
+
+    @if (saveError()) {
+      <div class="form-alert form-alert--error" role="alert">{{ saveError() }}</div>
+    }
+
+    @if (submitted() && formErrorCount() > 0) {
+      <div class="form-alert form-alert--error" role="alert">
+        Certains champs sont invalides. Les onglets concernés sont signalés par un point.
+      </div>
+    }
+
+    <form [formGroup]="productForm" (ngSubmit)="save('draft')" novalidate class="product-form">
+      <bruny-tabs
+        [tabs]="tabs"
+        [activeId]="activeTab()"
+        ariaLabel="Sections du formulaire produit"
+        (tabChange)="setTab($event)"
+      />
+
+      <section
+        class="product-form__panel"
+        role="tabpanel"
+        [attr.id]="'bs-tab-panel-' + activeTab()"
+        [attr.aria-labelledby]="'bs-tab-' + activeTab()"
+      >
+        @switch (activeTab()) {
+          @case ('informations') {
+            <div class="panel-heading">
+              <h2>Informations générales</h2>
+              <p>Le nom, la description et le rattachement du produit au catalogue.</p>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-grid__full">
+                <bruny-input
+                  label="Nom du produit"
+                  name="name"
+                  formControlName="name"
+                  placeholder="Ex. Sneakers Air Max 90"
+                  [required]="true"
+                  [error]="errorFor('name')"
+                  hint="3 à 160 caractères."
+                />
+              </div>
+
+              <div class="form-grid__full">
+                <bruny-input
+                  label="Slug"
+                  name="slug"
+                  formControlName="slug"
+                  placeholder="sneakers-air-max-90"
+                  [error]="errorFor('slug')"
+                  hint="Généré depuis le nom. Minuscules, chiffres et tirets uniquement."
+                  (valueChange)="onSlugChange($event)"
+                />
+              </div>
+
+              <div class="form-grid__full">
+                <label class="field-label" for="product-description">
+                  Description <span class="required" aria-hidden="true">*</span>
+                </label>
+                <textarea
+                  id="product-description"
+                  class="field-textarea"
+                  formControlName="description"
+                  rows="7"
+                  placeholder="Matières, coupe, conseils d’entretien…"
+                  [attr.aria-invalid]="errorFor('description') ? 'true' : null"
+                  [attr.aria-describedby]="errorFor('description') ? 'description-error' : null"
+                ></textarea>
+                <div class="field-meta">
+                  @if (errorFor('description')) {
+                    <p class="field-error" id="description-error" role="alert">
+                      {{ errorFor('description') }}
+                    </p>
+                  } @else {
+                    <p class="field-hint">Minimum 10 caractères.</p>
+                  }
+                  <span>{{ productForm.controls.description.value.length }} / 10 000</span>
+                </div>
+              </div>
+
+              <div>
+                <bruny-select
+                  label="Catégorie"
+                  name="categoryId"
+                  [options]="categoryOptions()"
+                  [value]="productForm.controls.categoryId.value"
+                  [placeholder]="optionsLoading() ? 'Chargement…' : 'Sélectionner une catégorie'"
+                  [required]="true"
+                  [loading]="optionsLoading()"
+                  [error]="errorFor('categoryId')"
+                  (valueChange)="setCategory($event)"
+                />
+              </div>
+
+              <div>
+                <bruny-select
+                  label="Marque"
+                  name="brandId"
+                  [options]="brandOptions()"
+                  [value]="productForm.controls.brandId.value"
+                  [placeholder]="optionsLoading() ? 'Chargement…' : 'Sélectionner une marque'"
+                  [required]="true"
+                  [loading]="optionsLoading()"
+                  [error]="errorFor('brandId')"
+                  (valueChange)="setBrand($event)"
+                />
+              </div>
+            </div>
+          }
+
+          @case ('variantes') {
+            <div class="panel-heading">
+              <h2>Variantes et stock</h2>
+              <p>Déclinez le produit par couleur et pointure, puis ajustez le stock initial.</p>
+            </div>
+
+            <div class="generator">
+              <h3>Générer des combinaisons</h3>
+              <div class="generator__grid">
+                <bruny-input
+                  label="Couleurs"
+                  name="generator-colors"
+                  placeholder="NOIR, BLANC"
+                  hint="Séparées par des virgules."
+                  [value]="generatorColors()"
+                  (valueChange)="generatorColors.set($event)"
+                />
+                <bruny-input
+                  label="Pointures / tailles"
+                  name="generator-sizes"
+                  placeholder="40, 41, 42"
+                  hint="Séparées par des virgules."
+                  [value]="generatorSizes()"
+                  (valueChange)="generatorSizes.set($event)"
+                />
+                <bruny-input
+                  label="Stock initial"
+                  name="generator-stock"
+                  type="number"
+                  inputMode="numeric"
+                  [value]="generatorStock()"
+                  (valueChange)="generatorStock.set($event)"
+                />
+                <bruny-button variant="secondary" (click)="generateVariants()">
+                  Ajouter les combinaisons
+                </bruny-button>
+              </div>
+            </div>
+
+            <div class="variants-toolbar">
+              <p>
+                <strong>{{ variants.length }}</strong> variante(s) ·
+                <strong>{{ hasStock() ? 'stock disponible' : 'aucun stock saisi' }}</strong>
+              </p>
+              <bruny-button variant="secondary" size="sm" (click)="addVariant()">
+                Ajouter une variante
+              </bruny-button>
+            </div>
+
+            @if (variantDuplicate()) {
+              <div class="form-alert form-alert--error" role="alert">
+                Deux variantes ont la même couleur et la même pointure.
+              </div>
+            }
+
+            @if (variants.length === 0) {
+              <div class="empty-variants">
+                <p>Aucune variante. Ajoutez-en au moins une pour pouvoir enregistrer.</p>
+                <bruny-button (click)="addVariant()">Ajouter une variante</bruny-button>
+              </div>
+            } @else {
+              <div class="variants-table" role="table" aria-label="Variantes du produit">
+                <div class="variants-table__head" role="row">
+                  <span role="columnheader">Couleur</span>
+                  <span role="columnheader">Pointure</span>
+                  <span role="columnheader">Prix spécifique (XAF)</span>
+                  <span role="columnheader">Stock</span>
+                  <span role="columnheader">Seuil bas</span>
+                  <span role="columnheader">SKU</span>
+                  <span role="columnheader" class="visually-hidden">Actions</span>
+                </div>
+
+                @for (variant of variants.controls; track variant; let i = $index) {
+                  <div class="variants-table__row" role="row" [formGroup]="variant">
+                    <div role="cell">
+                      <input
+                        class="inline-input"
+                        formControlName="color"
+                        placeholder="NOIR"
+                        [attr.aria-label]="'Couleur de la variante ' + (i + 1)"
+                        [attr.aria-invalid]="variantError(i, 'color') ? 'true' : null"
+                      />
+                      @if (variantError(i, 'color')) {
+                        <p class="field-error">{{ variantError(i, 'color') }}</p>
+                      }
+                    </div>
+                    <div role="cell">
+                      <input
+                        class="inline-input"
+                        formControlName="size"
+                        placeholder="42"
+                        [attr.aria-label]="'Pointure de la variante ' + (i + 1)"
+                        [attr.aria-invalid]="variantError(i, 'size') ? 'true' : null"
+                      />
+                      @if (variantError(i, 'size')) {
+                        <p class="field-error">{{ variantError(i, 'size') }}</p>
+                      }
+                    </div>
+                    <div role="cell">
+                      <input
+                        class="inline-input"
+                        type="number"
+                        min="0"
+                        formControlName="price"
+                        placeholder="Prix produit"
+                        [attr.aria-label]="'Prix spécifique de la variante ' + (i + 1)"
+                        [attr.aria-invalid]="variantError(i, 'price') ? 'true' : null"
+                      />
+                      @if (variantError(i, 'price')) {
+                        <p class="field-error">{{ variantError(i, 'price') }}</p>
+                      }
+                    </div>
+                    <div role="cell">
+                      <input
+                        class="inline-input"
+                        type="number"
+                        min="0"
+                        formControlName="stock"
+                        [attr.aria-label]="'Stock de la variante ' + (i + 1)"
+                        [attr.aria-invalid]="variantError(i, 'stock') ? 'true' : null"
+                      />
+                      @if (variantError(i, 'stock')) {
+                        <p class="field-error">{{ variantError(i, 'stock') }}</p>
+                      }
+                    </div>
+                    <div role="cell">
+                      <input
+                        class="inline-input"
+                        type="number"
+                        min="0"
+                        formControlName="lowStockThreshold"
+                        [attr.aria-label]="'Seuil de stock bas de la variante ' + (i + 1)"
+                        [attr.aria-invalid]="variantError(i, 'lowStockThreshold') ? 'true' : null"
+                      />
+                      @if (variantError(i, 'lowStockThreshold')) {
+                        <p class="field-error">{{ variantError(i, 'lowStockThreshold') }}</p>
+                      }
+                    </div>
+                    <div role="cell">
+                      <span class="sku">{{
+                        variant.controls.sku.value || 'Généré à l’enregistrement'
+                      }}</span>
+                    </div>
+                    <div role="cell" class="variants-table__actions">
+                      <button
+                        type="button"
+                        class="icon-button"
+                        (click)="removeVariant(i)"
+                        [attr.aria-label]="'Supprimer la variante ' + (i + 1)"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (!hasStock()) {
+              <div class="form-alert form-alert--warning" role="status">
+                Un produit ne peut être publié qu’avec au moins une variante en stock. Le brouillon,
+                lui, peut être enregistré sans stock.
+              </div>
+            }
+          }
+
+          @case ('images') {
+            <div class="panel-heading">
+              <h2>Images du produit</h2>
+              <p>La première image sert de visuel principal dans le catalogue.</p>
+            </div>
+
+            @if (imageError()) {
+              <div class="form-alert form-alert--error" role="alert">{{ imageError() }}</div>
+            }
+
+            <div class="upload-card">
+              <div>
+                <h3>Téléverser une image</h3>
+                <p>JPEG, PNG ou WebP · 20 Mo maximum. Les formats sont convertis et optimisés.</p>
+                @if (!isEdit()) {
+                  <p class="upload-card__hint">
+                    Enregistrez d’abord le brouillon : l’envoi de fichiers nécessite un produit
+                    existant.
+                  </p>
+                }
+              </div>
+              <div class="upload-card__controls">
+                <bruny-input
+                  label="Couleur associée (optionnel)"
+                  name="upload-color"
+                  placeholder="NOIR"
+                  hint="Laisser vide pour une image commune."
+                  [value]="uploadColor()"
+                  (valueChange)="uploadColor.set($event)"
+                />
+                <label
+                  class="file-picker"
+                  [class.file-picker--disabled]="!isEdit() || imageUploading()"
+                >
+                  <span>{{ imageUploading() ? 'Téléversement…' : 'Choisir des fichiers' }}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    [disabled]="!isEdit() || imageUploading()"
+                    (change)="onFilesSelected($event)"
+                  />
+                </label>
+              </div>
+            </div>
+
+            @if (!isEdit()) {
+              <div class="url-card">
+                <h3>Ajouter une image par URL</h3>
+                <div class="url-card__grid">
+                  <bruny-input
+                    label="URL de l’image"
+                    name="image-url"
+                    type="url"
+                    placeholder="https://cdn.exemple.cm/produit.jpg"
+                    [value]="newImageUrl()"
+                    (valueChange)="newImageUrl.set($event)"
+                  />
+                  <bruny-input
+                    label="Texte alternatif"
+                    name="image-alt"
+                    placeholder="Vue de profil"
+                    [value]="newImageAlt()"
+                    (valueChange)="newImageAlt.set($event)"
+                  />
+                  <bruny-input
+                    label="Couleur associée (optionnel)"
+                    name="image-color"
+                    placeholder="NOIR"
+                    [value]="newImageColor()"
+                    (valueChange)="newImageColor.set($event)"
+                  />
+                  <bruny-button variant="secondary" (click)="addImageFromUrl()"
+                    >Ajouter</bruny-button
+                  >
+                </div>
+                @if (imageUrlError()) {
+                  <p class="field-error" role="alert">{{ imageUrlError() }}</p>
+                }
+              </div>
+            }
+
+            @if (images().length === 0) {
+              <div class="empty-images">
+                <p>Aucune image pour ce produit.</p>
+              </div>
+            } @else {
+              <div class="image-grid">
+                @for (image of images(); track image.id ?? image.url; let i = $index) {
+                  <article class="image-card">
+                    <div class="image-card__visual">
+                      <img [src]="image.url" [alt]="image.alt || 'Image du produit'" />
+                      @if (i === 0) {
+                        <span class="image-card__badge">Principale</span>
+                      }
+                    </div>
+                    <div class="image-card__body">
+                      <p class="image-card__alt">{{ image.alt || 'Sans texte alternatif' }}</p>
+                      <p class="image-card__meta">
+                        Position {{ i + 1 }}
+                        @if (image.variantColor) {
+                          · {{ image.variantColor }}
+                        }
+                      </p>
+                      <div class="image-card__actions">
+                        <button
+                          type="button"
+                          class="icon-button"
+                          [disabled]="i === 0 || imageUploading()"
+                          (click)="moveImage(i, -1)"
+                          aria-label="Déplacer l’image vers le haut"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          class="icon-button"
+                          [disabled]="i === images().length - 1 || imageUploading()"
+                          (click)="moveImage(i, 1)"
+                          aria-label="Déplacer l’image vers le bas"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          class="icon-button icon-button--danger"
+                          [disabled]="imageUploading()"
+                          (click)="removeImage(image)"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                }
+              </div>
+            }
+          }
+
+          @case ('tarifs') {
+            <div class="panel-heading">
+              <h2>Tarifs et promotion</h2>
+              <p>Les montants sont exprimés en francs CFA (XAF), sans décimales.</p>
+            </div>
+
+            <div class="form-grid form-grid--narrow">
+              <bruny-input
+                label="Prix de base"
+                name="basePrice"
+                type="number"
+                inputMode="numeric"
+                prefix="XAF"
+                formControlName="basePrice"
+                [required]="true"
+                [error]="errorFor('basePrice')"
+              />
+              <bruny-input
+                label="Prix promotionnel"
+                name="promoPrice"
+                type="number"
+                inputMode="numeric"
+                prefix="XAF"
+                formControlName="promoPrice"
+                [error]="errorFor('promoPrice')"
+                hint="Strictement inférieur au prix de base."
+              />
+              <div>
+                <label class="field-label" for="promo-start">Début de la promotion</label>
+                <input
+                  id="promo-start"
+                  class="field-input"
+                  type="datetime-local"
+                  formControlName="promoStart"
+                />
+              </div>
+              <div>
+                <label class="field-label" for="promo-end">Fin de la promotion</label>
+                <input
+                  id="promo-end"
+                  class="field-input"
+                  type="datetime-local"
+                  formControlName="promoEnd"
+                />
+              </div>
+            </div>
+
+            @if (promotionError()) {
+              <div class="form-alert form-alert--error" role="alert">{{ promotionError() }}</div>
+            } @else {
+              <p class="field-hint">
+                Une promotion doit avoir un prix, une date de début et une date de fin.
+              </p>
+            }
+
+            <div class="price-summary">
+              <span>Prix affiché aujourd’hui</span>
+              <strong>
+                {{ preview().promoPrice ?? preview().basePrice | fcfa }}
+              </strong>
+              @if (preview().promoPrice !== null) {
+                <span class="price-summary__old">{{ preview().basePrice | fcfa }}</span>
+              }
+            </div>
+          }
+
+          @case ('seo') {
+            <div class="panel-heading">
+              <h2>Référencement naturel</h2>
+              <p>
+                Personnalisez le titre et la description affichés dans les moteurs de recherche.
+              </p>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-grid__full">
+                <bruny-input
+                  label="Titre SEO"
+                  name="seoTitle"
+                  formControlName="seoTitle"
+                  placeholder="Sneakers Air Max 90 — BRUNY SHOPPING"
+                  [error]="errorFor('seoTitle')"
+                />
+                <div class="field-counter">
+                  {{ productForm.controls.seoTitle.value.length }} / 255
+                </div>
+              </div>
+
+              <div class="form-grid__full">
+                <label class="field-label" for="seo-description">Description SEO</label>
+                <textarea
+                  id="seo-description"
+                  class="field-textarea"
+                  formControlName="seoDescription"
+                  rows="4"
+                  placeholder="Décrivez le produit en une phrase claire et incitative."
+                  [attr.aria-invalid]="errorFor('seoDescription') ? 'true' : null"
+                ></textarea>
+                <div class="field-meta">
+                  @if (errorFor('seoDescription')) {
+                    <p class="field-error" role="alert">{{ errorFor('seoDescription') }}</p>
+                  }
+                  <span>{{ productForm.controls.seoDescription.value.length }} / 500</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="serp-preview" aria-label="Aperçu dans les résultats de recherche">
+              <p class="serp-preview__url">
+                brunyshopping.cm › produits › {{ productForm.controls.slug.value || 'slug' }}
+              </p>
+              <p class="serp-preview__title">
+                {{
+                  productForm.controls.seoTitle.value ||
+                    productForm.controls.name.value ||
+                    'Titre du produit'
+                }}
+              </p>
+              <p class="serp-preview__description">
+                {{
+                  productForm.controls.seoDescription.value ||
+                    productForm.controls.description.value ||
+                    'Description du produit affichée dans les résultats de recherche.'
+                }}
+              </p>
+            </div>
+          }
+        }
+      </section>
+
+      <footer class="product-form__footer">
+        <p>
+          @if (hasUnsavedChanges()) {
+            Modifications non enregistrées
+          } @else {
+            Toutes les modifications sont enregistrées
+          }
+        </p>
+        <div class="product-form__footer-actions">
+          <bruny-button variant="ghost" (click)="goBack()">Annuler</bruny-button>
+          <bruny-button
+            variant="secondary"
+            [loading]="saving() === 'draft'"
+            [disabled]="saving() !== null"
+            (click)="save('draft')"
+          >
+            @if (isEdit()) {
+              Enregistrer
+            } @else {
+              Enregistrer le brouillon
+            }
+          </bruny-button>
+          @if (!isPublished()) {
+            <bruny-button
+              [loading]="saving() === 'publish'"
+              [disabled]="saving() !== null"
+              (click)="save('publish')"
+            >
+              Publier
+            </bruny-button>
+          }
+        </div>
+      </footer>
+    </form>
+  }
+
+  <bruny-modal
+    [open]="previewOpen()"
+    title="Aperçu de la fiche produit"
+    id="product-preview"
+    size="lg"
+    (openChange)="previewOpen.set($event)"
+  >
+    <div class="preview">
+      <div class="preview__media">
+        @if (preview().image) {
+          <img [src]="preview().image!" [alt]="preview().name" />
+        } @else {
+          <span>{{ preview().name.charAt(0) }}</span>
+        }
+      </div>
+      <div class="preview__content">
+        <p class="preview__eyebrow">{{ preview().brand }} · {{ preview().category }}</p>
+        <h2>{{ preview().name }}</h2>
+        <div class="preview__price">
+          <strong>{{ preview().promoPrice ?? preview().basePrice | fcfa }}</strong>
+          @if (preview().promoPrice !== null) {
+            <span>{{ preview().basePrice | fcfa }}</span>
+          }
+        </div>
+        <p class="preview__description">{{ preview().description }}</p>
+        <dl class="preview__facts">
+          <div>
+            <dt>Variantes</dt>
+            <dd>{{ preview().variants }}</dd>
+          </div>
+          <div>
+            <dt>Stock total</dt>
+            <dd>{{ preview().stock }}</dd>
+          </div>
+          <div>
+            <dt>Couleurs</dt>
+            <dd>{{ preview().colors.join(', ') || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Pointures</dt>
+            <dd>{{ preview().sizes.join(', ') || '—' }}</dd>
+          </div>
+        </dl>
+        @if (preview().seoTitle || preview().seoDescription) {
+          <div class="preview__seo">
+            <h3>Référencement</h3>
+            <p class="preview__seo-title">{{ preview().seoTitle || preview().name }}</p>
+            <p>{{ preview().seoDescription }}</p>
+          </div>
+        }
+      </div>
+    </div>
+    <div bsModalFooter class="preview__footer">
+      <bruny-button variant="secondary" (click)="previewOpen.set(false)">Fermer</bruny-button>
+    </div>
+  </bruny-modal>
+
+  <bruny-confirm-dialog
+    [open]="duplicateOpen()"
+    title="Dupliquer ce produit ?"
+    message="Une copie sera créée en brouillon avec les variantes et images de la dernière version enregistrée."
+    confirmLabel="Dupliquer"
+    [loading]="duplicateLoading()"
+    tone="neutral"
+    (confirmed)="confirmDuplicate()"
+    (cancelled)="duplicateOpen.set(false)"
+  />
+
+  <bruny-confirm-dialog
+    [open]="imageDeleteTarget() !== null"
+    title="Supprimer cette image ?"
+    message="L’image sera retirée du produit et du stockage."
+    confirmLabel="Supprimer"
+    tone="danger"
+    (confirmed)="confirmDeleteImage()"
+    (cancelled)="imageDeleteTarget.set(null)"
+  />
+
+  <bruny-confirm-dialog
+    [open]="leaveDialogOpen()"
+    title="Quitter sans enregistrer ?"
+    message="Des modifications ne sont pas enregistrées. Elles seront perdues si vous quittez cette page."
+    confirmLabel="Quitter sans enregistrer"
+    cancelLabel="Rester sur la page"
+    tone="danger"
+    (confirmed)="confirmLeave()"
+    (cancelled)="cancelLeave()"
+  />
+</div>

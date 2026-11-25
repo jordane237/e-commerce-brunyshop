@@ -767,6 +767,37 @@
         "tags": ["catalog"]
       }
     },
+    "/api/v1/admin/catalog/options": {
+      "get": {
+        "operationId": "AdminCatalogOptionsController_getOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Options de saisie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCatalogOptionsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Catégories et marques disponibles pour le formulaire produit",
+        "tags": ["admin-catalog"]
+      }
+    },
     "/api/v1/admin/products": {
       "get": {
         "operationId": "AdminProductsController_list_v1",
@@ -965,6 +996,43 @@
       }
     },
     "/api/v1/admin/products/{id}": {
+      "get": {
+        "operationId": "AdminProductsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identifiant UUID du produit.",
+            "schema": {
+              "example": "a1b2c3d4-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Détail du produit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produit introuvable (PRODUCT_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Détail complet d’un produit (admin)",
+        "tags": ["admin-products"]
+      },
       "patch": {
         "description": "Met à jour les champs métadonnées, prix, promotion et statut d’un produit. Les variantes ne sont PAS modifiées via cette route (réservé à PUT /:id/variants). Chaque modification de prix est auditée.",
         "operationId": "AdminProductsController_update_v1",
@@ -1979,6 +2047,248 @@
         },
         "summary": "Lister les zones de livraison disponibles",
         "tags": ["shipping"]
+      }
+    },
+    "/api/v1/shipping/quote": {
+      "post": {
+        "description": "Retourne les frais, le délai estimé et les modes disponibles pour une ville. Si la ville n'est pas desservie, retourne available=false avec une alternative WhatsApp.",
+        "operationId": "ShippingController_quote_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShippingQuoteRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Devis de livraison",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShippingQuoteDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMIT_EXCEEDED"
+          }
+        },
+        "summary": "Obtenir un devis de livraison",
+        "tags": ["shipping"]
+      }
+    },
+    "/api/v1/admin/delivery-zones": {
+      "get": {
+        "operationId": "AdminDeliveryZonesController_list_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Recherche sur le nom ou les villes",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          },
+          {
+            "name": "mode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["HOME", "RELAY", "PICKUP"]
+            }
+          },
+          {
+            "name": "city",
+            "required": false,
+            "in": "query",
+            "description": "Filtre par ville desservie",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminDeliveryZoneDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Lister les zones de livraison (administration)",
+        "tags": ["admin-delivery-zones"]
+      },
+      "post": {
+        "operationId": "AdminDeliveryZonesController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeliveryZoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDeliveryZoneDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Créer une zone de livraison",
+        "tags": ["admin-delivery-zones"]
+      }
+    },
+    "/api/v1/admin/delivery-zones/{id}": {
+      "get": {
+        "operationId": "AdminDeliveryZonesController_get_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDeliveryZoneDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Zone introuvable (DELIVERY_ZONE_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Consulter une zone de livraison",
+        "tags": ["admin-delivery-zones"]
+      },
+      "patch": {
+        "operationId": "AdminDeliveryZonesController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeliveryZoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDeliveryZoneDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Zone introuvable (DELIVERY_ZONE_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Modifier une zone de livraison",
+        "tags": ["admin-delivery-zones"]
+      },
+      "delete": {
+        "operationId": "AdminDeliveryZonesController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Zone supprimée."
+          },
+          "404": {
+            "description": "Zone introuvable (DELIVERY_ZONE_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Supprimer une zone de livraison non utilisée",
+        "tags": ["admin-delivery-zones"]
       }
     },
     "/api/v1/admin/media/presign": {
@@ -3035,6 +3345,61 @@
           "similarProducts"
         ]
       },
+      "AdminCategoryOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          }
+        },
+        "required": ["id", "name", "slug", "parentId"]
+      },
+      "AdminBrandOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "slug"]
+      },
+      "AdminCatalogOptionsDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCategoryOptionDto"
+            }
+          },
+          "brands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminBrandOptionDto"
+            }
+          }
+        },
+        "required": ["categories", "brands"]
+      },
       "PaginatedAdminProductsDto": {
         "type": "object",
         "properties": {
@@ -3049,145 +3414,6 @@
           }
         },
         "required": ["items", "meta"]
-      },
-      "CreateProductImageDto": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "example": "https://cdn.brunyshop.cm/products/air-max-noir.jpg"
-          },
-          "alt": {
-            "type": "string"
-          },
-          "position": {
-            "type": "number",
-            "minimum": 0,
-            "default": 0
-          },
-          "variantColor": {
-            "type": "string",
-            "description": "Couleur concernée (null = image commune)"
-          }
-        },
-        "required": ["url"]
-      },
-      "CreateProductVariantDto": {
-        "type": "object",
-        "properties": {
-          "color": {
-            "type": "string",
-            "example": "NOIR",
-            "description": "Couleur (normalisée en majuscules)"
-          },
-          "size": {
-            "type": "string",
-            "example": "42",
-            "description": "Pointure ou taille (normalisée en majuscules)"
-          },
-          "price": {
-            "type": "number",
-            "minimum": 0,
-            "description": "Prix spécifique XAF (sinon prix produit)"
-          },
-          "stock": {
-            "type": "number",
-            "minimum": 0,
-            "example": 10,
-            "description": "Stock physique initial"
-          },
-          "lowStockThreshold": {
-            "type": "number",
-            "minimum": 0,
-            "default": 5
-          }
-        },
-        "required": ["color", "size", "stock"]
-      },
-      "CreateProductDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "Air Max 90 Noir"
-          },
-          "slug": {
-            "type": "string",
-            "example": "air-max-90-noir",
-            "description": "Généré depuis le nom s’il est absent (unicité garantie : -2, -3…)"
-          },
-          "description": {
-            "type": "string"
-          },
-          "categoryId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "brandId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"],
-            "default": "DRAFT"
-          },
-          "basePrice": {
-            "type": "number",
-            "minimum": 0,
-            "example": 45000,
-            "description": "Prix de base XAF (entier)"
-          },
-          "promoPrice": {
-            "type": "number",
-            "minimum": 1,
-            "description": "Doit être strictement inférieur à basePrice"
-          },
-          "promoStart": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "promoEnd": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "seoTitle": {
-            "type": "string"
-          },
-          "seoDescription": {
-            "type": "string"
-          },
-          "images": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateProductImageDto"
-            }
-          },
-          "variants": {
-            "description": "Format explicite (contrôle fin du stock et du prix par variante)",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateProductVariantDto"
-            }
-          },
-          "colors": {
-            "example": ["noir", "blanc"],
-            "description": "Couleurs pour la génération automatique du produit cartésien",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "sizes": {
-            "example": ["40", "41", "42"],
-            "description": "Pointures pour la génération automatique du produit cartésien",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["name", "description", "categoryId", "brandId", "basePrice"]
       },
       "AdminProductCategoryDto": {
         "type": "object",
@@ -3415,6 +3641,145 @@
           "images"
         ]
       },
+      "CreateProductImageDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://cdn.brunyshop.cm/products/air-max-noir.jpg"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "variantColor": {
+            "type": "string",
+            "description": "Couleur concernée (null = image commune)"
+          }
+        },
+        "required": ["url"]
+      },
+      "CreateProductVariantDto": {
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": "string",
+            "example": "NOIR",
+            "description": "Couleur (normalisée en majuscules)"
+          },
+          "size": {
+            "type": "string",
+            "example": "42",
+            "description": "Pointure ou taille (normalisée en majuscules)"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Prix spécifique XAF (sinon prix produit)"
+          },
+          "stock": {
+            "type": "number",
+            "minimum": 0,
+            "example": 10,
+            "description": "Stock physique initial"
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "default": 5
+          }
+        },
+        "required": ["color", "size", "stock"]
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Air Max 90 Noir"
+          },
+          "slug": {
+            "type": "string",
+            "example": "air-max-90-noir",
+            "description": "Généré depuis le nom s’il est absent (unicité garantie : -2, -3…)"
+          },
+          "description": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"],
+            "default": "DRAFT"
+          },
+          "basePrice": {
+            "type": "number",
+            "minimum": 0,
+            "example": 45000,
+            "description": "Prix de base XAF (entier)"
+          },
+          "promoPrice": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Doit être strictement inférieur à basePrice"
+          },
+          "promoStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "promoEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seoTitle": {
+            "type": "string"
+          },
+          "seoDescription": {
+            "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateProductImageDto"
+            }
+          },
+          "variants": {
+            "description": "Format explicite (contrôle fin du stock et du prix par variante)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateProductVariantDto"
+            }
+          },
+          "colors": {
+            "example": ["noir", "blanc"],
+            "description": "Couleurs pour la génération automatique du produit cartésien",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sizes": {
+            "example": ["40", "41", "42"],
+            "description": "Pointures pour la génération automatique du produit cartésien",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["name", "description", "categoryId", "brandId", "basePrice"]
+      },
       "UpdateProductDto": {
         "type": "object",
         "properties": {
@@ -3444,17 +3809,17 @@
             "minimum": 0
           },
           "promoPrice": {
-            "type": "number",
+            "type": "object",
             "minimum": 1,
             "nullable": true
           },
           "promoStart": {
-            "type": "string",
+            "type": "object",
             "format": "date-time",
             "nullable": true
           },
           "promoEnd": {
-            "type": "string",
+            "type": "object",
             "format": "date-time",
             "nullable": true
           },
@@ -4771,9 +5136,308 @@
             "type": "number",
             "description": "Délai estimé en jours ouvrés",
             "example": 1
+          },
+          "modes": {
+            "type": "array",
+            "example": ["HOME"],
+            "description": "Modes de livraison proposés pour la zone.",
+            "items": {
+              "type": "string",
+              "enum": ["HOME", "RELAY", "PICKUP"]
+            }
           }
         },
-        "required": ["id", "name", "cities", "fee", "estimatedDays"]
+        "required": ["id", "name", "cities", "fee", "estimatedDays", "modes"]
+      },
+      "ShippingQuoteRequestDto": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "example": "Douala",
+            "description": "Ville pour laquelle le client demande un devis."
+          },
+          "deliveryZoneId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Zone choisie dans le tunnel ; si présente, elle doit couvrir la ville."
+          }
+        },
+        "required": ["city"]
+      },
+      "ShippingQuoteZoneDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Douala Centre"
+          },
+          "fee": {
+            "type": "number",
+            "description": "Frais de livraison en XAF entier",
+            "example": 1500
+          },
+          "estimatedDays": {
+            "type": "number",
+            "description": "Délai estimé en jours ouvrés",
+            "example": 1
+          },
+          "modes": {
+            "type": "array",
+            "example": ["HOME"],
+            "items": {
+              "type": "string",
+              "enum": ["HOME", "RELAY", "PICKUP"]
+            }
+          }
+        },
+        "required": ["id", "name", "fee", "estimatedDays", "modes"]
+      },
+      "ShippingQuoteWhatsAppDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "+237679176296"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://wa.me/237679176296?text=..."
+          },
+          "message": {
+            "type": "string",
+            "example": "Bonjour, je souhaite savoir si la livraison est disponible pour Douala."
+          }
+        },
+        "required": ["phone", "url", "message"]
+      },
+      "ShippingQuoteDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "Indique si la livraison est disponible pour la ville."
+          },
+          "city": {
+            "type": "string",
+            "example": "Douala"
+          },
+          "zone": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShippingQuoteZoneDto"
+              }
+            ]
+          },
+          "fee": {
+            "type": "object",
+            "description": "Frais de livraison en XAF entier",
+            "nullable": true,
+            "example": 1500
+          },
+          "estimatedDays": {
+            "type": "object",
+            "description": "Délai estimé en jours ouvrés",
+            "nullable": true,
+            "example": 1
+          },
+          "modes": {
+            "type": "array",
+            "example": ["HOME"],
+            "items": {
+              "type": "string",
+              "enum": ["HOME", "RELAY", "PICKUP"]
+            }
+          },
+          "message": {
+            "type": "object",
+            "nullable": true
+          },
+          "whatsapp": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShippingQuoteWhatsAppDto"
+              }
+            ]
+          },
+          "whatsappUrl": {
+            "type": "object",
+            "nullable": true
+          },
+          "whatsappMessage": {
+            "type": "object",
+            "nullable": true
+          },
+          "whatsappPhone": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": ["available", "city", "modes"]
+      },
+      "AdminDeliveryZoneDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Douala Centre"
+          },
+          "description": {
+            "type": "object",
+            "nullable": true,
+            "example": "Zone couvrant le centre-ville de Douala."
+          },
+          "cities": {
+            "example": ["Douala", "Bonabéri"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fee": {
+            "type": "number",
+            "description": "Frais de livraison en XAF entier",
+            "example": 1500
+          },
+          "estimatedDays": {
+            "type": "number",
+            "description": "Délai estimé en jours ouvrés",
+            "example": 1
+          },
+          "modes": {
+            "type": "array",
+            "example": ["HOME", "RELAY"],
+            "items": {
+              "type": "string",
+              "enum": ["HOME", "RELAY", "PICKUP"]
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "cities",
+          "fee",
+          "estimatedDays",
+          "modes",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateDeliveryZoneDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Douala Centre"
+          },
+          "description": {
+            "type": "string",
+            "example": "Zone couvrant le centre-ville de Douala."
+          },
+          "cities": {
+            "example": ["Douala", "Bonabéri"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fee": {
+            "type": "number",
+            "description": "Frais de livraison en XAF entier",
+            "example": 1500,
+            "minimum": 0
+          },
+          "estimatedDays": {
+            "type": "number",
+            "description": "Délai estimé en jours ouvrés",
+            "example": 1,
+            "minimum": 1
+          },
+          "modes": {
+            "type": "array",
+            "example": ["HOME", "RELAY"],
+            "items": {
+              "type": "string",
+              "enum": ["HOME", "RELAY", "PICKUP"]
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": ["name", "cities", "fee", "estimatedDays", "modes"]
+      },
+      "UpdateDeliveryZoneDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Douala Centre"
+          },
+          "description": {
+            "type": "object",
+            "example": "Zone couvrant le centre-ville de Douala.",
+            "nullable": true
+          },
+          "cities": {
+            "example": ["Douala", "Bonabéri"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fee": {
+            "type": "number",
+            "description": "Frais de livraison en XAF entier",
+            "example": 1500,
+            "minimum": 0
+          },
+          "estimatedDays": {
+            "type": "number",
+            "description": "Délai estimé en jours ouvrés",
+            "example": 1,
+            "minimum": 1
+          },
+          "modes": {
+            "type": "array",
+            "example": ["HOME"],
+            "items": {
+              "type": "string",
+              "enum": ["HOME", "RELAY", "PICKUP"]
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
       },
       "PresignUploadDto": {
         "type": "object",
