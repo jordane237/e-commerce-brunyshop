@@ -315,6 +315,9 @@ model ProductVariant {
   // Date de la dernière alerte de stock bas envoyée. Null tant que la
   // variante n'a pas atteint son seuil, ou après un réapprovisionnement.
   lowStockAlertSentAt DateTime?
+  // BO-05 : une variante liée à une commande n'est jamais supprimée. Elle est
+  // archivée et reste consultable dans l'historique, mais n'est plus vendable.
+  archivedAt        DateTime?
   // Optimistic concurrency for the last pairs (RG-STK-07).
   version           Int      @default(1)
   createdAt         DateTime @default(now())
@@ -327,6 +330,7 @@ model ProductVariant {
 
   @@index([productId])
   @@index([lowStockAlertSentAt])
+  @@index([archivedAt])
   // Une seule variante par couple couleur/pointure dans un produit (CAT-04).
   @@unique([productId, color, size])
 }

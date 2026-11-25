@@ -34,6 +34,7 @@ const detailSelection = {
     select: { id: true, url: true, alt: true, position: true, variantColor: true },
   },
   variants: {
+    where: { archivedAt: null },
     orderBy: [{ color: 'asc' as const }, { size: 'asc' as const }],
     select: {
       id: true,
@@ -64,7 +65,10 @@ const summarySelection = {
     take: 1,
     select: { id: true, url: true, alt: true, position: true, variantColor: true },
   },
-  variants: { select: { stock: true, reservedStock: true } },
+  variants: {
+    where: { archivedAt: null },
+    select: { stock: true, reservedStock: true },
+  },
 } satisfies Prisma.ProductSelect;
 
 type DetailProduct = Prisma.ProductGetPayload<{ select: typeof detailSelection }>;

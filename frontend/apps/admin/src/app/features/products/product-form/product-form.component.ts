@@ -58,6 +58,7 @@ interface VariantControls {
   price: FormControl<number | null>;
   stock: FormControl<number>;
   lowStockThreshold: FormControl<number>;
+  hasOrders: FormControl<boolean>;
 }
 
 type VariantForm = FormGroup<VariantControls>;
@@ -69,6 +70,11 @@ interface ProductImageItem {
   variantColor: string | null;
   position: number;
   persisted: boolean;
+}
+
+interface PendingArchivedVariant {
+  index: number;
+  variant: AdminProductVariant;
 }
 
 const TABS: readonly TabItem[] = [
@@ -90,16 +96,25 @@ function positiveIntegerValidator(control: AbstractControl): ValidationErrors | 
 
 function duplicateVariantsValidator(control: AbstractControl): ValidationErrors | null {
   if (!(control instanceof FormArray)) return null;
-  const seen = new Set<string>();
+  const combinations = new Set<string>();
+  const skus = new Set<string>();
   for (const group of control.controls) {
-    const value = group.value as { color?: unknown; size?: unknown };
+    const value = group.value as { color?: unknown; size?: unknown; sku?: unknown };
     const key = `${String(value.color ?? '')
       .trim()
       .toUpperCase()}::${String(value.size ?? '')
       .trim()
       .toUpperCase()}`;
-    if (seen.has(key)) return { duplicateVariants: true };
-    seen.add(key);
+    if (combinations.has(key)) return { duplicateVariants: true };
+    combinations.add(key);
+
+    const sku = String(value.sku ?? '')
+      .trim()
+      .toUpperCase();
+    if (sku !== '') {
+      if (skus.has(sku)) return { duplicateSkus: true };
+      skus.add(sku);
+    }
   }
   return null;
 }
@@ -147,6 +162,24 @@ function numberOrNull(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function compareSizes(left: string, right: string): number {
+  const leftNumber = Number(left);
+  const rightNumber = Number(right);
+  if (Number.isNaN(leftNumber) || Number.isNaN(rightNumber)) {
+    return left.localeCompare(right);
+  }
+  return leftNumber - rightNumber;
+}
+
+function skuSegment(value: string, maxLength: number): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+    .slice(0, maxLength);
 }
 
 function toDateTimeLocal(iso: string | null): string {
@@ -218,9 +251,23 @@ export class ProductFormComponent implements OnInit {
   readonly newImageColor = signal('');
   readonly imageUrlError = signal('');
 
-  readonly generatorColors = signal('');
-  readonly generatorSizes = signal('');
+  readonly generatorColors = signal<string[]>([]);
+  readonly generatorSizes = signal<string[]>([]);
+  readonly draftColor = signal('');
+  readonly draftSize = signal('');
+  readonly sizeRangeFrom = signal('');
+  readonly sizeRangeTo = signal('');
   readonly generatorStock = signal('0');
+  readonly generatorThreshold = signal('5');
+
+  readonly bulkMode = signal<'row' | 'column'>('row');
+  readonly bulkTarget = signal('');
+  readonly bulkField = signal<'stock' | 'threshold'>('stock');
+  readonly bulkValue = signal('');
+
+  readonly archivedVariants = signal<AdminProductVariant[]>([]);
+  readonly pendingArchived = signal<PendingArchivedVariant[]>([]);
+  readonly variantRemovalTarget = signal<number | null>(null);
 
   private autoSlug = true;
   private variantBaseline = '';
@@ -291,6 +338,37 @@ export class ProductFormComponent implements OnInit {
     this.formTick();
     return this.variants.hasError('duplicateVariants');
   });
+  readonly variantSkuDuplicate = computed(() => {
+    this.formTick();
+    return this.variants.hasError('duplicateSkus');
+  });
+  readonly gridColors = computed(() => {
+    this.formTick();
+    const colors = this.variants
+      .getRawValue()
+      .map((variant) => String(variant.color).trim().toUpperCase())
+      .filter((color) => color !== '');
+    return [...new Set(colors)];
+  });
+  readonly gridSizes = computed(() => {
+    this.formTick();
+    const sizes = this.variants
+      .getRawValue()
+      .map((variant) => String(variant.size).trim().toUpperCase())
+      .filter((size) => size !== '');
+    return [...new Set(sizes)].sort(compareSizes);
+  });
+  readonly bulkTargetOptions = computed(() => {
+    const values = this.bulkMode() === 'row' ? this.gridColors() : this.gridSizes();
+    return values.map((value) => ({
+      value,
+      label: this.bulkMode() === 'row' ? `Ligne ${value}` : `Colonne ${value}`,
+    }));
+  });
+  readonly bulkSelectionLabel = computed(() =>
+    this.bulkMode() === 'row' ? 'la ligne' : 'la colonne',
+  );
+  readonly archivedCount = computed(() => this.archivedVariants().length);
   readonly formErrorCount = computed(() => {
     this.formTick();
     let count = 0;
@@ -371,7 +449,8 @@ export class ProductFormComponent implements OnInit {
   private initCreate(): void {
     this.autoSlug = true;
     this.status.set('DRAFT');
-    if (this.variants.length === 0) this.addVariant();
+    this.archivedVariants.set([]);
+    this.pendingArchived.set([]);
     this.productForm.markAsPristine();
     this.variantBaseline = this.variantsSnapshot();
     this.imagesDirty.set(false);
@@ -408,7 +487,11 @@ export class ProductFormComponent implements OnInit {
       seoDescription: product.seoDescription ?? '',
     });
     this.variants.clear({ emitEvent: false });
-    for (const variant of product.variants) this.variants.push(this.createVariantGroup(variant));
+    for (const variant of product.variants) {
+      if (variant.archivedAt === null) this.variants.push(this.createVariantGroup(variant));
+    }
+    this.archivedVariants.set(product.variants.filter((variant) => variant.archivedAt !== null));
+    this.pendingArchived.set([]);
     this.images.set(
       product.images.map((image) => ({
         id: image.id,
@@ -428,7 +511,10 @@ export class ProductFormComponent implements OnInit {
   private createVariantGroup(variant?: AdminProductVariant): VariantForm {
     return this.fb.group<VariantControls>({
       id: this.fb.control<string | null>(variant?.id ?? null),
-      sku: this.fb.nonNullable.control(variant?.sku ?? ''),
+      sku: this.fb.nonNullable.control(variant?.sku ?? '', [
+        Validators.maxLength(64),
+        Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9_-]*$/),
+      ]),
       color: this.fb.nonNullable.control(variant?.color ?? '', [
         Validators.required,
         Validators.maxLength(32),
@@ -448,6 +534,7 @@ export class ProductFormComponent implements OnInit {
         Validators.min(0),
         positiveIntegerValidator,
       ]),
+      hasOrders: this.fb.nonNullable.control((variant?.orderCount ?? 0) > 0),
     });
   }
 
@@ -455,6 +542,7 @@ export class ProductFormComponent implements OnInit {
     return JSON.stringify(
       this.variants.getRawValue().map((variant) => ({
         id: variant.id,
+        sku: String(variant.sku).trim().toUpperCase(),
         color: String(variant.color).trim().toUpperCase(),
         size: String(variant.size).trim().toUpperCase(),
         price: numberOrNull(variant.price),
@@ -533,6 +621,9 @@ export class ProductFormComponent implements OnInit {
     if (control.hasError('pattern') && name === 'slug') {
       return 'Utilisez uniquement des minuscules, chiffres et tirets.';
     }
+    if (control.hasError('pattern') && name === 'sku') {
+      return 'Le SKU doit contenir uniquement lettres, chiffres, tirets et underscores.';
+    }
     if (control.hasError('min')) return 'La valeur ne peut pas être négative.';
     if (control.hasError('integer')) return 'Saisissez un nombre entier positif.';
     return 'Valeur invalide.';
@@ -586,8 +677,33 @@ export class ProductFormComponent implements OnInit {
 
   // ---------------------------------------------------------------- variants
 
-  addVariant(): void {
-    this.variants.push(this.createVariantGroup());
+  variantAt(color: string, size: string): VariantForm | null {
+    const index = this.variantIndex(color, size);
+    return index >= 0 ? (this.variants.at(index) as VariantForm) : null;
+  }
+
+  variantIndex(color: string, size: string): number {
+    const normalizedColor = color.trim().toUpperCase();
+    const normalizedSize = size.trim().toUpperCase();
+    return this.variants
+      .getRawValue()
+      .findIndex(
+        (variant) =>
+          String(variant.color).trim().toUpperCase() === normalizedColor &&
+          String(variant.size).trim().toUpperCase() === normalizedSize,
+      );
+  }
+
+  addGridCell(color: string, size: string): void {
+    if (this.variantAt(color, size) !== null) return;
+    const group = this.createVariantGroup();
+    group.patchValue({
+      color,
+      size,
+      stock: Math.max(0, Math.trunc(Number(this.generatorStock()) || 0)),
+      lowStockThreshold: Math.max(0, Math.trunc(Number(this.generatorThreshold()) || 0)),
+    });
+    this.variants.push(group);
     this.variants.markAsDirty();
   }
 
@@ -596,18 +712,152 @@ export class ProductFormComponent implements OnInit {
     this.variants.markAsDirty();
   }
 
+  requestRemoveVariant(index: number): void {
+    const group = this.variants.at(index);
+    if (!group) return;
+    if (group.controls.hasOrders.value) {
+      this.variantRemovalTarget.set(index);
+      return;
+    }
+    this.removeVariant(index);
+  }
+
+  confirmRemoveVariant(): void {
+    const index = this.variantRemovalTarget();
+    if (index === null) return;
+    const group = this.variants.at(index);
+    if (!group) {
+      this.variantRemovalTarget.set(null);
+      return;
+    }
+    const raw = group.getRawValue();
+    this.pendingArchived.update((items) =>
+      [
+        ...items,
+        {
+          index,
+          variant: {
+            id: raw.id ?? '',
+            sku: raw.sku,
+            color: raw.color,
+            size: raw.size,
+            price: numberOrNull(raw.price),
+            stock: Number(raw.stock),
+            reservedStock: 0,
+            lowStockThreshold: Number(raw.lowStockThreshold),
+            archivedAt: null,
+            orderCount: 1,
+            version: 0,
+          },
+        },
+      ].sort((left, right) => left.index - right.index),
+    );
+    this.removeVariant(index);
+    this.variantRemovalTarget.set(null);
+    this.toast.warning(
+      'Cette variante a déjà été vendue : elle sera archivée à l’enregistrement, pas supprimée.',
+    );
+  }
+
+  restorePendingArchived(index: number): void {
+    const item = this.pendingArchived().find((entry) => entry.index === index);
+    if (!item) return;
+    this.pendingArchived.update((items) => items.filter((entry) => entry.index !== index));
+    this.variants.insert(
+      Math.min(index, this.variants.length),
+      this.createVariantGroup(item.variant),
+    );
+    this.variants.markAsDirty();
+  }
+
+  restoreArchivedVariant(variant: AdminProductVariant): void {
+    if (this.variantAt(variant.color, variant.size) !== null) {
+      this.toast.error('Une variante active utilise déjà cette couleur et cette pointure.');
+      return;
+    }
+    this.archivedVariants.update((items) => items.filter((item) => item.id !== variant.id));
+    this.variants.push(this.createVariantGroup(variant));
+    this.variants.markAsDirty();
+    this.toast.success('Variante réactivée. Enregistrez pour confirmer.');
+  }
+
+  addColor(): void {
+    const color = this.draftColor().trim().toUpperCase();
+    if (color === '') return;
+    if (color.length > 32) {
+      this.toast.error('Une couleur ne peut pas dépasser 32 caractères.');
+      return;
+    }
+    if (this.generatorColors().includes(color)) {
+      this.toast.warning('Cette couleur est déjà sélectionnée.');
+      return;
+    }
+    this.generatorColors.update((colors) => [...colors, color]);
+    this.draftColor.set('');
+  }
+
+  removeColor(color: string): void {
+    this.generatorColors.update((colors) => colors.filter((item) => item !== color));
+  }
+
+  addSize(): void {
+    const size = this.draftSize().trim().toUpperCase();
+    if (size === '') return;
+    if (size.length > 16) {
+      this.toast.error('Une pointure ne peut pas dépasser 16 caractères.');
+      return;
+    }
+    if (this.generatorSizes().includes(size)) {
+      this.toast.warning('Cette pointure est déjà sélectionnée.');
+      return;
+    }
+    this.generatorSizes.update((sizes) => [...sizes, size].sort(compareSizes));
+    this.draftSize.set('');
+  }
+
+  removeSize(size: string): void {
+    this.generatorSizes.update((sizes) => sizes.filter((item) => item !== size));
+  }
+
+  addSizeRange(): void {
+    const from = Number(this.sizeRangeFrom());
+    const to = Number(this.sizeRangeTo());
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 15 || to > 60 || from > to) {
+      this.toast.error('Saisissez une plage de pointures entières comprise entre 15 et 60.');
+      return;
+    }
+    if (to - from > 30) {
+      this.toast.error('La plage ne peut pas dépasser 31 pointures.');
+      return;
+    }
+    const added = new Set(this.generatorSizes());
+    for (let size = from; size <= to; size += 1) added.add(String(size));
+    this.generatorSizes.set([...added].sort(compareSizes));
+    this.sizeRangeFrom.set('');
+    this.sizeRangeTo.set('');
+  }
+
+  previewSku(color: string, size: string): string {
+    const brandSlug = this.brands().find(
+      (brand) => brand.id === this.productForm.controls.brandId.value,
+    )?.slug;
+    const productSlug =
+      this.productForm.controls.slug.value.trim() || slugify(this.productForm.controls.name.value);
+    const brand = skuSegment(brandSlug ?? '', 8);
+    const product = skuSegment(productSlug, 10);
+    const sizePart = skuSegment(size, 8);
+    const colorPart = skuSegment(color, 12);
+    if (brand === '' || product === '' || sizePart === '' || colorPart === '') return '';
+    return `${brand}-${product}-${sizePart}-${colorPart}`;
+  }
+
   generateVariants(): void {
-    const colors = this.generatorColors()
-      .split(/[,;\n]/)
-      .map((value) => value.trim().toUpperCase())
-      .filter(Boolean);
-    const sizes = this.generatorSizes()
-      .split(/[,;\n]/)
-      .map((value) => value.trim().toUpperCase())
-      .filter(Boolean);
+    const colors = this.generatorColors();
+    const sizes = this.generatorSizes();
     const stock = Math.max(0, Math.trunc(Number(this.generatorStock()) || 0));
+    const threshold = Math.max(0, Math.trunc(Number(this.generatorThreshold()) || 0));
     if (colors.length === 0 || sizes.length === 0) {
-      this.toast.error('Saisissez au moins une couleur et une pointure.');
+      this.toast.error('Sélectionnez au moins une couleur et une pointure.');
       return;
     }
 
@@ -619,23 +869,81 @@ export class ProductFormComponent implements OnInit {
             `${String(variant.color).trim().toUpperCase()}::${String(variant.size).trim().toUpperCase()}`,
         ),
     );
+    const archived = new Set(
+      this.archivedVariants().map(
+        (variant) => `${variant.color.trim().toUpperCase()}::${variant.size.trim().toUpperCase()}`,
+      ),
+    );
     let added = 0;
+    let skippedArchived = 0;
     for (const color of colors) {
       for (const size of sizes) {
-        if (existing.has(`${color}::${size}`)) continue;
+        const key = `${color}::${size}`;
+        if (existing.has(key)) continue;
+        if (archived.has(key)) {
+          skippedArchived += 1;
+          continue;
+        }
         const group = this.createVariantGroup();
-        group.patchValue({ color, size, stock });
+        group.patchValue({ color, size, stock, lowStockThreshold: threshold });
         this.variants.push(group);
-        existing.add(`${color}::${size}`);
+        existing.add(key);
         added += 1;
       }
     }
     if (added === 0) {
-      this.toast.warning('Toutes ces combinaisons existent déjà.');
+      this.toast.warning(
+        skippedArchived > 0
+          ? 'Ces combinaisons existent déjà ou sont archivées. Réactivez la variante archivée concernée.'
+          : 'Toutes ces combinaisons existent déjà.',
+      );
       return;
     }
     this.variants.markAsDirty();
-    this.toast.success(`${added} variante(s) ajoutée(s).`);
+    this.toast.success(
+      `${added} variante(s) ajoutée(s)${skippedArchived > 0 ? `, ${skippedArchived} archivée(s) ignorée(s)` : ''}.`,
+    );
+  }
+
+  setBulkMode(mode: 'row' | 'column'): void {
+    this.bulkMode.set(mode);
+    this.bulkTarget.set('');
+  }
+
+  setBulkField(value: string): void {
+    this.bulkField.set(value === 'threshold' ? 'threshold' : 'stock');
+  }
+
+  applyBulk(): void {
+    const target = this.bulkTarget();
+    const value = Number(this.bulkValue());
+    if (target === '') {
+      this.toast.error(`Sélectionnez ${this.bulkSelectionLabel()} à remplir.`);
+      return;
+    }
+    if (!Number.isInteger(value) || value < 0) {
+      this.toast.error('La valeur de remplissage doit être un entier positif ou nul.');
+      return;
+    }
+    let count = 0;
+    for (const group of this.variants.controls) {
+      const matches =
+        this.bulkMode() === 'row'
+          ? group.controls.color.value.trim().toUpperCase() === target
+          : group.controls.size.value.trim().toUpperCase() === target;
+      if (!matches) continue;
+      if (this.bulkField() === 'stock') group.controls.stock.setValue(value);
+      else group.controls.lowStockThreshold.setValue(value);
+      group.controls[this.bulkField() === 'stock' ? 'stock' : 'lowStockThreshold'].markAsDirty();
+      count += 1;
+    }
+    this.variants.markAsDirty();
+    if (count === 0) {
+      this.toast.warning('Aucune variante ne correspond à cette sélection.');
+      return;
+    }
+    const label = this.bulkField() === 'stock' ? 'stock' : 'seuil d’alerte';
+    this.toast.success(`${label} appliqué à ${count} variante(s).`);
   }
 
   // ------------------------------------------------------------------ images
@@ -837,9 +1145,11 @@ export class ProductFormComponent implements OnInit {
   private variantPayload(): ProductVariantPayload[] {
     return this.variants.getRawValue().map((variant) => {
       const price = numberOrNull(variant.price);
+      const sku = String(variant.sku).trim().toUpperCase();
       return {
         color: String(variant.color).trim(),
         size: String(variant.size).trim(),
+        ...(sku !== '' ? { sku } : {}),
         ...(price !== null ? { price: Math.trunc(price) } : {}),
         stock: Math.trunc(Number(variant.stock)),
         lowStockThreshold: Math.trunc(Number(variant.lowStockThreshold)),

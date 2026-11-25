@@ -9,6 +9,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
   Min,
   MinLength,
@@ -36,6 +37,18 @@ export class UpdateProductVariantDto {
   @MinLength(1)
   @MaxLength(16)
   size!: string;
+
+  @ApiPropertyOptional({
+    example: 'BARRAGEF-AIRMAX90-42-NOIR',
+    description: 'SKU personnalisé (conservé s’il est absent)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  @Matches(/^[A-Za-z0-9][A-Za-z0-9_-]*$/, {
+    message: 'Le SKU doit contenir uniquement lettres, chiffres, tirets et underscores.',
+  })
+  sku?: string;
 
   @ApiPropertyOptional({ minimum: 0, description: 'Prix spécifique XAF (null = prix produit)' })
   @IsOptional()

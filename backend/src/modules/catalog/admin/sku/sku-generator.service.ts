@@ -82,6 +82,7 @@ export class SkuGeneratorService {
     brandSlug: string,
     productSlug: string,
     variants: SkuVariantInput[],
+    reservedSkus: string[] = [],
   ): Promise<Map<string, string>> {
     const bases = new Map<string, string>();
     for (const variant of variants) {
@@ -99,7 +100,7 @@ export class SkuGeneratorService {
       where: { sku: { in: [...bases.values()] } },
       select: { sku: true },
     });
-    const used = new Set(existing.map((row) => row.sku));
+    const used = new Set([...existing.map((row) => row.sku), ...reservedSkus]);
 
     const result = new Map<string, string>();
     for (const [key, base] of bases) {

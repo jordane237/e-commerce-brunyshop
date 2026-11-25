@@ -5,7 +5,10 @@ import type { AdminProductDetailDto } from './dto/admin-product-detail.dto';
 export const adminProductInclude = {
   category: { select: { id: true, name: true, slug: true } },
   brand: { select: { id: true, name: true, slug: true, logo: true } },
-  variants: { orderBy: [{ color: 'asc' as const }, { size: 'asc' as const }] },
+  variants: {
+    orderBy: [{ color: 'asc' as const }, { size: 'asc' as const }],
+    include: { _count: { select: { orderItems: true } } },
+  },
   images: { orderBy: [{ position: 'asc' as const }, { createdAt: 'asc' as const }] },
 } satisfies Prisma.ProductInclude;
 
@@ -45,6 +48,8 @@ export function toAdminProductDetail(
       stock: variant.stock,
       reservedStock: variant.reservedStock,
       lowStockThreshold: variant.lowStockThreshold,
+      archivedAt: variant.archivedAt?.toISOString() ?? null,
+      orderCount: variant._count?.orderItems ?? 0,
       version: variant.version,
     })),
     images: product.images.map((image) => ({
