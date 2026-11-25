@@ -20,11 +20,11 @@ export class ConfirmUploadDto {
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   productSlug!: string;
 
-  @ApiPropertyOptional({ example: 'noir' })
+  @ApiPropertyOptional({ example: 'BLEU MARINE' })
   @IsOptional()
   @IsString()
   @MaxLength(32)
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  @Matches(/^[a-zA-Z0-9À-ÿ][a-zA-Z0-9À-ÿ _-]*$/)
   variantColor?: string;
 
   @ApiPropertyOptional({ minimum: 0 })

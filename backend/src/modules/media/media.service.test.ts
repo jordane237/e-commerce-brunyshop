@@ -41,6 +41,9 @@ function makeService() {
       delete: vi.fn().mockResolvedValue(undefined),
       update: vi.fn().mockResolvedValue(undefined),
     },
+    productVariant: {
+      findMany: vi.fn().mockResolvedValue([{ color: 'NOIR' }]),
+    },
     $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => callback(prisma)),
   };
   const audit = { record: vi.fn().mockResolvedValue(undefined) };
@@ -103,6 +106,24 @@ describe('MediaService — presign', () => {
       expect.anything(),
       expect.objectContaining({ action: 'MEDIA_PRESIGN_GENERATED' }),
     );
+  });
+
+  it('slugifie une couleur multi-mots dans la clé sans perdre le libellé', async () => {
+    const { service, prisma } = makeService();
+    prisma.productVariant.findMany.mockResolvedValue([{ color: 'BLEU MARINE' }]);
+
+    const result = await service.presignUpload(presignDto({ variantColor: 'BLEU MARINE' }), ACTOR);
+
+    expect(result.key).toMatch(new RegExp(`^products/${SLUG}/bleu-marine/`));
+  });
+
+  it('refuse une couleur absente des variantes actives au presign', async () => {
+    const { service, prisma } = makeService();
+    prisma.productVariant.findMany.mockResolvedValue([{ color: 'NOIR' }]);
+
+    await expect(
+      service.presignUpload(presignDto({ variantColor: 'ROUGE' }), ACTOR),
+    ).rejects.toMatchObject({ response: { code: 'INVALID_VARIANT_COLOR' } });
   });
 
   it('renvoie 404 pour un produit inexistant', async () => {
@@ -226,6 +247,118 @@ describe('MediaService — confirm', () => {
 
     await expect(service.confirmUpload(confirmDto(key), ACTOR)).rejects.toThrow('db down');
     expect(storage.getObject(key.replace(/\.jpg$/, '.webp'))).toBeUndefined();
+  });
+});
+
+describe('MediaService — configuration & métadonnées', () => {
+  it('expose les limites configurées sans secret de stockage', () => {
+    const { service } = makeService();
+
+    expect(service.getConfig()).toEqual({
+      maxFileSizeBytes: 5 * 1024 * 1024,
+      maxImagesPerProduct: 10,
+      presignExpiresSeconds: 300,
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    });
+  });
+
+  it('met à jour le texte alternatif et une couleur active', async () => {
+    const { service, prisma, audit, cache } = makeService();
+    prisma.productImage.findUnique.mockResolvedValue({
+      id: 'image-1',
+      productId: 'product-1',
+      url: 'http://media.test/brunyshop-media/products/test/noir/a.webp',
+      storageKey: `products/${SLUG}/noir/${randomUUID()}.webp`,
+      alt: null,
+      position: 0,
+      variantColor: null,
+    });
+    prisma.productImage.update.mockImplementation(({ data }: { data: Record<string, unknown> }) =>
+      Promise.resolve({
+        id: 'image-1',
+        productId: 'product-1',
+        url: 'http://media.test/brunyshop-media/products/test/noir/a.webp',
+        storageKey: `products/${SLUG}/noir/${randomUUID()}.webp`,
+        alt: data['alt'],
+        position: 0,
+        variantColor: data['variantColor'],
+      }),
+    );
+
+    const result = await service.updateImage(
+      'image-1',
+      { alt: '  Vue de face  ', variantColor: 'noir' },
+      ACTOR,
+    );
+
+    expect(prisma.productVariant.findMany).toHaveBeenCalledWith({
+      where: { productId: 'product-1', archivedAt: null },
+      select: { color: true },
+      distinct: ['color'],
+    });
+    expect(result).toMatchObject({ alt: 'Vue de face', variantColor: 'NOIR' });
+    expect(result.thumbnailUrl).toMatch(/-thumb\.webp$/);
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ action: 'MEDIA_UPDATED' }),
+    );
+    expect(cache.invalidateProducts).toHaveBeenCalledOnce();
+  });
+
+  it('refuse une couleur absente des variantes actives', async () => {
+    const { service, prisma } = makeService();
+    prisma.productImage.findUnique.mockResolvedValue({
+      id: 'image-1',
+      productId: 'product-1',
+      url: 'http://media.test/a.webp',
+      storageKey: `products/${SLUG}/noir/a.webp`,
+      alt: null,
+      position: 0,
+      variantColor: null,
+    });
+    prisma.productVariant.findMany.mockResolvedValue([{ color: 'NOIR' }]);
+
+    await expect(
+      service.updateImage('image-1', { variantColor: 'ROUGE' }, ACTOR),
+    ).rejects.toMatchObject({ response: { code: 'INVALID_VARIANT_COLOR' } });
+    expect(prisma.productImage.update).not.toHaveBeenCalled();
+  });
+
+  it('conserve une couleur historique quand seul le texte alternatif change', async () => {
+    const { service, prisma } = makeService();
+    prisma.productImage.findUnique.mockResolvedValue({
+      id: 'image-1',
+      productId: 'product-1',
+      url: 'http://media.test/a.webp',
+      storageKey: `products/${SLUG}/ancienne/a.webp`,
+      alt: null,
+      position: 0,
+      variantColor: 'ANCIENNE',
+    });
+    prisma.productVariant.findMany.mockResolvedValue([]);
+    prisma.productImage.update.mockResolvedValue({
+      id: 'image-1',
+      productId: 'product-1',
+      url: 'http://media.test/a.webp',
+      storageKey: `products/${SLUG}/ancienne/a.webp`,
+      alt: 'Vue historique',
+      position: 0,
+      variantColor: 'ANCIENNE',
+    });
+
+    await expect(
+      service.updateImage('image-1', { alt: 'Vue historique' }, ACTOR),
+    ).resolves.toMatchObject({ alt: 'Vue historique', variantColor: 'ANCIENNE' });
+    expect(prisma.productVariant.findMany).not.toHaveBeenCalled();
+  });
+
+  it('renvoie 404 pour une image inconnue', async () => {
+    const { service, prisma } = makeService();
+    prisma.productImage.findUnique.mockResolvedValue(null);
+
+    await expect(service.updateImage('missing', { alt: 'x' }, ACTOR)).rejects.toMatchObject({
+      response: { code: 'IMAGE_NOT_FOUND' },
+    });
   });
 });
 

@@ -577,140 +577,11 @@
           @case ('images') {
             <div class="panel-heading">
               <h2>Images du produit</h2>
-              <p>La première image sert de visuel principal dans le catalogue.</p>
+              <p>
+                Ajoutez plusieurs photos, suivez leur téléversement, puis choisissez l’image
+                principale et la couleur associée.
+              </p>
             </div>
-
-            @if (imageError()) {
-              <div class="form-alert form-alert--error" role="alert">{{ imageError() }}</div>
-            }
-
-            <div class="upload-card">
-              <div>
-                <h3>Téléverser une image</h3>
-                <p>JPEG, PNG ou WebP · 20 Mo maximum. Les formats sont convertis et optimisés.</p>
-                @if (!isEdit()) {
-                  <p class="upload-card__hint">
-                    Enregistrez d’abord le brouillon : l’envoi de fichiers nécessite un produit
-                    existant.
-                  </p>
-                }
-              </div>
-              <div class="upload-card__controls">
-                <bruny-input
-                  label="Couleur associée (optionnel)"
-                  name="upload-color"
-                  placeholder="NOIR"
-                  hint="Laisser vide pour une image commune."
-                  [value]="uploadColor()"
-                  (valueChange)="uploadColor.set($event)"
-                />
-                <label
-                  class="file-picker"
-                  [class.file-picker--disabled]="!isEdit() || imageUploading()"
-                >
-                  <span>{{ imageUploading() ? 'Téléversement…' : 'Choisir des fichiers' }}</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    multiple
-                    [disabled]="!isEdit() || imageUploading()"
-                    (change)="onFilesSelected($event)"
-                  />
-                </label>
-              </div>
-            </div>
-
-            @if (!isEdit()) {
-              <div class="url-card">
-                <h3>Ajouter une image par URL</h3>
-                <div class="url-card__grid">
-                  <bruny-input
-                    label="URL de l’image"
-                    name="image-url"
-                    type="url"
-                    placeholder="https://cdn.exemple.cm/produit.jpg"
-                    [value]="newImageUrl()"
-                    (valueChange)="newImageUrl.set($event)"
-                  />
-                  <bruny-input
-                    label="Texte alternatif"
-                    name="image-alt"
-                    placeholder="Vue de profil"
-                    [value]="newImageAlt()"
-                    (valueChange)="newImageAlt.set($event)"
-                  />
-                  <bruny-input
-                    label="Couleur associée (optionnel)"
-                    name="image-color"
-                    placeholder="NOIR"
-                    [value]="newImageColor()"
-                    (valueChange)="newImageColor.set($event)"
-                  />
-                  <bruny-button variant="secondary" (click)="addImageFromUrl()"
-                    >Ajouter</bruny-button
-                  >
-                </div>
-                @if (imageUrlError()) {
-                  <p class="field-error" role="alert">{{ imageUrlError() }}</p>
-                }
-              </div>
-            }
-
-            @if (images().length === 0) {
-              <div class="empty-images">
-                <p>Aucune image pour ce produit.</p>
-              </div>
-            } @else {
-              <div class="image-grid">
-                @for (image of images(); track image.id ?? image.url; let i = $index) {
-                  <article class="image-card">
-                    <div class="image-card__visual">
-                      <img [src]="image.url" [alt]="image.alt || 'Image du produit'" />
-                      @if (i === 0) {
-                        <span class="image-card__badge">Principale</span>
-                      }
-                    </div>
-                    <div class="image-card__body">
-                      <p class="image-card__alt">{{ image.alt || 'Sans texte alternatif' }}</p>
-                      <p class="image-card__meta">
-                        Position {{ i + 1 }}
-                        @if (image.variantColor) {
-                          · {{ image.variantColor }}
-                        }
-                      </p>
-                      <div class="image-card__actions">
-                        <button
-                          type="button"
-                          class="icon-button"
-                          [disabled]="i === 0 || imageUploading()"
-                          (click)="moveImage(i, -1)"
-                          aria-label="Déplacer l’image vers le haut"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          class="icon-button"
-                          [disabled]="i === images().length - 1 || imageUploading()"
-                          (click)="moveImage(i, 1)"
-                          aria-label="Déplacer l’image vers le bas"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          type="button"
-                          class="icon-button icon-button--danger"
-                          [disabled]="imageUploading()"
-                          (click)="removeImage(image)"
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                }
-              </div>
-            }
           }
 
           @case ('tarifs') {
@@ -841,6 +712,23 @@
             </div>
           }
         }
+
+        <!--
+          Le gestionnaire reste monté hors du @switch : changer d’onglet ne doit
+          ni annuler un téléversement ni perdre des fichiers en attente.
+        -->
+        <div [hidden]="activeTab() !== 'images'">
+          <app-product-images
+            [productId]="productId()"
+            [productSlug]="productSlug()"
+            [images]="images()"
+            [colors]="imageColorOptions()"
+            [disabled]="saving() !== null"
+            (imagesChange)="setImages($event)"
+            (dirtyChange)="imagesDirty.set($event)"
+            (uploadingChange)="imageUploading.set($event)"
+          />
+        </div>
       </section>
 
       <footer class="product-form__footer">
@@ -945,16 +833,6 @@
     tone="neutral"
     (confirmed)="confirmDuplicate()"
     (cancelled)="duplicateOpen.set(false)"
-  />
-
-  <bruny-confirm-dialog
-    [open]="imageDeleteTarget() !== null"
-    title="Supprimer cette image ?"
-    message="L’image sera retirée du produit et du stockage."
-    confirmLabel="Supprimer"
-    tone="danger"
-    (confirmed)="confirmDeleteImage()"
-    (cancelled)="imageDeleteTarget.set(null)"
   />
 
   <bruny-confirm-dialog

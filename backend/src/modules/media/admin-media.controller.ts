@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Headers,
   HttpCode,
   HttpStatus,
@@ -34,12 +35,14 @@ import {
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ConfirmUploadDto } from './dto/confirm-upload.dto';
 import {
+  MediaConfigDto,
   MediaImageResponseDto,
   PresignResponseDto,
   ReorderResponseDto,
 } from './dto/media-response.dto';
 import { PresignUploadDto } from './dto/presign-upload.dto';
 import { ReorderImagesDto } from './dto/reorder-images.dto';
+import { UpdateProductImageDto } from './dto/update-image.dto';
 import { MediaService, type MediaActor } from './media.service';
 
 @ApiTags('admin-media')
@@ -48,6 +51,19 @@ import { MediaService, type MediaActor } from './media.service';
 @Controller('admin/media')
 export class AdminMediaController {
   constructor(private readonly media: MediaService) {}
+
+  @Get('config')
+  @ApiOperation({
+    summary: 'Lire les limites de téléversement des images',
+    description:
+      'Expose uniquement les limites publiques au back-office (taille, quota, durée de signature, formats). Les identifiants du stockage restent côté serveur.',
+  })
+  @ApiOkResponse({ description: 'Limites média actives.', type: MediaConfigDto })
+  @ApiUnauthorizedResponse({ description: 'Jeton absent, invalide ou expiré.' })
+  @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
+  getConfig(): MediaConfigDto {
+    return this.media.getConfig();
+  }
 
   @Post('presign')
   @HttpCode(HttpStatus.OK)
@@ -105,6 +121,30 @@ export class AdminMediaController {
     @Headers('user-agent') userAgent: string | undefined,
   ): Promise<MediaImageResponseDto> {
     return this.media.confirmUpload(dto, this.actor(user, ip, userAgent));
+  }
+
+  @Patch('images/:id/metadata')
+  @ApiOperation({
+    summary: 'Modifier le texte alternatif ou la couleur d’une image',
+    description:
+      'Met à jour les métadonnées sans retoucher au fichier. Une nouvelle couleur doit exister parmi les variantes actives du produit ; une couleur historique peut être conservée tant qu’elle n’est pas remplacée. Audit MEDIA_UPDATED et invalidation du cache.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ description: 'Métadonnées mises à jour.', type: MediaImageResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Couleur inconnue du produit (INVALID_VARIANT_COLOR) ou payload invalide.',
+  })
+  @ApiNotFoundResponse({ description: 'Image introuvable (IMAGE_NOT_FOUND).' })
+  @ApiUnauthorizedResponse({ description: 'Jeton absent, invalide ou expiré.' })
+  @ApiForbiddenResponse({ description: 'Rôle insuffisant (FORBIDDEN).' })
+  async updateImage(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProductImageDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string | undefined,
+  ): Promise<MediaImageResponseDto> {
+    return this.media.updateImage(id, dto, this.actor(user, ip, userAgent));
   }
 
   @Delete('images/:id')

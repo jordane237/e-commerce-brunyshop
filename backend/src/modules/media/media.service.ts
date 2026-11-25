@@ -13,6 +13,7 @@ import {
   type StorageProvider,
 } from '../../infrastructure/storage/providers/storage-provider.interface';
 import {
+  ALLOWED_IMAGE_MIME_TYPES,
   extensionForMime,
   type AllowedImageMimeType,
   type StorageSettings,
@@ -22,6 +23,7 @@ import { CatalogCacheService } from '../catalog/cache/catalog-cache.service';
 import { ConfirmUploadDto } from './dto/confirm-upload.dto';
 import { PresignUploadDto } from './dto/presign-upload.dto';
 import { ReorderImagesDto } from './dto/reorder-images.dto';
+import { UpdateProductImageDto } from './dto/update-image.dto';
 import { ImageProcessorService, type ProcessedImage } from './image-processor.service';
 import { MEDIA_AUDIT_ACTIONS as ACTIONS } from './media-audit.actions';
 
@@ -56,6 +58,12 @@ interface ImageRow {
   storageKey: string | null;
 }
 
+interface EditableImageRow extends ImageRow {
+  alt: string | null;
+  position: number;
+  variantColor: string | null;
+}
+
 function normalizeColor(value: string): string {
   return value
     .normalize('NFD')
@@ -63,6 +71,15 @@ function normalizeColor(value: string): string {
     .trim()
     .replace(/\s+/g, ' ')
     .toUpperCase();
+}
+
+function colorSlug(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 @Injectable()
@@ -91,6 +108,9 @@ export class MediaService {
         message: 'Produit introuvable.',
       });
     }
+    if (dto.variantColor) {
+      await this.assertActiveProductColor(product.id, normalizeColor(dto.variantColor));
+    }
 
     const imageCount = await this.prisma.productImage.count({
       where: { productId: product.id },
@@ -110,7 +130,7 @@ export class MediaService {
     }
 
     const extension = extensionForMime(dto.contentType as AllowedImageMimeType);
-    const colorSegment = dto.variantColor ?? 'common';
+    const colorSegment = dto.variantColor ? colorSlug(dto.variantColor) : 'common';
     const key = `products/${dto.productSlug}/${colorSegment}/${randomUUID()}.${extension}`;
     const signed = await this.storage.presignUpload(
       key,
@@ -148,6 +168,9 @@ export class MediaService {
         code: 'PRODUCT_NOT_FOUND',
         message: 'Produit introuvable.',
       });
+    }
+    if (dto.variantColor) {
+      await this.assertActiveProductColor(product.id, normalizeColor(dto.variantColor));
     }
 
     this.assertKeyOwnership(dto.key, dto.productSlug, dto.variantColor);
@@ -256,6 +279,98 @@ export class MediaService {
     }
   }
 
+  getConfig(): {
+    maxFileSizeBytes: number;
+    maxImagesPerProduct: number;
+    presignExpiresSeconds: number;
+    allowedMimeTypes: string[];
+  } {
+    return {
+      maxFileSizeBytes: this.settings.maxFileSizeBytes,
+      maxImagesPerProduct: this.settings.maxImagesPerProduct,
+      presignExpiresSeconds: this.settings.presignExpiresSeconds,
+      allowedMimeTypes: [...ALLOWED_IMAGE_MIME_TYPES],
+    };
+  }
+
+  async updateImage(
+    imageId: string,
+    dto: UpdateProductImageDto,
+    actor: MediaActor,
+  ): Promise<ConfirmResponse> {
+    const image: EditableImageRow | null = await this.prisma.productImage.findUnique({
+      where: { id: imageId },
+      select: {
+        id: true,
+        productId: true,
+        url: true,
+        storageKey: true,
+        alt: true,
+        position: true,
+        variantColor: true,
+      },
+    });
+    if (!image) {
+      throw new NotFoundException({
+        code: 'IMAGE_NOT_FOUND',
+        message: 'Image introuvable.',
+      });
+    }
+
+    const variantColor =
+      dto.variantColor === undefined
+        ? undefined
+        : dto.variantColor === null
+          ? null
+          : normalizeColor(dto.variantColor);
+
+    if (
+      variantColor !== undefined &&
+      variantColor !== null &&
+      variantColor !== image.variantColor
+    ) {
+      await this.assertActiveProductColor(image.productId, variantColor);
+    }
+
+    const alt =
+      dto.alt === undefined ? undefined : dto.alt === null ? null : dto.alt.trim() || null;
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const row = await tx.productImage.update({
+        where: { id: image.id },
+        data: {
+          ...(alt !== undefined ? { alt } : {}),
+          ...(variantColor !== undefined ? { variantColor } : {}),
+        },
+      });
+      await this.audit.record(tx, {
+        userId: actor.userId,
+        action: ACTIONS.MEDIA_UPDATED,
+        entity: 'ProductImage',
+        entityId: image.id,
+        ip: actor.ip,
+        userAgent: actor.userAgent,
+        before: {
+          alt: image.alt,
+          variantColor: image.variantColor,
+          position: image.position,
+        },
+        after: { alt: row.alt, variantColor: row.variantColor, position: row.position },
+      });
+      return row;
+    });
+
+    await this.cache.invalidateProducts();
+    return {
+      id: updated.id,
+      url: updated.url,
+      thumbnailUrl: this.thumbnailUrl(updated.url, updated.storageKey),
+      alt: updated.alt,
+      position: updated.position,
+      variantColor: updated.variantColor,
+    };
+  }
+
   async deleteImage(imageId: string, actor: MediaActor): Promise<void> {
     const image: ImageRow | null = await this.prisma.productImage.findUnique({
       where: { id: imageId },
@@ -338,8 +453,31 @@ export class MediaService {
     return { updated: dto.order.length };
   }
 
+  private async assertActiveProductColor(productId: string, color: string): Promise<void> {
+    const variants = await this.prisma.productVariant.findMany({
+      where: { productId, archivedAt: null },
+      select: { color: true },
+      distinct: ['color'],
+    });
+    if (!variants.some((variant) => normalizeColor(variant.color) === color)) {
+      throw new BadRequestException({
+        code: 'INVALID_VARIANT_COLOR',
+        message: 'Cette couleur n’existe pas parmi les variantes actives du produit.',
+      });
+    }
+  }
+
+  private thumbnailUrl(url: string, storageKey: string | null = null): string {
+    const key = storageKey ?? this.keyFromUrl(url);
+    if (!key) return url;
+    return this.storage.getPublicUrl(
+      key.endsWith('.webp') ? key.replace(/\.webp$/, '-thumb.webp') : key,
+    );
+  }
+
   private assertKeyOwnership(key: string, slug: string, variantColor?: string): void {
-    const expectedPrefix = `products/${slug}/${variantColor ?? 'common'}/`;
+    const colorSegment = variantColor ? colorSlug(variantColor) : 'common';
+    const expectedPrefix = `products/${slug}/${colorSegment}/`;
     if (!key.startsWith(expectedPrefix) || key.includes('..')) {
       throw new BadRequestException({
         code: 'INVALID_MEDIA_KEY',

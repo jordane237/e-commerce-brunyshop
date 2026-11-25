@@ -54,6 +54,7 @@ const detail: AdminProductDetail = {
     {
       id: 'image-1',
       url: 'https://cdn.example.com/am90.jpg',
+      thumbnailUrl: 'https://cdn.example.com/am90.jpg',
       alt: 'Air Max 90',
       position: 0,
       variantColor: null,
@@ -73,8 +74,18 @@ function setup(productId: string | null = null, product: AdminProductDetail = de
     options: vi.fn().mockReturnValue(of({ categories: [category], brands: [brand] })),
   };
   const mediaApi = {
+    config: vi.fn().mockReturnValue(
+      of({
+        maxFileSizeBytes: 5 * 1024 * 1024,
+        maxImagesPerProduct: 10,
+        presignExpiresSeconds: 300,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      }),
+    ),
     presign: vi.fn(),
+    upload: vi.fn(),
     confirm: vi.fn(),
+    updateImage: vi.fn(),
     deleteImage: vi.fn().mockReturnValue(of(void 0)),
     reorder: vi.fn().mockReturnValue(of(void 0)),
   };
@@ -365,34 +376,6 @@ describe('ProductFormComponent', () => {
     expect(component.archivedVariants()).toHaveLength(0);
     expect(component.variants.at(0).controls.id.value).toBe('variant-1');
     expect(component.variants.at(0).controls.hasOrders.value).toBe(true);
-  });
-
-  it('ajoute une image par URL au brouillon', async () => {
-    const { component } = await ready();
-    component.newImageUrl.set('https://cdn.example.com/photo.webp');
-    component.newImageAlt.set('Photo produit');
-
-    component.addImageFromUrl();
-
-    expect(component.images()).toHaveLength(1);
-    expect(component.imagesDirty()).toBe(true);
-    expect(component.imagePayload()).toEqual([
-      {
-        url: 'https://cdn.example.com/photo.webp',
-        alt: 'Photo produit',
-        position: 0,
-      },
-    ]);
-  });
-
-  it('refuse une URL d’image invalide', async () => {
-    const { component } = await ready();
-    component.newImageUrl.set('pas-une-url');
-
-    component.addImageFromUrl();
-
-    expect(component.images()).toHaveLength(0);
-    expect(component.imageUrlError()).toContain('URL complète');
   });
 
   it('duplique un produit existant en brouillon', async () => {

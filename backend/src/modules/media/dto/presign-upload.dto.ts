@@ -15,12 +15,12 @@ export class PresignUploadDto {
   })
   productSlug!: string;
 
-  @ApiPropertyOptional({ example: 'noir' })
+  @ApiPropertyOptional({ example: 'BLEU MARINE' })
   @IsOptional()
   @IsString()
   @MaxLength(32)
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'La couleur doit être en minuscules, chiffres et tirets.',
+  @Matches(/^[a-zA-Z0-9À-ÿ][a-zA-Z0-9À-ÿ _-]*$/, {
+    message: 'La couleur contient des caractères non autorisés.',
   })
   variantColor?: string;
 

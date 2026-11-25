@@ -400,6 +400,55 @@ describe('Media upload (CAT-05)', () => {
     expect(JSON.stringify(publicDetail.body.images)).toContain(response.body.url);
   });
 
+  it('expose les limites média au back-office', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`${BASE_URL}/admin/media/config`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    expect(response.body).toEqual({
+      maxFileSizeBytes: 5 * 1024 * 1024,
+      maxImagesPerProduct: 10,
+      presignExpiresSeconds: 300,
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    });
+  });
+
+  it('met à jour le texte alternatif et la couleur d’une image', async () => {
+    const image = await prisma.productImage.findFirst({ where: { productId } });
+    expect(image).not.toBeNull();
+
+    const response = await request(app.getHttpServer())
+      .patch(`${BASE_URL}/admin/media/images/${image!.id}/metadata`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ alt: 'Vue de trois quarts', variantColor: 'noir' })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      id: image!.id,
+      alt: 'Vue de trois quarts',
+      variantColor: 'NOIR',
+      thumbnailUrl: expect.stringMatching(/-thumb\.webp$/),
+    });
+    const updated = await prisma.productImage.findUnique({ where: { id: image!.id } });
+    expect(updated?.alt).toBe('Vue de trois quarts');
+    const audit = await prisma.auditLog.findFirst({
+      where: { action: 'MEDIA_UPDATED', entityId: image!.id },
+    });
+    expect(audit).not.toBeNull();
+  });
+
+  it('refuse une couleur absente des variantes actives (400)', async () => {
+    const image = await prisma.productImage.findFirst({ where: { productId } });
+    const response = await request(app.getHttpServer())
+      .patch(`${BASE_URL}/admin/media/images/${image!.id}/metadata`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ variantColor: 'ROUGE' })
+      .expect(400);
+
+    expect(response.body.code).toBe('INVALID_VARIANT_COLOR');
+  });
+
   it('refuse un PDF à la confirmation, supprime le brut et audite le rejet', async () => {
     const presigned = await presign(adminToken, {
       productSlug,
