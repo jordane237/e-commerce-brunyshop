@@ -3487,6 +3487,15 @@
             "type": "number",
             "description": "Seuil d’alerte de stock bas"
           },
+          "archivedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date d’archivage (null = variante active)"
+          },
+          "orderCount": {
+            "type": "number",
+            "description": "Nombre de lignes de commande liées à cette variante"
+          },
           "version": {
             "type": "number",
             "description": "Version d’optimistic locking"
@@ -3501,6 +3510,8 @@
           "stock",
           "reservedStock",
           "lowStockThreshold",
+          "archivedAt",
+          "orderCount",
           "version"
         ]
       },
@@ -3676,6 +3687,11 @@
             "example": "42",
             "description": "Pointure ou taille (normalisée en majuscules)"
           },
+          "sku": {
+            "type": "string",
+            "example": "BARRAGEF-AIRMAX90-42-NOIR",
+            "description": "SKU personnalisé (généré automatiquement s’il est absent)"
+          },
           "price": {
             "type": "number",
             "minimum": 0,
@@ -3846,6 +3862,11 @@
           "size": {
             "type": "string",
             "example": "42"
+          },
+          "sku": {
+            "type": "string",
+            "example": "BARRAGEF-AIRMAX90-42-NOIR",
+            "description": "SKU personnalisé (conservé s’il est absent)"
           },
           "price": {
             "type": "number",

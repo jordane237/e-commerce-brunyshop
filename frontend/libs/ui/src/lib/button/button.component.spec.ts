@@ -12,6 +12,7 @@ import { ButtonComponent } from './button.component';
       [loading]="loading()"
       [iconOnly]="iconOnly()"
       ariaLabel="Action de test"
+      (clicked)="clicks.set(clicks() + 1)"
     >
       Ajouter
     </bruny-button>
@@ -21,6 +22,7 @@ class ButtonHostComponent {
   readonly disabled = signal(false);
   readonly loading = signal(false);
   readonly iconOnly = signal(false);
+  readonly clicks = signal(0);
 }
 
 describe('ButtonComponent', () => {
@@ -57,6 +59,13 @@ describe('ButtonComponent', () => {
     expect(button.getAttribute('aria-busy')).toBe('true');
     expect(button.disabled).toBe(true);
     expect(fixture.nativeElement.querySelector('bruny-spinner')).not.toBeNull();
+  });
+
+  it('émet clicked au clic sur le bouton natif', async () => {
+    const { fixture, button } = await create();
+    button.click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.clicks()).toBe(1);
   });
 
   it('exposes an accessible name on icon-only buttons', async () => {

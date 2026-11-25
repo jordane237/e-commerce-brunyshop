@@ -27,6 +27,7 @@ const listSelection = {
   brand: { select: { id: true, name: true, slug: true, logo: true } },
   images: { orderBy: { position: 'asc' as const } },
   variants: {
+    where: { archivedAt: null },
     select: { id: true, sku: true, color: true, size: true, stock: true, reservedStock: true },
     orderBy: [{ color: 'asc' as const }, { size: 'asc' as const }],
   },
@@ -107,7 +108,9 @@ export class CatalogService {
     query: ListProductsDto,
     now: Date,
   ): Promise<Prisma.ProductWhereInput> {
-    const clauses: Prisma.ProductWhereInput[] = [{ status: 'PUBLISHED', deletedAt: null }];
+    const clauses: Prisma.ProductWhereInput[] = [
+      { status: 'PUBLISHED', deletedAt: null, variants: { some: { archivedAt: null } } },
+    ];
     if (query.category) {
       clauses.push({ category: { slug: query.category } });
     }
@@ -163,7 +166,11 @@ export class CatalogService {
       color?: string;
     } = {},
   ): Promise<string[]> {
-    const conditions = [Prisma.sql`v."productId" = p.id`, Prisma.sql`v.stock > v."reservedStock"`];
+    const conditions = [
+      Prisma.sql`v."productId" = p.id`,
+      Prisma.sql`v."archivedAt" IS NULL`,
+      Prisma.sql`v.stock > v."reservedStock"`,
+    ];
     if (filters.size) conditions.push(Prisma.sql`v.size = ${filters.size}`);
     if (filters.color) conditions.push(Prisma.sql`lower(v.color) = lower(${filters.color})`);
     const rows = await this.prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
@@ -196,7 +203,10 @@ export class CatalogService {
         promoEnd: true,
         category: { select: { id: true, name: true, slug: true } },
         brand: { select: { id: true, name: true, slug: true } },
-        variants: { select: { size: true, color: true, stock: true, reservedStock: true } },
+        variants: {
+          where: { archivedAt: null },
+          select: { size: true, color: true, stock: true, reservedStock: true },
+        },
       },
     });
 

@@ -51,6 +51,8 @@ export interface AdminProductVariant {
   stock: number;
   reservedStock: number;
   lowStockThreshold: number;
+  archivedAt: string | null;
+  orderCount: number;
   version: number;
 }
 
@@ -89,6 +91,7 @@ export interface AdminProductDetail {
 export interface ProductVariantPayload {
   color: string;
   size: string;
+  sku?: string;
   price?: number;
   stock: number;
   lowStockThreshold?: number;

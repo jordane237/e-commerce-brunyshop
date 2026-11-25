@@ -28,6 +28,7 @@ const variantSelection = {
   price: true,
   stock: true,
   reservedStock: true,
+  archivedAt: true,
   product: {
     select: {
       id: true,
@@ -102,6 +103,30 @@ export class CartValidationService {
       const quote = this.pricing.calculatePrice(product, variant, at);
       const label = `${product.name} (${variant.size}, ${variant.color})`;
       const availableStock = Math.max(0, variant.stock - variant.reservedStock);
+
+      if (variant.archivedAt !== null && variant.archivedAt !== undefined) {
+        const issue: CartIssueDto = {
+          code: CartIssueCode.VARIANT_NOT_FOUND,
+          variantId: variant.id,
+          productId: product.id,
+          message: `La variante ${label} n’est plus proposée.`,
+        };
+        items.push({
+          variantId: variant.id,
+          productId: product.id,
+          productName: product.name,
+          variantSku: variant.sku,
+          size: variant.size,
+          color: variant.color,
+          quantity: 0,
+          availableStock,
+          unitPrice: quote.unitPrice,
+          lineTotal: 0,
+          issues: [issue],
+        });
+        issues.push(issue);
+        continue;
+      }
 
       // Soft-deleted first: an archived product that was also deleted is
       // reported as unavailable, never as merely archived.

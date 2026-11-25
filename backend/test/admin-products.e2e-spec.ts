@@ -693,6 +693,48 @@ describe('Admin products & variants (CAT-04)', () => {
     ).expect(404);
   });
 
+  it('exclut les variantes archivées du catalogue public (200)', async () => {
+    const product = await prisma.product.create({
+      data: {
+        name: 'Produit Archives BO05',
+        slug: `${PREFIX}-archived-variants`,
+        description: 'Description suffisamment longue.',
+        categoryId,
+        brandId,
+        basePrice: 5000,
+        status: 'PUBLISHED',
+        variants: {
+          create: [
+            {
+              sku: `${PREFIX}-ARCHIVED-ACTIVE`,
+              color: 'NOIR',
+              size: '42',
+              stock: 5,
+            },
+            {
+              sku: `${PREFIX}-ARCHIVED-HIDDEN`,
+              color: 'BLANC',
+              size: '43',
+              stock: 5,
+              archivedAt: new Date(),
+            },
+          ],
+        },
+      },
+      select: { id: true, slug: true },
+    });
+
+    const response = await request(app.getHttpServer())
+      .get(`${baseUrl}/products/${product.slug}`)
+      .expect(200);
+    expect(response.body.variants).toHaveLength(1);
+    expect(response.body.variants[0]).toMatchObject({ color: 'NOIR', size: '42' });
+    expect(response.body.colors).toEqual([expect.objectContaining({ color: 'NOIR' })]);
+    expect(response.body.sizes).toEqual([expect.objectContaining({ size: '42' })]);
+
+    await prisma.product.delete({ where: { id: product.id } });
+  });
+
   // ------------------------------------------- remplacement des variantes
   it('ajoute une nouvelle variante avec SKU généré (200)', async () => {
     const response = await adminRequest(
@@ -713,6 +755,50 @@ describe('Admin products & variants (CAT-04)', () => {
     await prisma.productVariant.deleteMany({
       where: { productId: sourceProductId, id: { not: sourceVariantId } },
     });
+  });
+
+  it('accepte un SKU personnalisé et refuse un SKU déjà utilisé (400)', async () => {
+    const customSku = `${PREFIX}-custom-sku`;
+    const response = await adminRequest(
+      'put',
+      `/admin/products/${sourceProductId}/variants`,
+      adminToken,
+    )
+      .send({
+        variants: [
+          { id: sourceVariantId, color: 'NOIR', size: '42', stock: 10 },
+          { color: 'JAUNE', size: '45', stock: 2, sku: customSku, lowStockThreshold: 2 },
+        ],
+      })
+      .expect(200);
+    const custom = response.body.variants.find(
+      (variant: { sku: string }) => variant.sku.toUpperCase() === customSku.toUpperCase(),
+    );
+    expect(custom).toMatchObject({
+      sku: customSku.toUpperCase(),
+      color: 'JAUNE',
+      size: '45',
+      stock: 2,
+    });
+
+    const conflict = await adminRequest(
+      'put',
+      `/admin/products/${sourceProductId}/variants`,
+      adminToken,
+    )
+      .send({
+        variants: [
+          { id: sourceVariantId, color: 'NOIR', size: '42', stock: 10 },
+          { id: custom.id, color: 'JAUNE', size: '45', stock: 2, sku: customSku },
+          { color: 'MARRON', size: '46', stock: 1, sku: customSku },
+        ],
+      })
+      .expect(400);
+    expect(
+      conflict.body.code ?? conflict.body.error?.code ?? JSON.stringify(conflict.body),
+    ).toContain('DUPLICATE_SKU');
+
+    await prisma.productVariant.delete({ where: { id: custom.id } });
   });
 
   it("met à jour le stock d'une variante et émet un audit STOCK (200)", async () => {
@@ -771,7 +857,7 @@ describe('Admin products & variants (CAT-04)', () => {
     expect(await prisma.productVariant.findUnique({ where: { id: toDelete.id } })).toBeNull();
   });
 
-  it("rejette la suppression d'une variante liée à une commande (409 VARIANT_HAS_ORDERS)", async () => {
+  it('archive une variante liée à une commande et permet sa réactivation (200)', async () => {
     const variantWithOrder = await prisma.productVariant.create({
       data: {
         productId: sourceProductId,
@@ -817,13 +903,35 @@ describe('Admin products & variants (CAT-04)', () => {
       adminToken,
     )
       .send({ variants: [{ id: sourceVariantId, color: 'NOIR', size: '42', stock: 10 }] })
-      .expect(409);
-    expect(
-      response.body.code ?? response.body.error?.code ?? JSON.stringify(response.body),
-    ).toContain('VARIANT_HAS_ORDERS');
+      .expect(200);
+    const archived = response.body.variants.find(
+      (variant: { id: string }) => variant.id === variantWithOrder.id,
+    );
+    expect(archived).toMatchObject({
+      sku: `${PREFIX}-with-order-sku`,
+      archivedAt: expect.any(String),
+      orderCount: 1,
+    });
     expect(
       await prisma.productVariant.findUnique({ where: { id: variantWithOrder.id } }),
     ).not.toBeNull();
+
+    const restored = await adminRequest(
+      'put',
+      `/admin/products/${sourceProductId}/variants`,
+      adminToken,
+    )
+      .send({
+        variants: [
+          { id: sourceVariantId, color: 'NOIR', size: '42', stock: 10 },
+          { id: variantWithOrder.id, color: 'VERT', size: '44', stock: 5 },
+        ],
+      })
+      .expect(200);
+    expect(
+      restored.body.variants.find((variant: { id: string }) => variant.id === variantWithOrder.id)
+        ?.archivedAt,
+    ).toBeNull();
 
     await prisma.orderItem.deleteMany({ where: { orderId: order.id } });
     await prisma.order.delete({ where: { id: order.id } });

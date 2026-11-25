@@ -49,6 +49,7 @@ const variantSelection = {
   price: true,
   stock: true,
   reservedStock: true,
+  archivedAt: true,
   product: {
     select: {
       id: true,
@@ -222,6 +223,12 @@ export class OrdersService {
                   variantId: line.variantId,
                 },
               ],
+            });
+          }
+          if (variant.archivedAt !== null && variant.archivedAt !== undefined) {
+            throw new BadRequestException({
+              code: OrderErrorCode.PRODUCT_ARCHIVED,
+              message: `La variante ${variant.product.name} (${variant.size}, ${variant.color}) n’est plus proposée.`,
             });
           }
           if (variant.product.deletedAt !== null) {

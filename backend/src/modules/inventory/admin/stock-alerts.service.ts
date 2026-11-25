@@ -42,6 +42,7 @@ export class StockAlertsService {
     const filter = Prisma.sql`
       p."deletedAt" IS NULL
       AND p."status" = 'PUBLISHED'
+      AND v."archivedAt" IS NULL
       AND (v."stock" - v."reservedStock") <= ${thresholdSql}
       ${productFilter}
     `;

@@ -1186,6 +1186,10 @@ export interface components {
       reservedStock: number;
       /** @description Seuil d’alerte de stock bas */
       lowStockThreshold: number;
+      /** @description Date d’archivage (null = variante active) */
+      archivedAt: string | null;
+      /** @description Nombre de lignes de commande liées à cette variante */
+      orderCount: number;
       /** @description Version d’optimistic locking */
       version: number;
     };
@@ -1252,6 +1256,11 @@ export interface components {
        * @example 42
        */
       size: string;
+      /**
+       * @description SKU personnalisé (généré automatiquement s’il est absent)
+       * @example BARRAGEF-AIRMAX90-42-NOIR
+       */
+      sku?: string;
       /** @description Prix spécifique XAF (sinon prix produit) */
       price?: number;
       /**
@@ -1343,6 +1352,11 @@ export interface components {
       color: string;
       /** @example 42 */
       size: string;
+      /**
+       * @description SKU personnalisé (conservé s’il est absent)
+       * @example BARRAGEF-AIRMAX90-42-NOIR
+       */
+      sku?: string;
       /** @description Prix spécifique XAF (null = prix produit) */
       price?: number;
       /** @description Stock physique (seule quantité modifiable) */

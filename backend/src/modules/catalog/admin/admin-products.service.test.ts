@@ -158,6 +158,7 @@ function makeVariantRow(
   stock: number;
   reservedStock: number;
   lowStockThreshold: number;
+  archivedAt?: Date | null;
   version: number;
 } {
   return {
@@ -169,7 +170,9 @@ function makeVariantRow(
     stock: overrides.stock ?? 10,
     reservedStock: overrides.reservedStock ?? 0,
     lowStockThreshold: overrides.lowStockThreshold ?? 5,
+    archivedAt: overrides.archivedAt ?? null,
     version: overrides.version ?? 1,
+    _count: { orderItems: 0 },
   } as never;
 }
 
@@ -785,7 +788,7 @@ describe('AdminProductsService.replaceVariants', () => {
     transactionMock.mockReset();
   });
 
-  it('rejette la suppression d’une variante liée à une commande (409)', async () => {
+  it('archive une variante liée à une commande au lieu de la supprimer', async () => {
     const existing = makeProductRow({
       variants: [
         makeVariantRow({ id: 'v-1', sku: 'SKU-1', stock: 10 }),
@@ -793,19 +796,34 @@ describe('AdminProductsService.replaceVariants', () => {
       ],
       brand: { id: 'brand-1', name: 'Nike', slug: 'nike', logo: null },
     });
-    const { service, orderItemFindMany } = makeService({
+    const {
+      service,
+      orderItemFindMany,
+      txMock,
+      productCreate,
+      transactionMock: txGlobal,
+    } = makeService({
       existingProduct: existing,
       skuGenerator: vi.fn().mockResolvedValue(new Map()),
     });
+    const tx = txMock(productCreate);
+    txGlobal.mockImplementation(async (fn) => fn(tx));
     orderItemFindMany.mockResolvedValue([{ variantId: 'v-2' }]);
 
-    await expect(
-      service.replaceVariants(
-        'product-1',
-        { variants: [{ id: 'v-1', color: 'NOIR', size: '42', stock: 10 }] },
-        ACTOR,
-      ),
-    ).rejects.toMatchObject({ response: { code: 'VARIANT_HAS_ORDERS' } });
+    await service.replaceVariants(
+      'product-1',
+      { variants: [{ id: 'v-1', color: 'NOIR', size: '42', stock: 10 }] },
+      ACTOR,
+    );
+
+    expect(tx.productVariant.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'v-2' },
+        data: expect.objectContaining({ archivedAt: expect.any(Date) }),
+      }),
+    );
+    expect(tx.productVariant.deleteMany).not.toHaveBeenCalled();
+    txGlobal.mockReset();
   });
 
   it('rejette la mise à jour d’une variante d’un autre produit', async () => {

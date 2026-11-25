@@ -29,6 +29,16 @@ export class AdminProductVariantDto {
   @ApiProperty({ description: 'Seuil d’alerte de stock bas' })
   lowStockThreshold!: number;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Date d’archivage (null = variante active)',
+  })
+  archivedAt!: string | null;
+
+  @ApiProperty({ description: 'Nombre de lignes de commande liées à cette variante' })
+  orderCount!: number;
+
   @ApiProperty({ description: 'Version d’optimistic locking' })
   version!: number;
 }

@@ -69,6 +69,7 @@ interface AdminProductListRow {
 interface NormalizedVariant {
   color: string;
   size: string;
+  sku: string | null;
   price: number | null;
   stock: number;
   lowStockThreshold: number;
@@ -91,6 +92,11 @@ function normalizeLabel(value: string): string {
     .trim()
     .replace(/\s+/g, ' ')
     .toUpperCase();
+}
+
+function normalizeSku(value: string | undefined): string | null {
+  const normalized = value?.trim().toUpperCase();
+  return normalized ? normalized : null;
 }
 
 function sameDate(left: Date | null, right: Date | null): boolean {
@@ -121,7 +127,15 @@ export class AdminProductsService {
     const slug = dto.slug
       ? await this.assertSlugFree(dto.slug)
       : await this.slugGenerator.generateUniqueSlug(dto.name);
-    const skus = await this.skuGenerator.generateSkusForProduct(brand.slug, slug, variants);
+    const customSkus = variants
+      .map((variant) => variant.sku)
+      .filter((sku): sku is string => sku !== null);
+    const skus = await this.skuGenerator.generateSkusForProduct(
+      brand.slug,
+      slug,
+      variants,
+      customSkus,
+    );
 
     try {
       const created = await this.prisma.$transaction(async (tx) => {
@@ -205,7 +219,11 @@ export class AdminProductsService {
 
     this.assertPromoRules(basePrice, promoPrice, promoStart, promoEnd);
     if (status === 'PUBLISHED' && existing.status !== 'PUBLISHED') {
-      this.assertHasStock(existing.variants);
+      this.assertHasStock(
+        existing.variants.filter(
+          (variant) => variant.archivedAt === null || variant.archivedAt === undefined,
+        ),
+      );
     }
     if (dto.categoryId !== undefined || dto.brandId !== undefined) {
       await this.assertRelations(
@@ -369,47 +387,70 @@ export class AdminProductsService {
         id: variant.id,
         color: normalizeLabel(variant.color),
         size: normalizeLabel(variant.size),
+        sku: normalizeSku(variant.sku),
         price: variant.price,
         stock: variant.stock,
         lowStockThreshold: variant.lowStockThreshold,
       };
     });
     this.assertUniqueLabels(variants);
+    this.assertUniqueSkus(variants);
 
-    const removals = product.variants.filter((variant) => !payloadIds.has(variant.id));
-    if (removals.length > 0) {
-      const linked = await this.prisma.orderItem.findMany({
-        where: { variantId: { in: removals.map((variant) => variant.id) } },
-        select: { variantId: true },
-        distinct: ['variantId'],
-      });
-      if (linked.length > 0) {
-        const skus = removals
-          .filter((variant) => linked.some((row) => row.variantId === variant.id))
-          .map((variant) => variant.sku);
-        throw new ConflictException({
-          code: 'VARIANT_HAS_ORDERS',
-          message: `Variante(s) liée(s) à une commande, suppression refusée : ${skus.join(', ')}.`,
-        });
-      }
-    }
+    // Les variantes déjà archivées ne sont pas des « suppressions » : elles
+    // restent en base et ne sont réactivées que si leur id est renvoyé.
+    const removals = product.variants.filter(
+      (variant) =>
+        (variant.archivedAt === null || variant.archivedAt === undefined) &&
+        !payloadIds.has(variant.id),
+    );
+    const linked =
+      removals.length > 0
+        ? await this.prisma.orderItem.findMany({
+            where: { variantId: { in: removals.map((variant) => variant.id) } },
+            select: { variantId: true },
+            distinct: ['variantId'],
+          })
+        : [];
+    const linkedIds = new Set(linked.map((row) => row.variantId));
+    const archivedRemovals = removals.filter((variant) => linkedIds.has(variant.id));
+    const deletableRemovals = removals.filter((variant) => !linkedIds.has(variant.id));
 
     const defaultLowStockThreshold = await this.settings.getStockLowThresholdDefault();
     const creations = variants.filter((variant) => variant.id === undefined);
+    const customSkus = variants
+      .map((variant) => variant.sku)
+      .filter((sku): sku is string => sku !== null);
     const skus =
       creations.length > 0
         ? await this.skuGenerator.generateSkusForProduct(
             product.brand.slug,
             product.slug,
             creations,
+            customSkus,
           )
         : new Map<string, string>();
 
     try {
+      const archivedAt = new Date();
       await this.prisma.$transaction(async (tx) => {
-        if (removals.length > 0) {
+        if (archivedRemovals.length > 0) {
+          for (const variant of archivedRemovals) {
+            await tx.productVariant.update({
+              where: { id: variant.id },
+              data: { archivedAt },
+            });
+            await this.audit(tx, actor, {
+              action: ACTIONS.PRODUCT_VARIANT_ARCHIVED,
+              entity: 'ProductVariant',
+              entityId: variant.id,
+              before: { sku: variant.sku, archivedAt: null },
+              after: { sku: variant.sku, archivedAt: archivedAt.toISOString() },
+            });
+          }
+        }
+        if (deletableRemovals.length > 0) {
           await tx.productVariant.deleteMany({
-            where: { id: { in: removals.map((variant) => variant.id) } },
+            where: { id: { in: deletableRemovals.map((variant) => variant.id) } },
           });
         }
 
@@ -443,13 +484,17 @@ export class AdminProductsService {
           // doit pouvoir déclencher une nouvelle alerte lors de la prochaine
           // baisse. Le reset est atomique avec la mise à jour du stock.
           const recovered = variant.stock > effectiveThreshold;
+          const restored = before.archivedAt !== null && before.archivedAt !== undefined;
+          const sku = variant.sku ?? before.sku;
 
           await tx.productVariant.update({
             where: { id: variant.id },
             data: {
+              sku,
               color: variant.color,
               size: variant.size,
               stock: variant.stock,
+              ...(restored ? { archivedAt: null } : {}),
               ...(variant.price !== undefined ? { price: variant.price } : {}),
               ...(variant.lowStockThreshold !== undefined
                 ? { lowStockThreshold: variant.lowStockThreshold }
@@ -458,6 +503,16 @@ export class AdminProductsService {
               ...(stockChanged ? { version: { increment: 1 } } : {}),
             },
           });
+
+          if (restored) {
+            await this.audit(tx, actor, {
+              action: ACTIONS.PRODUCT_VARIANT_RESTORED,
+              entity: 'ProductVariant',
+              entityId: variant.id,
+              before: { sku: before.sku, archivedAt: before.archivedAt?.toISOString() ?? null },
+              after: { sku, archivedAt: null },
+            });
+          }
 
           if (stockChanged) {
             await tx.stockMovement.create({
@@ -546,13 +601,16 @@ export class AdminProductsService {
     const resetStock = dto.resetStock ?? false;
 
     const variants = copyVariants
-      ? source.variants.map((variant) => ({
-          color: variant.color,
-          size: variant.size,
-          price: variant.price,
-          stock: resetStock ? 0 : variant.stock,
-          lowStockThreshold: variant.lowStockThreshold,
-        }))
+      ? source.variants
+          .filter((variant) => variant.archivedAt === null || variant.archivedAt === undefined)
+          .map((variant) => ({
+            color: variant.color,
+            size: variant.size,
+            sku: null,
+            price: variant.price,
+            stock: resetStock ? 0 : variant.stock,
+            lowStockThreshold: variant.lowStockThreshold,
+          }))
       : [];
     const skus =
       variants.length > 0
@@ -650,7 +708,7 @@ export class AdminProductsService {
     const searchFilter =
       search === undefined || search === ''
         ? Prisma.empty
-        : Prisma.sql`AND (p."name" ILIKE ${'%' + search + '%'} OR p."slug" ILIKE ${'%' + search + '%'} OR EXISTS (SELECT 1 FROM "ProductVariant" v WHERE v."productId" = p."id" AND v."sku" ILIKE ${'%' + search + '%'}))`;
+        : Prisma.sql`AND (p."name" ILIKE ${'%' + search + '%'} OR p."slug" ILIKE ${'%' + search + '%'} OR EXISTS (SELECT 1 FROM "ProductVariant" v WHERE v."productId" = p."id" AND v."archivedAt" IS NULL AND v."sku" ILIKE ${'%' + search + '%'}))`;
     const statusFilter =
       query.status === undefined
         ? Prisma.empty
@@ -702,7 +760,7 @@ export class AdminProductsService {
           b."name" AS "brandName",
           COALESCE(s."totalStock", 0)::int AS "totalStock",
           COALESCE(s."availableStock", 0)::int AS "availableStock",
-          (SELECT v."sku" FROM "ProductVariant" v WHERE v."productId" = p."id" ORDER BY v."createdAt" ASC LIMIT 1) AS "sku",
+          (SELECT v."sku" FROM "ProductVariant" v WHERE v."productId" = p."id" AND v."archivedAt" IS NULL ORDER BY v."createdAt" ASC LIMIT 1) AS "sku",
           (SELECT i."url" FROM "ProductImage" i WHERE i."productId" = p."id" ORDER BY i."position" ASC, i."createdAt" ASC LIMIT 1) AS "imageUrl",
           (SELECT i."alt" FROM "ProductImage" i WHERE i."productId" = p."id" ORDER BY i."position" ASC, i."createdAt" ASC LIMIT 1) AS "imageAlt"
         FROM "Product" p
@@ -713,7 +771,7 @@ export class AdminProductsService {
             COALESCE(SUM(v."stock"), 0)::int AS "totalStock",
             COALESCE(SUM(v."stock" - v."reservedStock"), 0)::int AS "availableStock"
           FROM "ProductVariant" v
-          WHERE v."productId" = p."id"
+          WHERE v."productId" = p."id" AND v."archivedAt" IS NULL
         ) s ON true
         WHERE ${where}
         ORDER BY ${orderBy}
@@ -726,7 +784,7 @@ export class AdminProductsService {
           SELECT COALESCE(SUM(v."stock"), 0)::int AS "totalStock",
                  COALESCE(SUM(v."stock" - v."reservedStock"), 0)::int AS "availableStock"
           FROM "ProductVariant" v
-          WHERE v."productId" = p."id"
+          WHERE v."productId" = p."id" AND v."archivedAt" IS NULL
         ) s ON true
         WHERE ${where}
       `),
@@ -804,12 +862,28 @@ export class AdminProductsService {
     const variants = raw.map((variant) => ({
       color: normalizeLabel(variant.color),
       size: normalizeLabel(variant.size),
+      sku: normalizeSku(variant.sku),
       price: variant.price ?? null,
       stock: variant.stock,
       lowStockThreshold: variant.lowStockThreshold ?? defaultLowStockThreshold,
     }));
     this.assertUniqueLabels(variants);
+    this.assertUniqueSkus(variants);
     return variants;
+  }
+
+  private assertUniqueSkus(variants: { sku: string | null }[]): void {
+    const seen = new Set<string>();
+    for (const variant of variants) {
+      if (variant.sku === null) continue;
+      if (seen.has(variant.sku)) {
+        throw new BadRequestException({
+          code: 'DUPLICATE_SKU',
+          message: `SKU en doublon : ${variant.sku}.`,
+        });
+      }
+      seen.add(variant.sku);
+    }
   }
 
   private assertUniqueLabels(variants: { color: string; size: string }[]): void {
@@ -909,7 +983,11 @@ export class AdminProductsService {
     return slug;
   }
 
-  private requireSku(skus: Map<string, string>, variant: { color: string; size: string }): string {
+  private requireSku(
+    skus: Map<string, string>,
+    variant: { color: string; size: string; sku: string | null },
+  ): string {
+    if (variant.sku !== null) return variant.sku;
     const sku = skus.get(variantKey(variant.color, variant.size));
     if (sku === undefined) {
       throw new InternalServerErrorException({

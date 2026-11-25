@@ -155,7 +155,7 @@ export class AdminStockService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
 
-    const baseWhere: Prisma.ProductVariantWhereInput = {};
+    const baseWhere: Prisma.ProductVariantWhereInput = { archivedAt: null };
     if (query.categoryId) {
       baseWhere.product = { categoryId: query.categoryId };
     }

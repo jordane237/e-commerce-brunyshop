@@ -38,6 +38,18 @@ export class CreateProductVariantDto {
   @MaxLength(16)
   size!: string;
 
+  @ApiPropertyOptional({
+    example: 'BARRAGEF-AIRMAX90-42-NOIR',
+    description: 'SKU personnalisé (généré automatiquement s’il est absent)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  @Matches(/^[A-Za-z0-9][A-Za-z0-9_-]*$/, {
+    message: 'Le SKU doit contenir uniquement lettres, chiffres, tirets et underscores.',
+  })
+  sku?: string;
+
   @ApiPropertyOptional({ minimum: 0, description: 'Prix spécifique XAF (sinon prix produit)' })
   @IsOptional()
   @Type(() => Number)
