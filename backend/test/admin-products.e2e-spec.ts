@@ -596,6 +596,55 @@ describe('Admin products & variants (CAT-04)', () => {
       .expect(404);
   });
 
+  // ----------------------------------------------------- lecture admin (BO-04)
+  it('retourne le détail complet d’un produit pour le formulaire (200)', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`${baseUrl}/admin/products/${sourceProductId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(response.body).toMatchObject({
+      id: sourceProductId,
+      slug: `${PREFIX}-source`,
+      categoryId,
+      brandId,
+    });
+    expect(response.body.category).toMatchObject({ id: categoryId });
+    expect(response.body.brand).toMatchObject({ id: brandId });
+    expect(response.body.variants).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: sourceVariantId })]),
+    );
+    expect(Array.isArray(response.body.images)).toBe(true);
+  });
+
+  it('retourne 404 sur le détail d’un produit inexistant', async () => {
+    await request(app.getHttpServer())
+      .get(`${baseUrl}/admin/products/00000000-0000-4000-8000-000000000004`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(404);
+  });
+
+  it('retourne les options catégories et marques du formulaire (200)', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`${baseUrl}/admin/catalog/options`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+    expect(response.body.categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: categoryId, name: expect.any(String) }),
+      ]),
+    );
+    expect(response.body.brands).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: brandId, name: expect.any(String) })]),
+    );
+  });
+
+  it('réserve les options du formulaire aux rôles catalogue (403 pour CUSTOMER)', async () => {
+    await request(app.getHttpServer())
+      .get(`${baseUrl}/admin/catalog/options`)
+      .set('Authorization', `Bearer ${customerToken}`)
+      .expect(403);
+  });
+
   // ------------------------------------------------------ archivage (DELETE)
   it('archive un produit existant (204 + status ARCHIVED en DB)', async () => {
     const product = await prisma.product.create({

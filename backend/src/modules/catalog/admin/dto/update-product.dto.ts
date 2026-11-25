@@ -67,17 +67,17 @@ export class UpdateProductDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  promoPrice?: number;
+  promoPrice?: number | null;
 
   @ApiPropertyOptional({ format: 'date-time', nullable: true })
   @IsOptional()
   @IsDateString()
-  promoStart?: string;
+  promoStart?: string | null;
 
   @ApiPropertyOptional({ format: 'date-time', nullable: true })
   @IsOptional()
   @IsDateString()
-  promoEnd?: string;
+  promoEnd?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

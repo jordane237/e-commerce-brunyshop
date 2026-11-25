@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
 import { CatalogApi } from '@bruny/data-access';
 import { AdminProductsApi, AdminProductsFilters, AdminProductStatus } from '@bruny/data-access';
@@ -218,7 +218,7 @@ export class AdminProductsStore {
 
   private async runBulk(
     _status: AdminProductStatus,
-    action: (id: string) => ReturnType<AdminProductsApi['updateStatus']>,
+    action: (id: string) => Observable<unknown>,
   ): Promise<void> {
     const ids = [...this._selectedIds()];
     if (ids.length === 0) return;
