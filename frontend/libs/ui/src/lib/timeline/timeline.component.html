@@ -1,0 +1,24 @@
+<ol class="timeline" role="list" [attr.aria-label]="ariaLabel()">
+  @for (entry of entries(); track entry.status) {
+    <li
+      class="timeline__item"
+      [class.timeline__item--completed]="entry.isCompleted"
+      [class.timeline__item--current]="entry.isCurrent"
+      [attr.aria-current]="entry.isCurrent ? 'step' : null"
+    >
+      <span class="timeline__marker" aria-hidden="true">
+        @if (entry.isCompleted) {
+          <bruny-icon name="check" [size]="14" />
+        } @else if (entry.isCurrent) {
+          <span class="timeline__pulse"></span>
+        }
+      </span>
+      <div class="timeline__content">
+        <p class="timeline__label">{{ entry.label }}</p>
+        @if (entry.date) {
+          <p class="timeline__date">{{ entry.date | date: 'd MMM yyyy, HH:mm' }}</p>
+        }
+      </div>
+    </li>
+  }
+</ol>

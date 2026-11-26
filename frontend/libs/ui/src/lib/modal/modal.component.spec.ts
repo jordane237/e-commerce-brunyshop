@@ -81,6 +81,15 @@ describe('ModalComponent', () => {
     trigger.remove();
   });
 
+  it('supports a right-side drawer placement', async () => {
+    const fixture = await create();
+    fixture.componentRef.setInput('placement', 'right');
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.bs-modal--drawer')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.bs-modal__overlay--drawer')).not.toBeNull();
+  });
+
   it('does not close when clicking inside the dialog', async () => {
     const fixture = await create();
     const title = fixture.nativeElement.querySelector('.bs-modal__title') as HTMLElement;

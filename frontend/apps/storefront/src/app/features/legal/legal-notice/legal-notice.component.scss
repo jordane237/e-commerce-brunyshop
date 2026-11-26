@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.legal-field {
+  border-bottom: 1px dashed var(--bs-color-warning-strong);
+  background: var(--bs-color-warning-soft);
+  font-style: italic;
+}
+
+.legal-pending {
+  color: var(--bs-color-warning-strong);
+  font-size: var(--bs-font-size-sm);
+}
+
+.legal-cross-links {
+  margin-top: var(--bs-space-8);
+  padding-top: var(--bs-space-4);
+  border-top: var(--bs-border-width) solid var(--bs-color-border);
+  font-size: var(--bs-font-size-sm);
+}

@@ -1,0 +1,858 @@
+<div class="product-form-page">
+  @if (loading()) {
+    <div class="form-state" role="status">
+      <span class="form-state__spinner" aria-hidden="true"></span>
+      <p>Chargement du produit…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="form-state form-state--error" role="alert">
+      <h1>Produit indisponible</h1>
+      <p>{{ loadError() }}</p>
+      <div class="form-state__actions">
+        <bruny-button variant="secondary" (click)="retryLoad()">Réessayer</bruny-button>
+        <bruny-button (click)="goBack()">Retour aux produits</bruny-button>
+      </div>
+    </div>
+  } @else {
+    <header class="product-form-header">
+      <div class="product-form-header__title">
+        <button type="button" class="back-link" (click)="goBack()" aria-label="Retour aux produits">
+          <span aria-hidden="true">←</span> Produits
+        </button>
+        <div class="product-form-header__heading">
+          <h1>{{ title() }}</h1>
+          <bruny-status-badge [status]="status()" />
+        </div>
+        @if (isEdit()) {
+          <p class="product-form-header__slug">/{{ productForm.controls.slug.value }}</p>
+        }
+      </div>
+
+      <div class="product-form-header__actions">
+        @if (isEdit()) {
+          <bruny-button variant="ghost" (click)="openDuplicate()">Dupliquer</bruny-button>
+        }
+        <bruny-button variant="secondary" (click)="openPreview()">Aperçu</bruny-button>
+        <bruny-button
+          variant="secondary"
+          [loading]="saving() === 'draft'"
+          [disabled]="saving() !== null"
+          (click)="save('draft')"
+        >
+          @if (isEdit()) {
+            Enregistrer
+          } @else {
+            Enregistrer le brouillon
+          }
+        </bruny-button>
+        @if (!isPublished()) {
+          <bruny-button
+            [loading]="saving() === 'publish'"
+            [disabled]="saving() !== null"
+            (click)="save('publish')"
+          >
+            Publier
+          </bruny-button>
+        }
+      </div>
+    </header>
+
+    @if (optionsError()) {
+      <div class="form-alert form-alert--warning" role="alert">
+        <p>{{ optionsError() }}</p>
+        <button type="button" (click)="retryLoad()">Réessayer</button>
+      </div>
+    }
+
+    @if (saveError()) {
+      <div class="form-alert form-alert--error" role="alert">{{ saveError() }}</div>
+    }
+
+    @if (submitted() && formErrorCount() > 0) {
+      <div class="form-alert form-alert--error" role="alert">
+        Certains champs sont invalides. Les onglets concernés sont signalés par un point.
+      </div>
+    }
+
+    <form [formGroup]="productForm" (ngSubmit)="save('draft')" novalidate class="product-form">
+      <bruny-tabs
+        [tabs]="tabs"
+        [activeId]="activeTab()"
+        ariaLabel="Sections du formulaire produit"
+        (tabChange)="setTab($event)"
+      />
+
+      <section
+        class="product-form__panel"
+        role="tabpanel"
+        [attr.id]="'bs-tab-panel-' + activeTab()"
+        [attr.aria-labelledby]="'bs-tab-' + activeTab()"
+      >
+        @switch (activeTab()) {
+          @case ('informations') {
+            <div class="panel-heading">
+              <h2>Informations générales</h2>
+              <p>Le nom, la description et le rattachement du produit au catalogue.</p>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-grid__full">
+                <bruny-input
+                  label="Nom du produit"
+                  name="name"
+                  formControlName="name"
+                  placeholder="Ex. Sneakers Air Max 90"
+                  [required]="true"
+                  [error]="errorFor('name')"
+                  hint="3 à 160 caractères."
+                />
+              </div>
+
+              <div class="form-grid__full">
+                <bruny-input
+                  label="Slug"
+                  name="slug"
+                  formControlName="slug"
+                  placeholder="sneakers-air-max-90"
+                  [error]="errorFor('slug')"
+                  hint="Généré depuis le nom. Minuscules, chiffres et tirets uniquement."
+                  (valueChange)="onSlugChange($event)"
+                />
+              </div>
+
+              <div class="form-grid__full">
+                <label class="field-label" for="product-description">
+                  Description <span class="required" aria-hidden="true">*</span>
+                </label>
+                <textarea
+                  id="product-description"
+                  class="field-textarea"
+                  formControlName="description"
+                  rows="7"
+                  placeholder="Matières, coupe, conseils d’entretien…"
+                  [attr.aria-invalid]="errorFor('description') ? 'true' : null"
+                  [attr.aria-describedby]="errorFor('description') ? 'description-error' : null"
+                ></textarea>
+                <div class="field-meta">
+                  @if (errorFor('description')) {
+                    <p class="field-error" id="description-error" role="alert">
+                      {{ errorFor('description') }}
+                    </p>
+                  } @else {
+                    <p class="field-hint">Minimum 10 caractères.</p>
+                  }
+                  <span>{{ productForm.controls.description.value.length }} / 10 000</span>
+                </div>
+              </div>
+
+              <div>
+                <bruny-select
+                  label="Catégorie"
+                  name="categoryId"
+                  [options]="categoryOptions()"
+                  [value]="productForm.controls.categoryId.value"
+                  [placeholder]="optionsLoading() ? 'Chargement…' : 'Sélectionner une catégorie'"
+                  [required]="true"
+                  [loading]="optionsLoading()"
+                  [error]="errorFor('categoryId')"
+                  (valueChange)="setCategory($event)"
+                />
+              </div>
+
+              <div>
+                <bruny-select
+                  label="Marque"
+                  name="brandId"
+                  [options]="brandOptions()"
+                  [value]="productForm.controls.brandId.value"
+                  [placeholder]="optionsLoading() ? 'Chargement…' : 'Sélectionner une marque'"
+                  [required]="true"
+                  [loading]="optionsLoading()"
+                  [error]="errorFor('brandId')"
+                  (valueChange)="setBrand($event)"
+                />
+              </div>
+            </div>
+          }
+
+          @case ('variantes') {
+            <div class="panel-heading">
+              <h2>Variantes et stock</h2>
+              <p>
+                Sélectionnez vos couleurs et pointures, puis gérez chaque combinaison directement
+                dans la grille.
+              </p>
+            </div>
+
+            <div class="generator">
+              <h3>Générer la grille couleurs × pointures</h3>
+              <div class="generator__selectors">
+                <div class="generator__field">
+                  <label class="field-label" for="generator-color">Couleurs</label>
+                  <div class="chip-input">
+                    <input
+                      id="generator-color"
+                      class="field-input"
+                      [value]="draftColor()"
+                      placeholder="NOIR"
+                      maxlength="32"
+                      (input)="draftColor.set($any($event.target).value)"
+                      (keydown.enter)="addColor(); $event.preventDefault()"
+                    />
+                    <button type="button" class="icon-button" (click)="addColor()">Ajouter</button>
+                  </div>
+                  @if (generatorColors().length > 0) {
+                    <div class="chips" aria-label="Couleurs sélectionnées">
+                      @for (color of generatorColors(); track color) {
+                        <span class="chip">
+                          {{ color }}
+                          <button
+                            type="button"
+                            [attr.aria-label]="'Retirer la couleur ' + color"
+                            (click)="removeColor(color)"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="generator__field">
+                  <label class="field-label" for="generator-size">Pointures / tailles</label>
+                  <div class="chip-input">
+                    <input
+                      id="generator-size"
+                      class="field-input"
+                      [value]="draftSize()"
+                      placeholder="42"
+                      maxlength="16"
+                      (input)="draftSize.set($any($event.target).value)"
+                      (keydown.enter)="addSize(); $event.preventDefault()"
+                    />
+                    <button type="button" class="icon-button" (click)="addSize()">Ajouter</button>
+                  </div>
+                  @if (generatorSizes().length > 0) {
+                    <div class="chips" aria-label="Pointures sélectionnées">
+                      @for (size of generatorSizes(); track size) {
+                        <span class="chip">
+                          {{ size }}
+                          <button
+                            type="button"
+                            [attr.aria-label]="'Retirer la pointure ' + size"
+                            (click)="removeSize(size)"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="generator__field">
+                  <span class="field-label">Plage de pointures</span>
+                  <div class="range-inputs">
+                    <input
+                      class="field-input"
+                      type="number"
+                      min="15"
+                      max="60"
+                      [value]="sizeRangeFrom()"
+                      placeholder="Du 38"
+                      aria-label="Première pointure de la plage"
+                      (input)="sizeRangeFrom.set($any($event.target).value)"
+                    />
+                    <input
+                      class="field-input"
+                      type="number"
+                      min="15"
+                      max="60"
+                      [value]="sizeRangeTo()"
+                      placeholder="Au 43"
+                      aria-label="Dernière pointure de la plage"
+                      (input)="sizeRangeTo.set($any($event.target).value)"
+                    />
+                    <button type="button" class="icon-button" (click)="addSizeRange()">
+                      Ajouter
+                    </button>
+                  </div>
+                  <p class="field-hint">Plage numérique de 15 à 60, ou ajout manuel.</p>
+                </div>
+              </div>
+
+              <div class="generator__defaults">
+                <bruny-input
+                  label="Stock initial"
+                  name="generator-stock"
+                  type="number"
+                  inputMode="numeric"
+                  [value]="generatorStock()"
+                  (valueChange)="generatorStock.set($event)"
+                />
+                <bruny-input
+                  label="Seuil d’alerte"
+                  name="generator-threshold"
+                  type="number"
+                  inputMode="numeric"
+                  [value]="generatorThreshold()"
+                  (valueChange)="generatorThreshold.set($event)"
+                />
+                <bruny-button variant="secondary" (click)="generateVariants()">
+                  Générer les combinaisons
+                </bruny-button>
+              </div>
+            </div>
+
+            <div class="variants-toolbar">
+              <p>
+                <strong>{{ variants.length }}</strong> variante(s) active(s) ·
+                <strong>{{ hasStock() ? 'stock disponible' : 'aucun stock saisi' }}</strong>
+                @if (archivedCount() > 0) {
+                  · <strong>{{ archivedCount() }}</strong> archivée(s)
+                }
+              </p>
+            </div>
+
+            @if (variantDuplicate()) {
+              <div class="form-alert form-alert--error" role="alert">
+                Deux variantes ont la même couleur et la même pointure.
+              </div>
+            }
+            @if (variantSkuDuplicate()) {
+              <div class="form-alert form-alert--error" role="alert">
+                Deux variantes utilisent le même SKU. Chaque SKU doit être unique.
+              </div>
+            }
+
+            @if (variants.length === 0) {
+              <div class="empty-variants">
+                <p>
+                  Aucune variante active. Ajoutez des couleurs et des pointures puis générez la
+                  grille.
+                </p>
+              </div>
+            } @else {
+              <div class="bulk-card">
+                <div>
+                  <h3>Remplissage en masse</h3>
+                  <p>
+                    Appliquez une valeur à toutes les pointures d’une couleur ou à toutes les
+                    couleurs d’une pointure.
+                  </p>
+                </div>
+                <div class="bulk-card__controls">
+                  <div class="segmented" role="group" aria-label="Type de remplissage">
+                    <button
+                      type="button"
+                      [class.is-active]="bulkMode() === 'row'"
+                      [attr.aria-pressed]="bulkMode() === 'row'"
+                      (click)="setBulkMode('row')"
+                    >
+                      Ligne
+                    </button>
+                    <button
+                      type="button"
+                      [class.is-active]="bulkMode() === 'column'"
+                      [attr.aria-pressed]="bulkMode() === 'column'"
+                      (click)="setBulkMode('column')"
+                    >
+                      Colonne
+                    </button>
+                  </div>
+                  <bruny-select
+                    label="Cible"
+                    name="bulk-target"
+                    [options]="bulkTargetOptions()"
+                    [value]="bulkTarget()"
+                    placeholder="Sélectionner"
+                    (valueChange)="bulkTarget.set($event)"
+                  />
+                  <bruny-select
+                    label="Champ"
+                    name="bulk-field"
+                    [options]="[
+                      { value: 'stock', label: 'Stock' },
+                      { value: 'threshold', label: 'Seuil d’alerte' },
+                    ]"
+                    [value]="bulkField()"
+                    (valueChange)="setBulkField($event)"
+                  />
+                  <bruny-input
+                    label="Valeur"
+                    name="bulk-value"
+                    type="number"
+                    inputMode="numeric"
+                    [value]="bulkValue()"
+                    (valueChange)="bulkValue.set($event)"
+                  />
+                  <bruny-button size="sm" (click)="applyBulk()">Appliquer</bruny-button>
+                </div>
+              </div>
+
+              <div
+                class="variant-grid"
+                role="table"
+                aria-label="Grille des variantes couleurs et pointures"
+              >
+                <div class="variant-grid__head" role="row">
+                  <span role="columnheader">Couleur</span>
+                  @for (size of gridSizes(); track size) {
+                    <span role="columnheader">Pointure {{ size }}</span>
+                  }
+                </div>
+                @for (color of gridColors(); track color) {
+                  <div class="variant-grid__row" role="row">
+                    <div class="variant-grid__color" role="rowheader">
+                      <strong>{{ color }}</strong>
+                      <span>{{ gridSizes().length }} pointure(s)</span>
+                    </div>
+                    @for (size of gridSizes(); track size) {
+                      @if (variantAt(color, size); as group) {
+                        <div class="variant-cell" role="cell" [formGroup]="group">
+                          <div class="variant-cell__head">
+                            <span>{{ color }} · {{ size }}</span>
+                            @if (group.controls.hasOrders.value) {
+                              <span class="badge badge--protected">Vendue</span>
+                            }
+                            <button
+                              type="button"
+                              class="icon-button icon-button--danger"
+                              [attr.aria-label]="'Retirer la variante ' + color + ' ' + size"
+                              (click)="requestRemoveVariant(variantIndex(color, size))"
+                            >
+                              Retirer
+                            </button>
+                          </div>
+                          <label class="cell-field">
+                            <span>SKU</span>
+                            <input
+                              class="inline-input"
+                              formControlName="sku"
+                              [placeholder]="previewSku(color, size) || 'Généré à l’enregistrement'"
+                              [attr.aria-invalid]="
+                                variantError(variantIndex(color, size), 'sku') ? 'true' : null
+                              "
+                            />
+                          </label>
+                          @if (variantError(variantIndex(color, size), 'sku')) {
+                            <p class="field-error">
+                              {{ variantError(variantIndex(color, size), 'sku') }}
+                            </p>
+                          }
+                          <div class="variant-cell__numbers">
+                            <label class="cell-field">
+                              <span>Stock</span>
+                              <input
+                                class="inline-input"
+                                type="number"
+                                min="0"
+                                formControlName="stock"
+                                [attr.aria-invalid]="
+                                  variantError(variantIndex(color, size), 'stock') ? 'true' : null
+                                "
+                              />
+                            </label>
+                            <label class="cell-field">
+                              <span>Seuil bas</span>
+                              <input
+                                class="inline-input"
+                                type="number"
+                                min="0"
+                                formControlName="lowStockThreshold"
+                                [attr.aria-invalid]="
+                                  variantError(variantIndex(color, size), 'lowStockThreshold')
+                                    ? 'true'
+                                    : null
+                                "
+                              />
+                            </label>
+                          </div>
+                          <label class="cell-field">
+                            <span>Prix spécifique (XAF)</span>
+                            <input
+                              class="inline-input"
+                              type="number"
+                              min="0"
+                              formControlName="price"
+                              placeholder="Prix produit"
+                              [attr.aria-invalid]="
+                                variantError(variantIndex(color, size), 'price') ? 'true' : null
+                              "
+                            />
+                          </label>
+                          @if (
+                            variantError(variantIndex(color, size), 'stock') ||
+                            variantError(variantIndex(color, size), 'lowStockThreshold')
+                          ) {
+                            <p class="field-error">
+                              Stock et seuil doivent être des entiers positifs.
+                            </p>
+                          }
+                        </div>
+                      } @else {
+                        <div class="variant-cell variant-cell--empty" role="cell">
+                          <span>{{ color }} · {{ size }}</span>
+                          <button
+                            type="button"
+                            class="icon-button"
+                            (click)="addGridCell(color, size)"
+                          >
+                            Ajouter
+                          </button>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            @if (pendingArchived().length > 0) {
+              <div class="form-alert form-alert--warning" role="status">
+                <strong>Suppression protégée :</strong> les variantes déjà vendues suivantes seront
+                archivées à l’enregistrement.
+                <ul class="archived-list">
+                  @for (item of pendingArchived(); track item.variant.id) {
+                    <li>
+                      <span
+                        >{{ item.variant.color }} · {{ item.variant.size }} ·
+                        {{ item.variant.sku }}</span
+                      >
+                      <button
+                        type="button"
+                        class="text-button"
+                        (click)="restorePendingArchived(item.index)"
+                      >
+                        Annuler le retrait
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+
+            @if (archivedVariants().length > 0) {
+              <div class="archived-panel">
+                <div>
+                  <h3>Variantes archivées</h3>
+                  <p>
+                    Elles conservent leur SKU et leur historique de commandes, mais ne sont plus
+                    vendables.
+                  </p>
+                </div>
+                <ul class="archived-list">
+                  @for (variant of archivedVariants(); track variant.id) {
+                    <li>
+                      <span>
+                        <strong>{{ variant.color }} · {{ variant.size }}</strong>
+                        <span class="sku">{{ variant.sku }}</span>
+                        · {{ variant.orderCount }} commande(s)
+                        @if (variant.archivedAt) {
+                          · archivée le {{ variant.archivedAt.slice(0, 10) }}
+                        }
+                      </span>
+                      <button
+                        type="button"
+                        class="text-button"
+                        (click)="restoreArchivedVariant(variant)"
+                      >
+                        Réactiver
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+
+            @if (!hasStock()) {
+              <div class="form-alert form-alert--warning" role="status">
+                Un produit ne peut être publié qu’avec au moins une variante en stock. Le brouillon,
+                lui, peut être enregistré sans stock.
+              </div>
+            }
+          }
+
+          @case ('images') {
+            <div class="panel-heading">
+              <h2>Images du produit</h2>
+              <p>
+                Ajoutez plusieurs photos, suivez leur téléversement, puis choisissez l’image
+                principale et la couleur associée.
+              </p>
+            </div>
+          }
+
+          @case ('tarifs') {
+            <div class="panel-heading">
+              <h2>Tarifs et promotion</h2>
+              <p>Les montants sont exprimés en francs CFA (XAF), sans décimales.</p>
+            </div>
+
+            <div class="form-grid form-grid--narrow">
+              <bruny-input
+                label="Prix de base"
+                name="basePrice"
+                type="number"
+                inputMode="numeric"
+                prefix="XAF"
+                formControlName="basePrice"
+                [required]="true"
+                [error]="errorFor('basePrice')"
+              />
+              <bruny-input
+                label="Prix promotionnel"
+                name="promoPrice"
+                type="number"
+                inputMode="numeric"
+                prefix="XAF"
+                formControlName="promoPrice"
+                [error]="errorFor('promoPrice')"
+                hint="Strictement inférieur au prix de base."
+              />
+              <div>
+                <label class="field-label" for="promo-start">Début de la promotion</label>
+                <input
+                  id="promo-start"
+                  class="field-input"
+                  type="datetime-local"
+                  formControlName="promoStart"
+                />
+              </div>
+              <div>
+                <label class="field-label" for="promo-end">Fin de la promotion</label>
+                <input
+                  id="promo-end"
+                  class="field-input"
+                  type="datetime-local"
+                  formControlName="promoEnd"
+                />
+              </div>
+            </div>
+
+            @if (promotionError()) {
+              <div class="form-alert form-alert--error" role="alert">{{ promotionError() }}</div>
+            } @else {
+              <p class="field-hint">
+                Une promotion doit avoir un prix, une date de début et une date de fin.
+              </p>
+            }
+
+            <div class="price-summary">
+              <span>Prix affiché aujourd’hui</span>
+              <strong>
+                {{ preview().promoPrice ?? preview().basePrice | fcfa }}
+              </strong>
+              @if (preview().promoPrice !== null) {
+                <span class="price-summary__old">{{ preview().basePrice | fcfa }}</span>
+              }
+            </div>
+          }
+
+          @case ('seo') {
+            <div class="panel-heading">
+              <h2>Référencement naturel</h2>
+              <p>
+                Personnalisez le titre et la description affichés dans les moteurs de recherche.
+              </p>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-grid__full">
+                <bruny-input
+                  label="Titre SEO"
+                  name="seoTitle"
+                  formControlName="seoTitle"
+                  placeholder="Sneakers Air Max 90 — BRUNY SHOPPING"
+                  [error]="errorFor('seoTitle')"
+                />
+                <div class="field-counter">
+                  {{ productForm.controls.seoTitle.value.length }} / 255
+                </div>
+              </div>
+
+              <div class="form-grid__full">
+                <label class="field-label" for="seo-description">Description SEO</label>
+                <textarea
+                  id="seo-description"
+                  class="field-textarea"
+                  formControlName="seoDescription"
+                  rows="4"
+                  placeholder="Décrivez le produit en une phrase claire et incitative."
+                  [attr.aria-invalid]="errorFor('seoDescription') ? 'true' : null"
+                ></textarea>
+                <div class="field-meta">
+                  @if (errorFor('seoDescription')) {
+                    <p class="field-error" role="alert">{{ errorFor('seoDescription') }}</p>
+                  }
+                  <span>{{ productForm.controls.seoDescription.value.length }} / 500</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="serp-preview" aria-label="Aperçu dans les résultats de recherche">
+              <p class="serp-preview__url">
+                brunyshopping.cm › produits › {{ productForm.controls.slug.value || 'slug' }}
+              </p>
+              <p class="serp-preview__title">
+                {{
+                  productForm.controls.seoTitle.value ||
+                    productForm.controls.name.value ||
+                    'Titre du produit'
+                }}
+              </p>
+              <p class="serp-preview__description">
+                {{
+                  productForm.controls.seoDescription.value ||
+                    productForm.controls.description.value ||
+                    'Description du produit affichée dans les résultats de recherche.'
+                }}
+              </p>
+            </div>
+          }
+        }
+
+        <!--
+          Le gestionnaire reste monté hors du @switch : changer d’onglet ne doit
+          ni annuler un téléversement ni perdre des fichiers en attente.
+        -->
+        <div [hidden]="activeTab() !== 'images'">
+          <app-product-images
+            [productId]="productId()"
+            [productSlug]="productSlug()"
+            [images]="images()"
+            [colors]="imageColorOptions()"
+            [disabled]="saving() !== null"
+            (imagesChange)="setImages($event)"
+            (dirtyChange)="imagesDirty.set($event)"
+            (uploadingChange)="imageUploading.set($event)"
+          />
+        </div>
+      </section>
+
+      <footer class="product-form__footer">
+        <p>
+          @if (hasUnsavedChanges()) {
+            Modifications non enregistrées
+          } @else {
+            Toutes les modifications sont enregistrées
+          }
+        </p>
+        <div class="product-form__footer-actions">
+          <bruny-button variant="ghost" (click)="goBack()">Annuler</bruny-button>
+          <bruny-button
+            variant="secondary"
+            [loading]="saving() === 'draft'"
+            [disabled]="saving() !== null"
+            (click)="save('draft')"
+          >
+            @if (isEdit()) {
+              Enregistrer
+            } @else {
+              Enregistrer le brouillon
+            }
+          </bruny-button>
+          @if (!isPublished()) {
+            <bruny-button
+              [loading]="saving() === 'publish'"
+              [disabled]="saving() !== null"
+              (click)="save('publish')"
+            >
+              Publier
+            </bruny-button>
+          }
+        </div>
+      </footer>
+    </form>
+  }
+
+  <bruny-modal
+    [open]="previewOpen()"
+    title="Aperçu de la fiche produit"
+    id="product-preview"
+    size="lg"
+    (openChange)="previewOpen.set($event)"
+  >
+    <div class="preview">
+      <div class="preview__media">
+        @if (preview().image) {
+          <img [src]="preview().image!" [alt]="preview().name" />
+        } @else {
+          <span>{{ preview().name.charAt(0) }}</span>
+        }
+      </div>
+      <div class="preview__content">
+        <p class="preview__eyebrow">{{ preview().brand }} · {{ preview().category }}</p>
+        <h2>{{ preview().name }}</h2>
+        <div class="preview__price">
+          <strong>{{ preview().promoPrice ?? preview().basePrice | fcfa }}</strong>
+          @if (preview().promoPrice !== null) {
+            <span>{{ preview().basePrice | fcfa }}</span>
+          }
+        </div>
+        <p class="preview__description">{{ preview().description }}</p>
+        <dl class="preview__facts">
+          <div>
+            <dt>Variantes</dt>
+            <dd>{{ preview().variants }}</dd>
+          </div>
+          <div>
+            <dt>Stock total</dt>
+            <dd>{{ preview().stock }}</dd>
+          </div>
+          <div>
+            <dt>Couleurs</dt>
+            <dd>{{ preview().colors.join(', ') || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Pointures</dt>
+            <dd>{{ preview().sizes.join(', ') || '—' }}</dd>
+          </div>
+        </dl>
+        @if (preview().seoTitle || preview().seoDescription) {
+          <div class="preview__seo">
+            <h3>Référencement</h3>
+            <p class="preview__seo-title">{{ preview().seoTitle || preview().name }}</p>
+            <p>{{ preview().seoDescription }}</p>
+          </div>
+        }
+      </div>
+    </div>
+    <div bsModalFooter class="preview__footer">
+      <bruny-button variant="secondary" (click)="previewOpen.set(false)">Fermer</bruny-button>
+    </div>
+  </bruny-modal>
+
+  <bruny-confirm-dialog
+    [open]="duplicateOpen()"
+    title="Dupliquer ce produit ?"
+    message="Une copie sera créée en brouillon avec les variantes et images de la dernière version enregistrée."
+    confirmLabel="Dupliquer"
+    [loading]="duplicateLoading()"
+    tone="neutral"
+    (confirmed)="confirmDuplicate()"
+    (cancelled)="duplicateOpen.set(false)"
+  />
+
+  <bruny-confirm-dialog
+    [open]="leaveDialogOpen()"
+    title="Quitter sans enregistrer ?"
+    message="Des modifications ne sont pas enregistrées. Elles seront perdues si vous quittez cette page."
+    confirmLabel="Quitter sans enregistrer"
+    cancelLabel="Rester sur la page"
+    tone="danger"
+    (confirmed)="confirmLeave()"
+    (cancelled)="cancelLeave()"
+  />
+
+  <bruny-confirm-dialog
+    [open]="variantRemovalTarget() !== null"
+    title="Retirer cette variante vendue ?"
+    message="Cette variante est liée à des commandes. Elle sera archivée, conservée dans l’historique et ne pourra plus être vendue."
+    confirmLabel="Retirer et archiver"
+    tone="danger"
+    (confirmed)="confirmRemoveVariant()"
+    (cancelled)="variantRemovalTarget.set(null)"
+  />
+</div>

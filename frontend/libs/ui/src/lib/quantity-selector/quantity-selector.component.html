@@ -1,0 +1,36 @@
+<div class="qty-selector" role="group" [attr.aria-label]="'Quantité de ' + productName()">
+  <button
+    type="button"
+    class="qty-selector__btn"
+    (click)="decrement()"
+    [disabled]="disabled() || value() <= min()"
+    [attr.aria-label]="'Diminuer la quantité de ' + productName()"
+  >
+    <bruny-icon name="minus" aria-hidden="true" />
+  </button>
+  <input
+    type="number"
+    class="qty-selector__input"
+    [value]="value()"
+    [min]="min()"
+    [max]="max()"
+    [disabled]="disabled()"
+    [attr.aria-label]="'Quantité'"
+    inputmode="numeric"
+    (change)="onInputChange($event)"
+  />
+  <button
+    type="button"
+    class="qty-selector__btn"
+    (click)="increment()"
+    [disabled]="disabled() || value() >= max()"
+    [attr.aria-label]="'Augmenter la quantité de ' + productName()"
+  >
+    <bruny-icon name="plus" aria-hidden="true" />
+  </button>
+</div>
+@if (max() < 100 && value() >= max()) {
+  <p class="qty-selector__hint" role="status">
+    Quantité maximale disponible ({{ max() }}) atteinte.
+  </p>
+}

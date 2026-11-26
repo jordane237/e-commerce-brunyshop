@@ -7,8 +7,8 @@ import tseslint from 'typescript-eslint';
 // On bloque l'atteinte des fichiers d'un module frère, tout en gardant :
 //   - le code shared/infra (src/common, src/config, src/infrastructure,
 //     src/generated) qui vit hors de src/modules et reste libre d'import ;
-//   - la composition NestJS existante catalog -> audit (imports: [AuditModule]),
-//     seule dépendance cross-module réelle, sans quoi le lint casserait.
+//   - les compositions NestJS existantes catalog -> audit/settings et
+//     inventory -> audit/notifications, sans quoi le lint casserait.
 // Les motifs littéraux `../<module>/**` et `../../<module>/**` ne peuvent pas
 // attraper `../../common/...` car `common` n'est pas un nom de module.
 const MODULES = [
@@ -17,8 +17,10 @@ const MODULES = [
   'auth',
   'cart',
   'catalog',
+  'contact',
   'health',
   'inventory',
+  'media',
   'notifications',
   'orders',
   'payments',
@@ -41,6 +43,36 @@ function crossModulePatterns(allowedForThisModule = []) {
   return blocked.flatMap((m) => [`../${m}/**`, `../../${m}/**`]);
 }
 
+// --- Seeds (seed.ts au niveau de prisma) : cycle d'import géré en dur -------
+// seed.ts importe les seeds/*.ts et chaque seed importe seed.ts (cycle).
+// C'est l'unique graphe de dépendance du seed orchestrateur : on le laisse
+// passer. Règle locale à la racine du seed, sans toucher à la config globale.
+const seedConfigForScript = [
+  {
+    files: ['prisma/seeds/**/*.ts', 'prisma/seed.ts'],
+    rules: {
+      'no-console': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['../prisma/seeds/**', '../prisma/seed.ts'],
+              message: 'Import vers seed.ts interdit dans les seeds.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
+
+// --- Config globale --------------------------------------------------------
+// Règles communes à tous les fichiers TypeScript du backend :
+//   - pas de console sauf pour les seeds (scripts CLI),
+//   - pas de variable inutilisée,
+//   - imports cycliques ignorés pour les seeds (seed.ts ne peut pas importer
+//     les seeds sans créer de cycle : c'est l'unique graphe du seed orchestrateur).
 export default tseslint.config(
   { ignores: ['dist', 'src/generated'] },
   // Plain JavaScript ESM configs: provide the Node globals explicitly.
@@ -63,6 +95,9 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       'no-console': 'error',
+      // Imports cycliques dans les seeds (seed.ts ne peut pas importer les seeds
+      // sans créer de cycle : c'est l'unique graphe du seed orchestrateur).
+      'import/no-cycle': 'off',
     },
   },
   // Frontières entre modules NestJS : blocage par défaut.
@@ -75,10 +110,78 @@ export default tseslint.config(
       ],
     },
   },
-  // Exception : catalog dépend légitimement de audit (AuditModule exporté).
+  // Exception : catalog dépend légitimement de audit (AuditModule exporté)
+  // et de settings (seuil global de stock bas à la création).
   // Override posé APRÈS la règle générale pour prévaloir sur elle.
   {
     files: ['src/modules/catalog/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: crossModulePatterns(['audit', 'settings']), message: CROSS_MODULE_MESSAGE },
+          ],
+        },
+      ],
+    },
+  },
+  // Exception : contact persiste un message puis émet la notification support
+  // et la confirmation visiteur, et trace l'action dans l'audit, via leurs
+  // modules NestJS exportés.
+  {
+    files: ['src/modules/contact/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: crossModulePatterns(['audit', 'notifications']),
+              message: CROSS_MODULE_MESSAGE,
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Exception : inventory émet l'alerte stock bas vers audit et notifications
+  // via leurs modules NestJS exportés.
+  {
+    files: ['src/modules/inventory/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: crossModulePatterns(['audit', 'notifications']),
+              message: CROSS_MODULE_MESSAGE,
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Exception : le module media dépend de catalog (invalidation du cache
+  // public) et d'audit (traçabilité), via leurs modules NestJS exportés.
+  {
+    files: ['src/modules/media/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: crossModulePatterns(['audit', 'catalog']), message: CROSS_MODULE_MESSAGE },
+          ],
+        },
+      ],
+    },
+  },
+  // Exception : shipping admin audite les mutations de zones de livraison via
+  // le service exporté par AuditModule.
+  {
+    files: ['src/modules/shipping/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -88,11 +191,26 @@ export default tseslint.config(
       ],
     },
   },
-  // CLI scripts (seed) print to stdout by design; no-console does not apply.
+  // Exception : orders compose les modules cart (recalcul des prix/validation),
+  // inventory (décrément atomique), audit (traçabilité ORDER_CREATED) et
+  // notifications (accusé de réception order.created) via leurs services exportés.
   {
-    files: ['prisma/**/*.ts'],
+    files: ['src/modules/orders/**/*.ts'],
     rules: {
-      'no-console': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: crossModulePatterns(['cart', 'inventory', 'audit', 'notifications']),
+              message: CROSS_MODULE_MESSAGE,
+            },
+          ],
+        },
+      ],
     },
   },
+  // CLI scripts (seed) print to stdout by design; no-console does not apply.
+  // Seeds : cycle d'import via seed.ts orchestrateur — règle locale.
+  ...seedConfigForScript,
 );

@@ -1,0 +1,104 @@
+<bruny-legal-page-layout
+  title="Retours et échanges"
+  eyebrow="Informations"
+  [intro]="intro"
+  [toc]="toc"
+  [breadcrumb]="breadcrumb"
+>
+  <section id="essentiel" aria-labelledby="essentiel-title">
+    <div class="callout">
+      <h2 id="essentiel-title">L’essentiel en 4 points</h2>
+      <ul class="returns-essentials">
+        <li>7 jours après réception</li>
+        <li>Produit non porté à l’extérieur</li>
+        <li>Emballage et étiquettes conservés</li>
+        <li>Preuve d’achat ou référence de commande</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="eligibilite" aria-labelledby="eligibilite-title">
+    <h2 id="eligibilite-title">Le produit est-il éligible ?</h2>
+    <div class="returns-grid">
+      <div class="returns-verdict returns-verdict--yes">
+        <h3>Le produit est éligible si</h3>
+        <ul>
+          <li>
+            <span class="returns-marker" aria-hidden="true">✓</span>
+            Il est dans son état d’origine, non porté à l’extérieur.
+          </li>
+          <li>
+            <span class="returns-marker" aria-hidden="true">✓</span>
+            L’emballage, la boîte et les étiquettes sont conservés.
+          </li>
+          <li>
+            <span class="returns-marker" aria-hidden="true">✓</span>
+            La demande est faite dans les 7 jours suivant la réception.
+          </li>
+          <li>
+            <span class="returns-marker" aria-hidden="true">✓</span>
+            Vous pouvez fournir votre référence de commande.
+          </li>
+        </ul>
+      </div>
+      <div class="returns-verdict returns-verdict--no">
+        <h3>Ne sont pas repris</h3>
+        <ul>
+          <li>
+            <span class="returns-marker" aria-hidden="true">✗</span>
+            Les produits portés à l’extérieur ou endommagés.
+          </li>
+          <li>
+            <span class="returns-marker" aria-hidden="true">✗</span>
+            Les articles d’hygiène ou personnalisés.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="procedure" aria-labelledby="procedure-title">
+    <h2 id="procedure-title">Comment faire ?</h2>
+    <ol class="returns-steps">
+      <li>Écrivez-nous avec votre référence et le motif.</li>
+      <li>Nous vérifions l’éligibilité et vous proposons un échange ou un retour.</li>
+      <li>Déposez le colis au point convenu ou remettez-le au coursier.</li>
+      <li>Nous contrôlons le produit et traitons votre demande.</li>
+    </ol>
+    <p>
+      Pour une commande en cours, indiquez sa référence : nous répondrons plus vite. Nous
+      vérifierons ensemble votre commande.
+    </p>
+    <div class="returns-actions">
+      <a
+        class="returns-action returns-action--primary"
+        [href]="'mailto:support@brunyshop.cm?subject=' + 'Un retour ou un échange'"
+      >
+        Demander un retour
+      </a>
+      <a
+        class="returns-action"
+        [href]="'mailto:support@brunyshop.cm?subject=' + 'Suivi de ma commande'"
+      >
+        Suivre ma commande
+      </a>
+    </div>
+  </section>
+
+  <section id="echange" aria-labelledby="echange-title">
+    <h2 id="echange-title">Échanger une taille</h2>
+    <p>
+      L’échange est possible selon les stocks disponibles. S’il n’est pas disponible, nous vous
+      proposons un remboursement.
+    </p>
+  </section>
+
+  <section id="remboursement" aria-labelledby="remboursement-title">
+    <h2 id="remboursement-title">Remboursement</h2>
+    <p>
+      Après contrôle du produit, nous vous remboursons selon le moyen de paiement utilisé. Les frais
+      de livraison initiaux ne sont pas remboursés, sauf erreur de notre part.
+    </p>
+    <p>Le remboursement est traité sous 7 jours ouvrés après réception du retour.</p>
+  </section>
+</bruny-legal-page-layout>

@@ -1,0 +1,10 @@
+.confirm-dialog__message {
+  margin: 0 0 1rem;
+  color: var(--bs-color-text, #111827);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

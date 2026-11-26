@@ -1,0 +1,95 @@
+:host {
+  display: contents;
+}
+
+.whatsapp-fab {
+  position: fixed;
+  right: var(--bs-space-6);
+  bottom: calc(var(--bs-space-6) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--bs-z-whatsapp-fab, 1030);
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--bs-radius-full);
+  color: var(--bs-color-primary);
+  background: var(--bs-color-whatsapp);
+  box-shadow: var(--bs-shadow-md);
+  text-decoration: none;
+  transition:
+    transform var(--bs-duration-fast) var(--bs-easing-standard),
+    box-shadow var(--bs-duration-fast) var(--bs-easing-standard);
+}
+
+.whatsapp-fab:hover {
+  transform: scale(1.05);
+  box-shadow: var(--bs-shadow-lg);
+}
+
+.whatsapp-fab:active {
+  transform: scale(0.98);
+}
+
+.whatsapp-fab:focus-visible {
+  outline: 3px solid var(--bs-color-primary);
+  outline-offset: 3px;
+}
+
+.whatsapp-fab__icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.whatsapp-fab__tooltip {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + var(--bs-space-3));
+  padding: var(--bs-space-2) var(--bs-space-3);
+  border-radius: var(--bs-radius-md);
+  color: var(--bs-color-text-inverse);
+  background: var(--bs-color-primary);
+  font-size: var(--bs-font-size-xs);
+  font-weight: var(--bs-font-weight-semibold);
+  line-height: var(--bs-line-height-snug);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) translateX(4px);
+  transition:
+    opacity var(--bs-duration-fast) var(--bs-easing-standard),
+    transform var(--bs-duration-fast) var(--bs-easing-standard);
+}
+
+.whatsapp-fab:hover .whatsapp-fab__tooltip,
+.whatsapp-fab:focus-visible .whatsapp-fab__tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+@media (max-width: 767px) {
+  .whatsapp-fab {
+    right: var(--bs-space-4);
+    bottom: calc(var(--bs-space-4) + env(safe-area-inset-bottom, 0px));
+    width: 52px;
+    height: 52px;
+  }
+
+  // La sticky bar CAT-10 porte déjà l'action WhatsApp sur P04 mobile.
+  .whatsapp-fab--product {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-fab,
+  .whatsapp-fab__tooltip {
+    transition: none;
+  }
+
+  .whatsapp-fab:hover,
+  .whatsapp-fab:active {
+    transform: none;
+  }
+}

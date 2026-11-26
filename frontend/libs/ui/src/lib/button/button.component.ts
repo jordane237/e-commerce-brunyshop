@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { SpinnerComponent } from '../spinner/spinner.component';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'whatsapp';
@@ -22,4 +22,10 @@ export class ButtonComponent {
   @Input() block = false;
   @Input() iconOnly = false;
   @Input() ariaLabel: string | null = null;
+
+  @Output() clicked = new EventEmitter<MouseEvent>();
+
+  onClick(event: MouseEvent): void {
+    this.clicked.emit(event);
+  }
 }

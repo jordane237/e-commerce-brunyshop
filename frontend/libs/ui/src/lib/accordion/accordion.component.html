@@ -1,0 +1,28 @@
+<div class="accordion">
+  @for (item of items(); track item.id) {
+    <section class="accordion__item">
+      <h3 class="accordion__heading">
+        <button
+          class="accordion__trigger"
+          type="button"
+          [id]="item.id + '-trigger'"
+          [attr.aria-expanded]="openId() === item.id"
+          [attr.aria-controls]="item.id + '-panel'"
+          (click)="toggle(item.id)"
+        >
+          <span>{{ item.question }}</span>
+          <bruny-icon [name]="openId() === item.id ? 'chevron-up' : 'chevron-down'" />
+        </button>
+      </h3>
+      <div
+        class="accordion__panel"
+        role="region"
+        [id]="item.id + '-panel'"
+        [attr.aria-labelledby]="item.id + '-trigger'"
+        [hidden]="openId() !== item.id"
+      >
+        <p class="accordion__answer">{{ item.answer }}</p>
+      </div>
+    </section>
+  }
+</div>

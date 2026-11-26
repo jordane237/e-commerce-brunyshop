@@ -1,0 +1,66 @@
+@if (total() > 0) {
+  <div class="more">
+    <p class="more__count" aria-live="polite">{{ shown() }} produits sur {{ total() }}</p>
+    @if (hasMore()) {
+      <button
+        class="more__button"
+        type="button"
+        [disabled]="loadingMore()"
+        [attr.aria-busy]="loadingMore() ? 'true' : null"
+        (click)="loadMore.emit()"
+      >
+        @if (loadingMore()) {
+          Chargement…
+        } @else {
+          Voir plus
+          <span class="more__icon" aria-hidden="true">⌄</span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (pages() > 1) {
+    <nav class="pagination" aria-label="Pages du catalogue">
+      <button
+        class="pagination__arrow"
+        type="button"
+        aria-label="Page précédente"
+        [disabled]="page() <= 1"
+        (click)="pageChange.emit(page() - 1)"
+      >
+        ‹
+      </button>
+
+      <ul class="pagination__list" role="list">
+        @for (item of visiblePages(); track $index) {
+          <li>
+            @if (item === 'gap') {
+              <span class="pagination__gap" aria-hidden="true">…</span>
+            } @else {
+              <button
+                class="pagination__page"
+                type="button"
+                [class.pagination__page--current]="item === page()"
+                [attr.aria-current]="item === page() ? 'page' : null"
+                [attr.aria-label]="'Page ' + item"
+                (click)="pageChange.emit(item)"
+              >
+                {{ item }}
+              </button>
+            }
+          </li>
+        }
+      </ul>
+
+      <button
+        class="pagination__arrow"
+        type="button"
+        aria-label="Page suivante"
+        [disabled]="page() >= pages()"
+        (click)="pageChange.emit(page() + 1)"
+      >
+        ›
+      </button>
+    </nav>
+  }
+}

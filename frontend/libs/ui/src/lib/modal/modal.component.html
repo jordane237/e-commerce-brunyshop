@@ -1,10 +1,15 @@
 @if (open) {
-  <div class="bs-modal__overlay" (mousedown)="onBackdrop($event)">
+  <div
+    class="bs-modal__overlay"
+    [class.bs-modal__overlay--drawer]="placement === 'right'"
+    (mousedown)="onBackdrop($event)"
+  >
     <div
       #dialog
       class="bs-modal"
       [class.bs-modal--sm]="size === 'sm'"
       [class.bs-modal--lg]="size === 'lg'"
+      [class.bs-modal--drawer]="placement === 'right'"
       role="dialog"
       aria-modal="true"
       [attr.aria-labelledby]="id + '-title'"

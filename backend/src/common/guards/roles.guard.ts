@@ -8,7 +8,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
-import { ROLES_KEY } from '../decorators/roles.decorator';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { ROLES_KEY, type RoleName } from '../decorators/roles.decorator';
 import type { AuthenticatedUser } from '../decorators/current-user.decorator';
 
 interface RequestWithUser extends Request {
@@ -23,7 +24,17 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const required = this.reflector.getAllAndOverride<string[] | undefined>(ROLES_KEY, [
+    // @Public wins over @Roles: a public route stays reachable anonymously
+    // even if a role list was declared by mistake on the class or method.
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      return true;
+    }
+
+    const required = this.reflector.getAllAndOverride<RoleName[] | undefined>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -34,7 +45,7 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest<RequestWithUser>();
     if (!user) {
       // Defensive: the global JwtAuthGuard always runs first.
-      throw new UnauthorizedException({ code: 'UNAUTHENTICATED' });
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED' });
     }
 
     // SUPER_ADMIN holds every right (cachier §2).
