@@ -1,0 +1,164 @@
+:host {
+  display: block;
+}
+
+.checkout-recap {
+  position: sticky;
+  top: var(--bs-space-6, 1.5rem);
+  padding: var(--bs-space-6, 1.5rem);
+  border: 1px solid var(--bs-color-border, #e5e7eb);
+  border-radius: var(--bs-radius-lg, 12px);
+  background: var(--bs-color-neutral-50, #f9fafb);
+}
+
+.checkout-recap__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--bs-space-3, 0.75rem);
+  margin-bottom: var(--bs-space-4, 1rem);
+}
+
+.checkout-recap__header h2 {
+  margin: 0;
+  font-size: var(--bs-font-size-lg, 1.125rem);
+}
+
+.checkout-recap__count {
+  margin: 0;
+  color: var(--bs-color-text-muted, #6b7280);
+  font-size: var(--bs-font-size-sm, 0.875rem);
+}
+
+.checkout-recap__lines {
+  display: grid;
+  gap: var(--bs-space-3, 0.75rem);
+  margin: 0 0 var(--bs-space-4, 1rem);
+  padding: 0;
+  list-style: none;
+}
+
+.checkout-recap__line {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--bs-space-3, 0.75rem);
+  align-items: start;
+}
+
+.checkout-recap__thumb {
+  width: 56px;
+  height: 70px;
+  border-radius: var(--bs-radius-sm, 6px);
+  object-fit: cover;
+  background: var(--bs-color-neutral-100, #f3f4f6);
+}
+
+.checkout-recap__name {
+  margin: 0;
+  font-size: var(--bs-font-size-sm, 0.875rem);
+  font-weight: var(--bs-font-weight-bold, 700);
+}
+
+.checkout-recap__variant {
+  margin: 2px 0 0;
+  color: var(--bs-color-text-muted, #6b7280);
+  font-size: var(--bs-font-size-xs, 0.75rem);
+}
+
+.checkout-recap__price {
+  margin: var(--bs-space-1, 0.25rem) 0 0;
+  font-size: var(--bs-font-size-sm, 0.875rem);
+  font-weight: var(--bs-font-weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+}
+
+.checkout-recap__more {
+  color: var(--bs-color-text-muted, #6b7280);
+  font-size: var(--bs-font-size-xs, 0.75rem);
+}
+
+.checkout-recap__totals {
+  margin: 0;
+  border-top: 1px solid var(--bs-color-border, #e5e7eb);
+}
+
+.checkout-recap__totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--bs-space-3, 0.75rem);
+  padding-block: var(--bs-space-2, 0.5rem);
+}
+
+.checkout-recap__totals dd {
+  margin: 0;
+  font-weight: var(--bs-font-weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+}
+
+.checkout-recap__discount dd {
+  color: var(--bs-color-success-strong, #287044);
+}
+
+.checkout-recap__total {
+  font-size: var(--bs-font-size-lg, 1.125rem);
+  border-top: 1px solid var(--bs-color-border, #e5e7eb);
+}
+
+.checkout-recap__zone {
+  margin: var(--bs-space-2, 0.5rem) 0 0;
+  color: var(--bs-color-text-muted, #6b7280);
+  font-size: var(--bs-font-size-xs, 0.75rem);
+}
+
+.checkout-recap__note {
+  margin: var(--bs-space-4, 1rem) 0 0;
+  color: var(--bs-color-text-muted, #6b7280);
+  font-size: var(--bs-font-size-xs, 0.75rem);
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .checkout-recap {
+    position: static;
+  }
+}
+
+/* Sur mobile, le récapitulatif devient une ligne de synthèse : le total reste
+   visible, les lignes et notes détaillées sont masquées pour ne pas repousser
+   le formulaire sous la ligne de flottaison. */
+@media (max-width: 680px) {
+  .checkout-recap {
+    padding: var(--bs-space-3, 0.75rem) var(--bs-space-4, 1rem);
+  }
+
+  .checkout-recap__header {
+    align-items: center;
+    margin-bottom: var(--bs-space-2, 0.5rem);
+  }
+
+  .checkout-recap__header h2 {
+    font-size: var(--bs-font-size-md, 1rem);
+  }
+
+  .checkout-recap__count {
+    font-size: var(--bs-font-size-xs, 0.75rem);
+  }
+
+  .checkout-recap__lines,
+  .checkout-recap__zone,
+  .checkout-recap__note,
+  .checkout-recap__totals > div:not(.checkout-recap__total) {
+    display: none;
+  }
+
+  .checkout-recap__totals {
+    border-top: 0;
+  }
+
+  .checkout-recap__total {
+    align-items: baseline;
+    padding-block: 0;
+    border-top: 0;
+    font-size: var(--bs-font-size-md, 1rem);
+  }
+}

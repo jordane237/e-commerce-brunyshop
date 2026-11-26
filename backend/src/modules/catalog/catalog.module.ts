@@ -1,13 +1,43 @@
 import { Module } from '@nestjs/common';
+import { PricingModule } from '../../common/pricing/pricing.module';
+import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { AuditModule } from '../audit/audit.module';
+import { SettingsModule } from '../settings/settings.module';
+import { CatalogCacheService } from './cache/catalog-cache.service';
+import { AdminCatalogOptionsController } from './admin/admin-catalog-options.controller';
+import { AdminCatalogOptionsService } from './admin/admin-catalog-options.service';
+import { AdminProductsController } from './admin/admin-products.controller';
+import { AdminProductsService } from './admin/admin-products.service';
+import { SlugGeneratorService } from './admin/slug/slug-generator.service';
+import { SkuGeneratorService } from './admin/sku/sku-generator.service';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
+import { ProductDetailService } from './products/product-detail.service';
+import { AdminSizeGuidesController } from './size-guides/admin-size-guides.controller';
+import { SizeGuidesController } from './size-guides/size-guides.controller';
+import { SizeGuidesService } from './size-guides/size-guides.service';
 
 @Module({
-  imports: [DatabaseModule, AuditModule],
-  controllers: [CatalogController],
-  providers: [CatalogService],
-  exports: [CatalogService],
+  // CacheModule is not @Global: it must be imported to inject RedisService.
+  imports: [DatabaseModule, AuditModule, CacheModule, SettingsModule, PricingModule],
+  controllers: [
+    CatalogController,
+    AdminCatalogOptionsController,
+    AdminProductsController,
+    SizeGuidesController,
+    AdminSizeGuidesController,
+  ],
+  providers: [
+    CatalogService,
+    CatalogCacheService,
+    ProductDetailService,
+    SizeGuidesService,
+    AdminCatalogOptionsService,
+    AdminProductsService,
+    SlugGeneratorService,
+    SkuGeneratorService,
+  ],
+  exports: [CatalogService, CatalogCacheService, ProductDetailService],
 })
 export class CatalogModule {}

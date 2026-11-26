@@ -1,0 +1,69 @@
+<section class="container cart-page">
+  <header class="cart-page__header">
+    <p class="eyebrow">VOTRE SÉLECTION</p>
+    <h1>Mon panier</h1>
+    @if (!cart.isEmpty()) {
+    <p class="cart-page__count">
+      {{ cart.itemCount() }} article{{ cart.itemCount() > 1 ? 's' : '' }}
+    </p>
+    }
+  </header>
+
+  @if (cart.loading() && cart.validationResult() === null) {
+  <p class="cart-page__loading" role="status" aria-live="polite">
+    Vérification des prix et du stock…
+  </p>
+  } @if (cart.hasIssues()) {
+  <section class="cart-page__issues" role="status" aria-live="polite">
+    <h2>Votre panier a changé</h2>
+    <ul>
+      @for (issue of cart.issues(); track issue.code + (issue.variantId ?? '')) {
+      <li>{{ issue.message }}</li>
+      }
+    </ul>
+    @if (!cart.isEmpty()) {
+    <button type="button" (click)="retry()">Vérifier à nouveau</button>
+    }
+  </section>
+  } @if (cart.isEmpty()) {
+  <bruny-empty-state
+    title="Votre panier est vide"
+    description="Ajoutez un produit pour commencer votre commande."
+    actionLabel="Découvrir la boutique"
+    (actionClicked)="goToCatalog()"
+  />
+  } @else { @if (cart.error()) {
+  <div class="cart-page__error" role="alert">
+    <p>{{ cart.error() }}</p>
+    <button type="button" (click)="retry()">Réessayer</button>
+  </div>
+  }
+
+  <div class="cart-page__layout">
+    <div class="cart-page__lines" [attr.aria-busy]="cart.loading()">
+      @for (line of cart.lines(); track line.variantId) {
+      <app-cart-line-item
+        [line]="line"
+        [quantity]="line.quantity"
+        [validationLine]="validatedLinesMap().get(line.variantId) ?? null"
+        [issue]="issuesMap().get(line.variantId) ?? null"
+        (quantityChange)="setQuantity(line.variantId, $event)"
+        (removed)="remove($event)"
+      />
+      }
+    </div>
+
+    <aside class="cart-page__aside">
+      <app-cart-summary
+        [subtotal]="cart.subtotal()"
+        [discount]="cart.discount()"
+        [shippingFee]="null"
+        [total]="cart.displayTotal()"
+        [loading]="cart.loading()"
+        [canCheckout]="canCheckout()"
+      />
+      <app-cart-reassurance [points]="reassurancePoints" />
+    </aside>
+  </div>
+  }
+</section>

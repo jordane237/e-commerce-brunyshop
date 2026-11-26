@@ -1,0 +1,1152 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  HostListener,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+
+import { readApiErrorMessage, ToastService } from '@bruny/core';
+import { FcfaPipe } from '@bruny/util';
+import {
+  AdminBrandOption,
+  AdminCatalogApi,
+  AdminCategoryOption,
+  AdminProductDetail,
+  AdminProductStatus,
+  AdminProductVariant,
+  AdminProductsApi,
+  CreateProductPayload,
+  ProductImagePayload,
+  ProductVariantPayload,
+  UpdateProductPayload,
+} from '@bruny/data-access';
+import {
+  ButtonComponent,
+  ConfirmDialogComponent,
+  InputComponent,
+  ModalComponent,
+  SelectComponent,
+  StatusBadgeComponent,
+  TabsComponent,
+  TabItem,
+} from '@bruny/ui';
+
+import { ProductImagesComponent } from './product-images/product-images.component';
+import type { ProductImageItem } from './product-images/product-images.types';
+
+interface VariantControls {
+  id: FormControl<string | null>;
+  sku: FormControl<string>;
+  color: FormControl<string>;
+  size: FormControl<string>;
+  price: FormControl<number | null>;
+  stock: FormControl<number>;
+  lowStockThreshold: FormControl<number>;
+  hasOrders: FormControl<boolean>;
+}
+
+type VariantForm = FormGroup<VariantControls>;
+
+interface PendingArchivedVariant {
+  index: number;
+  variant: AdminProductVariant;
+}
+
+const TABS: readonly TabItem[] = [
+  { id: 'informations', label: 'Informations' },
+  { id: 'variantes', label: 'Variantes et stock' },
+  { id: 'images', label: 'Images' },
+  { id: 'tarifs', label: 'Tarifs' },
+  { id: 'seo', label: 'SEO' },
+];
+
+function positiveIntegerValidator(control: AbstractControl): ValidationErrors | null {
+  if (control.value === null || control.value === '' || control.value === undefined) return null;
+  const value = Number(control.value);
+  return Number.isInteger(value) && value >= 0 ? null : { integer: true };
+}
+
+function duplicateVariantsValidator(control: AbstractControl): ValidationErrors | null {
+  if (!(control instanceof FormArray)) return null;
+  const combinations = new Set<string>();
+  const skus = new Set<string>();
+  for (const group of control.controls) {
+    const value = group.value as { color?: unknown; size?: unknown; sku?: unknown };
+    const key = `${String(value.color ?? '')
+      .trim()
+      .toUpperCase()}::${String(value.size ?? '')
+      .trim()
+      .toUpperCase()}`;
+    if (combinations.has(key)) return { duplicateVariants: true };
+    combinations.add(key);
+
+    const sku = String(value.sku ?? '')
+      .trim()
+      .toUpperCase();
+    if (sku !== '') {
+      if (skus.has(sku)) return { duplicateSkus: true };
+      skus.add(sku);
+    }
+  }
+  return null;
+}
+
+const promotionValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const value = group.value as {
+    basePrice?: unknown;
+    promoPrice?: unknown;
+    promoStart?: unknown;
+    promoEnd?: unknown;
+  };
+  const errors: ValidationErrors = {};
+  const basePrice = Number(value.basePrice);
+  const promoRaw = value.promoPrice;
+  const promoPrice =
+    promoRaw === null || promoRaw === '' || promoRaw === undefined ? null : Number(promoRaw);
+  const start = typeof value.promoStart === 'string' ? value.promoStart : '';
+  const end = typeof value.promoEnd === 'string' ? value.promoEnd : '';
+
+  if (promoPrice !== null) {
+    if (!Number.isInteger(promoPrice) || promoPrice < 1) {
+      errors['promoPriceInvalid'] = true;
+    } else if (!Number.isNaN(basePrice) && promoPrice >= basePrice) {
+      errors['promoPriceTooHigh'] = true;
+    }
+    if (start === '' || end === '') errors['promoDatesRequired'] = true;
+  }
+  if (start !== '' && end !== '' && new Date(start).getTime() >= new Date(end).getTime()) {
+    errors['promoWindowInvalid'] = true;
+  }
+  return Object.keys(errors).length > 0 ? errors : null;
+};
+
+function slugify(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 180);
+}
+
+function numberOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function compareSizes(left: string, right: string): number {
+  const leftNumber = Number(left);
+  const rightNumber = Number(right);
+  if (Number.isNaN(leftNumber) || Number.isNaN(rightNumber)) {
+    return left.localeCompare(right);
+  }
+  return leftNumber - rightNumber;
+}
+
+function skuSegment(value: string, maxLength: number): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+    .slice(0, maxLength);
+}
+
+function toDateTimeLocal(iso: string | null): string {
+  if (iso === null) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours(),
+  )}:${pad(date.getMinutes())}`;
+}
+
+@Component({
+  selector: 'app-product-form',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    FcfaPipe,
+    TabsComponent,
+    InputComponent,
+    SelectComponent,
+    ButtonComponent,
+    StatusBadgeComponent,
+    ModalComponent,
+    ConfirmDialogComponent,
+    ProductImagesComponent,
+  ],
+  templateUrl: './product-form.component.html',
+  styleUrl: './product-form.component.scss',
+})
+export class ProductFormComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly productsApi = inject(AdminProductsApi);
+  private readonly catalogApi = inject(AdminCatalogApi);
+  private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly tabs = TABS;
+  readonly activeTab = signal('informations');
+  readonly loading = signal(true);
+  readonly loadError = signal('');
+  readonly saving = signal<'draft' | 'publish' | null>(null);
+  readonly saveError = signal('');
+  readonly submitted = signal(false);
+  readonly formTick = signal(0);
+  readonly productId = signal<string | null>(null);
+  readonly productSlug = signal('');
+  readonly status = signal<AdminProductStatus>('DRAFT');
+  readonly categories = signal<AdminCategoryOption[]>([]);
+  readonly brands = signal<AdminBrandOption[]>([]);
+  readonly optionsLoading = signal(true);
+  readonly optionsError = signal('');
+  readonly images = signal<ProductImageItem[]>([]);
+  readonly imagesDirty = signal(false);
+  readonly imageUploading = signal(false);
+  readonly previewOpen = signal(false);
+  readonly duplicateOpen = signal(false);
+  readonly duplicateLoading = signal(false);
+  readonly leaveDialogOpen = signal(false);
+
+  readonly generatorColors = signal<string[]>([]);
+  readonly generatorSizes = signal<string[]>([]);
+  readonly draftColor = signal('');
+  readonly draftSize = signal('');
+  readonly sizeRangeFrom = signal('');
+  readonly sizeRangeTo = signal('');
+  readonly generatorStock = signal('0');
+  readonly generatorThreshold = signal('5');
+
+  readonly bulkMode = signal<'row' | 'column'>('row');
+  readonly bulkTarget = signal('');
+  readonly bulkField = signal<'stock' | 'threshold'>('stock');
+  readonly bulkValue = signal('');
+
+  readonly archivedVariants = signal<AdminProductVariant[]>([]);
+  readonly pendingArchived = signal<PendingArchivedVariant[]>([]);
+  readonly variantRemovalTarget = signal<number | null>(null);
+
+  private autoSlug = true;
+  private variantBaseline = '';
+  private pendingLeave: ((allow: boolean) => void) | null = null;
+  private readonly imageManager = viewChild(ProductImagesComponent);
+
+  readonly productForm = this.fb.group(
+    {
+      name: this.fb.nonNullable.control('', [
+        Validators.required,
+        Validators.minLength(3),
+        Validators.maxLength(160),
+      ]),
+      slug: this.fb.nonNullable.control('', [
+        Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+        Validators.maxLength(180),
+      ]),
+      description: this.fb.nonNullable.control('', [
+        Validators.required,
+        Validators.minLength(10),
+        Validators.maxLength(10000),
+      ]),
+      categoryId: this.fb.nonNullable.control('', [Validators.required]),
+      brandId: this.fb.nonNullable.control('', [Validators.required]),
+      basePrice: this.fb.nonNullable.control(0, [
+        Validators.required,
+        Validators.min(0),
+        positiveIntegerValidator,
+      ]),
+      promoPrice: this.fb.control<number | null>(null, [positiveIntegerValidator]),
+      promoStart: this.fb.nonNullable.control(''),
+      promoEnd: this.fb.nonNullable.control(''),
+      seoTitle: this.fb.nonNullable.control('', [Validators.maxLength(255)]),
+      seoDescription: this.fb.nonNullable.control('', [Validators.maxLength(500)]),
+    },
+    { validators: promotionValidator },
+  );
+
+  readonly variants = this.fb.array<VariantForm>([], {
+    validators: [duplicateVariantsValidator],
+  });
+
+  readonly isEdit = computed(() => this.productId() !== null);
+  readonly isPublished = computed(() => this.status() === 'PUBLISHED');
+  readonly title = computed(() => {
+    this.formTick();
+    return this.isEdit()
+      ? this.productForm.controls.name.value || 'Modifier le produit'
+      : 'Nouveau produit';
+  });
+  readonly categoryOptions = computed(() => {
+    const byId = new Map(this.categories().map((category) => [category.id, category]));
+    return this.categories().map((category) => {
+      const parent = category.parentId ? byId.get(category.parentId) : undefined;
+      return {
+        value: category.id,
+        label: parent ? `${parent.name} / ${category.name}` : category.name,
+      };
+    });
+  });
+  readonly brandOptions = computed(() =>
+    this.brands().map((brand) => ({ value: brand.id, label: brand.name })),
+  );
+  readonly hasStock = computed(() => {
+    this.formTick();
+    return this.variants.controls.some((variant) => Number(variant.controls.stock.value) > 0);
+  });
+  readonly variantDuplicate = computed(() => {
+    this.formTick();
+    return this.variants.hasError('duplicateVariants');
+  });
+  readonly variantSkuDuplicate = computed(() => {
+    this.formTick();
+    return this.variants.hasError('duplicateSkus');
+  });
+  readonly gridColors = computed(() => {
+    this.formTick();
+    const colors = this.variants
+      .getRawValue()
+      .map((variant) => String(variant.color).trim().toUpperCase())
+      .filter((color) => color !== '');
+    return [...new Set(colors)];
+  });
+  readonly gridSizes = computed(() => {
+    this.formTick();
+    const sizes = this.variants
+      .getRawValue()
+      .map((variant) => String(variant.size).trim().toUpperCase())
+      .filter((size) => size !== '');
+    return [...new Set(sizes)].sort(compareSizes);
+  });
+  readonly bulkTargetOptions = computed(() => {
+    const values = this.bulkMode() === 'row' ? this.gridColors() : this.gridSizes();
+    return values.map((value) => ({
+      value,
+      label: this.bulkMode() === 'row' ? `Ligne ${value}` : `Colonne ${value}`,
+    }));
+  });
+  readonly bulkSelectionLabel = computed(() =>
+    this.bulkMode() === 'row' ? 'la ligne' : 'la colonne',
+  );
+  readonly archivedCount = computed(() => this.archivedVariants().length);
+  readonly imageColorOptions = computed(() => this.gridColors());
+  readonly formErrorCount = computed(() => {
+    this.formTick();
+    let count = 0;
+    if (this.productForm.invalid) count += 1;
+    if (this.variants.length === 0 || this.variants.invalid) count += 1;
+    return count;
+  });
+  readonly preview = computed(() => {
+    this.formTick();
+    const raw = this.productForm.getRawValue();
+    const images = this.images();
+    const variants = this.variants.getRawValue();
+    const base = Number(raw.basePrice) || 0;
+    const promo = numberOrNull(raw.promoPrice);
+    const start = raw.promoStart ? new Date(raw.promoStart).getTime() : null;
+    const end = raw.promoEnd ? new Date(raw.promoEnd).getTime() : null;
+    const now = Date.now();
+    const promoActive =
+      promo !== null &&
+      promo > 0 &&
+      (start === null || start <= now) &&
+      (end === null || end >= now);
+    return {
+      name: raw.name || 'Nom du produit',
+      description: raw.description || 'Aucune description pour le moment.',
+      basePrice: base,
+      promoPrice: promoActive ? promo : null,
+      category:
+        this.categories().find((category) => category.id === raw.categoryId)?.name ??
+        'Catégorie non sélectionnée',
+      brand:
+        this.brands().find((brand) => brand.id === raw.brandId)?.name ?? 'Marque non sélectionnée',
+      image: images[0]?.url ?? null,
+      stock: variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0),
+      variants: variants.length,
+      colors: [...new Set(variants.map((variant) => variant.color).filter(Boolean))],
+      sizes: [...new Set(variants.map((variant) => variant.size).filter(Boolean))],
+      seoTitle: raw.seoTitle,
+      seoDescription: raw.seoDescription,
+    };
+  });
+
+  constructor() {
+    this.productForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.formTick.update((tick) => tick + 1);
+    });
+    this.variants.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.formTick.update((tick) => tick + 1);
+    });
+    this.productForm.controls.name.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((name) => {
+        if (!this.autoSlug) return;
+        this.productForm.controls.slug.setValue(slugify(name), { emitEvent: false });
+      });
+  }
+
+  async ngOnInit(): Promise<void> {
+    const id = this.route.snapshot.paramMap.get('id');
+    await Promise.all([this.loadOptions(), id ? this.loadProduct(id) : this.initCreate()]);
+    this.loading.set(false);
+  }
+
+  private async loadOptions(): Promise<void> {
+    this.optionsLoading.set(true);
+    this.optionsError.set('');
+    try {
+      const options = await firstValueFrom(this.catalogApi.options());
+      this.categories.set(options.categories);
+      this.brands.set(options.brands);
+    } catch {
+      this.optionsError.set('Impossible de charger les catégories et marques.');
+    } finally {
+      this.optionsLoading.set(false);
+    }
+  }
+
+  private initCreate(): void {
+    this.autoSlug = true;
+    this.status.set('DRAFT');
+    this.archivedVariants.set([]);
+    this.pendingArchived.set([]);
+    this.productForm.markAsPristine();
+    this.variantBaseline = this.variantsSnapshot();
+    this.imagesDirty.set(false);
+  }
+
+  private async loadProduct(id: string): Promise<void> {
+    this.autoSlug = false;
+    try {
+      const product = await firstValueFrom(this.productsApi.get(id));
+      this.applyDetail(product);
+    } catch (error) {
+      this.loadError.set(
+        readApiErrorMessage(error, 'Impossible de charger ce produit. Vérifiez son identifiant.'),
+      );
+    }
+  }
+
+  private applyDetail(product: AdminProductDetail): void {
+    this.autoSlug = false;
+    this.productId.set(product.id);
+    this.productSlug.set(product.slug);
+    this.status.set(product.status);
+    this.productForm.patchValue({
+      name: product.name,
+      slug: product.slug,
+      description: product.description,
+      categoryId: product.categoryId,
+      brandId: product.brandId,
+      basePrice: product.basePrice,
+      promoPrice: product.promoPrice,
+      promoStart: toDateTimeLocal(product.promoStart),
+      promoEnd: toDateTimeLocal(product.promoEnd),
+      seoTitle: product.seoTitle ?? '',
+      seoDescription: product.seoDescription ?? '',
+    });
+    this.variants.clear({ emitEvent: false });
+    for (const variant of product.variants) {
+      if (variant.archivedAt === null) this.variants.push(this.createVariantGroup(variant));
+    }
+    this.archivedVariants.set(product.variants.filter((variant) => variant.archivedAt !== null));
+    this.pendingArchived.set([]);
+    this.images.set(
+      product.images.map((image) => ({
+        id: image.id,
+        url: image.url,
+        thumbnailUrl: image.url,
+        alt: image.alt ?? '',
+        variantColor: image.variantColor,
+        position: image.position,
+        persisted: true,
+      })),
+    );
+    this.imagesDirty.set(false);
+    this.submitted.set(false);
+    this.productForm.markAsPristine();
+    this.variantBaseline = this.variantsSnapshot();
+  }
+
+  private createVariantGroup(variant?: AdminProductVariant): VariantForm {
+    return this.fb.group<VariantControls>({
+      id: this.fb.control<string | null>(variant?.id ?? null),
+      sku: this.fb.nonNullable.control(variant?.sku ?? '', [
+        Validators.maxLength(64),
+        Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9_-]*$/),
+      ]),
+      color: this.fb.nonNullable.control(variant?.color ?? '', [
+        Validators.required,
+        Validators.maxLength(32),
+      ]),
+      size: this.fb.nonNullable.control(variant?.size ?? '', [
+        Validators.required,
+        Validators.maxLength(16),
+      ]),
+      price: this.fb.control<number | null>(variant?.price ?? null, [positiveIntegerValidator]),
+      stock: this.fb.nonNullable.control(variant?.stock ?? 0, [
+        Validators.required,
+        Validators.min(0),
+        positiveIntegerValidator,
+      ]),
+      lowStockThreshold: this.fb.nonNullable.control(variant?.lowStockThreshold ?? 5, [
+        Validators.required,
+        Validators.min(0),
+        positiveIntegerValidator,
+      ]),
+      hasOrders: this.fb.nonNullable.control((variant?.orderCount ?? 0) > 0),
+    });
+  }
+
+  private variantsSnapshot(): string {
+    return JSON.stringify(
+      this.variants.getRawValue().map((variant) => ({
+        id: variant.id,
+        sku: String(variant.sku).trim().toUpperCase(),
+        color: String(variant.color).trim().toUpperCase(),
+        size: String(variant.size).trim().toUpperCase(),
+        price: numberOrNull(variant.price),
+        stock: Number(variant.stock),
+        lowStockThreshold: Number(variant.lowStockThreshold),
+      })),
+    );
+  }
+
+  private variantsChanged(): boolean {
+    return this.variantsSnapshot() !== this.variantBaseline;
+  }
+
+  onSlugChange(value: string): void {
+    this.autoSlug = false;
+    this.productForm.controls.slug.setValue(value);
+  }
+
+  setCategory(value: string): void {
+    this.productForm.controls.categoryId.setValue(value);
+    this.productForm.controls.categoryId.markAsTouched();
+  }
+
+  setBrand(value: string): void {
+    this.productForm.controls.brandId.setValue(value);
+    this.productForm.controls.brandId.markAsTouched();
+  }
+
+  setTab(tabId: string): void {
+    this.activeTab.set(tabId);
+  }
+
+  async retryLoad(): Promise<void> {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.loading.set(true);
+    this.loadError.set('');
+    await Promise.all([this.loadOptions(), id ? this.loadProduct(id) : this.initCreate()]);
+    this.loading.set(false);
+  }
+
+  // --------------------------------------------------------------- validation
+
+  errorFor(
+    name:
+      | 'name'
+      | 'slug'
+      | 'description'
+      | 'categoryId'
+      | 'brandId'
+      | 'basePrice'
+      | 'promoPrice'
+      | 'promoStart'
+      | 'promoEnd'
+      | 'seoTitle'
+      | 'seoDescription',
+  ): string {
+    const control = this.productForm.controls[name];
+    if (!(control.touched || control.dirty || this.submitted())) return '';
+    return this.controlMessage(control, name);
+  }
+
+  private controlMessage(control: AbstractControl, name: string): string {
+    if (control.hasError('required')) {
+      return name === 'categoryId'
+        ? 'Sélectionnez une catégorie.'
+        : name === 'brandId'
+          ? 'Sélectionnez une marque.'
+          : 'Ce champ est obligatoire.';
+    }
+    if (control.hasError('minlength')) {
+      return `Minimum ${String(control.getError('minlength').requiredLength)} caractères.`;
+    }
+    if (control.hasError('maxlength')) {
+      return `Maximum ${String(control.getError('maxlength').requiredLength)} caractères.`;
+    }
+    if (control.hasError('pattern') && name === 'slug') {
+      return 'Utilisez uniquement des minuscules, chiffres et tirets.';
+    }
+    if (control.hasError('pattern') && name === 'sku') {
+      return 'Le SKU doit contenir uniquement lettres, chiffres, tirets et underscores.';
+    }
+    if (control.hasError('min')) return 'La valeur ne peut pas être négative.';
+    if (control.hasError('integer')) return 'Saisissez un nombre entier positif.';
+    return 'Valeur invalide.';
+  }
+
+  promotionError(): string {
+    if (!(this.productForm.touched || this.productForm.dirty || this.submitted())) return '';
+    const errors = this.productForm.errors ?? {};
+    if (errors['promoPriceTooHigh']) {
+      return 'Le prix promotionnel doit être strictement inférieur au prix de base.';
+    }
+    if (errors['promoPriceInvalid'])
+      return 'Le prix promotionnel doit être un entier supérieur à 0.';
+    if (errors['promoDatesRequired']) {
+      return 'Renseignez les dates de début et de fin pour programmer une promotion.';
+    }
+    if (errors['promoWindowInvalid']) {
+      return 'La date de début doit précéder la date de fin.';
+    }
+    return '';
+  }
+
+  variantError(index: number, field: keyof VariantControls): string {
+    const control = this.variants.at(index)?.controls[field];
+    if (!control || !(control.touched || control.dirty || this.submitted())) return '';
+    return this.controlMessage(control, String(field));
+  }
+
+  private firstInvalidTab(): string {
+    const c = this.productForm.controls;
+    if (
+      [c.name, c.slug, c.description, c.categoryId, c.brandId].some((control) => control.invalid)
+    ) {
+      return 'informations';
+    }
+    if (this.variants.length === 0 || this.variants.invalid) return 'variantes';
+    if (c.basePrice.invalid || c.promoPrice.invalid || this.productForm.errors) return 'tarifs';
+    if (c.seoTitle.invalid || c.seoDescription.invalid) return 'seo';
+    return 'informations';
+  }
+
+  private validateForm(): boolean {
+    this.submitted.set(true);
+    this.productForm.markAllAsTouched();
+    this.variants.markAllAsTouched();
+    if (this.productForm.valid && this.variants.length > 0 && this.variants.valid) return true;
+    this.activeTab.set(this.firstInvalidTab());
+    this.toast.error('Corrigez les champs signalés avant d’enregistrer.');
+    return false;
+  }
+
+  // ---------------------------------------------------------------- variants
+
+  variantAt(color: string, size: string): VariantForm | null {
+    const index = this.variantIndex(color, size);
+    return index >= 0 ? (this.variants.at(index) as VariantForm) : null;
+  }
+
+  variantIndex(color: string, size: string): number {
+    const normalizedColor = color.trim().toUpperCase();
+    const normalizedSize = size.trim().toUpperCase();
+    return this.variants
+      .getRawValue()
+      .findIndex(
+        (variant) =>
+          String(variant.color).trim().toUpperCase() === normalizedColor &&
+          String(variant.size).trim().toUpperCase() === normalizedSize,
+      );
+  }
+
+  addGridCell(color: string, size: string): void {
+    if (this.variantAt(color, size) !== null) return;
+    const group = this.createVariantGroup();
+    group.patchValue({
+      color,
+      size,
+      stock: Math.max(0, Math.trunc(Number(this.generatorStock()) || 0)),
+      lowStockThreshold: Math.max(0, Math.trunc(Number(this.generatorThreshold()) || 0)),
+    });
+    this.variants.push(group);
+    this.variants.markAsDirty();
+  }
+
+  removeVariant(index: number): void {
+    this.variants.removeAt(index);
+    this.variants.markAsDirty();
+  }
+
+  requestRemoveVariant(index: number): void {
+    const group = this.variants.at(index);
+    if (!group) return;
+    if (group.controls.hasOrders.value) {
+      this.variantRemovalTarget.set(index);
+      return;
+    }
+    this.removeVariant(index);
+  }
+
+  confirmRemoveVariant(): void {
+    const index = this.variantRemovalTarget();
+    if (index === null) return;
+    const group = this.variants.at(index);
+    if (!group) {
+      this.variantRemovalTarget.set(null);
+      return;
+    }
+    const raw = group.getRawValue();
+    this.pendingArchived.update((items) =>
+      [
+        ...items,
+        {
+          index,
+          variant: {
+            id: raw.id ?? '',
+            sku: raw.sku,
+            color: raw.color,
+            size: raw.size,
+            price: numberOrNull(raw.price),
+            stock: Number(raw.stock),
+            reservedStock: 0,
+            lowStockThreshold: Number(raw.lowStockThreshold),
+            archivedAt: null,
+            orderCount: 1,
+            version: 0,
+          },
+        },
+      ].sort((left, right) => left.index - right.index),
+    );
+    this.removeVariant(index);
+    this.variantRemovalTarget.set(null);
+    this.toast.warning(
+      'Cette variante a déjà été vendue : elle sera archivée à l’enregistrement, pas supprimée.',
+    );
+  }
+
+  restorePendingArchived(index: number): void {
+    const item = this.pendingArchived().find((entry) => entry.index === index);
+    if (!item) return;
+    this.pendingArchived.update((items) => items.filter((entry) => entry.index !== index));
+    this.variants.insert(
+      Math.min(index, this.variants.length),
+      this.createVariantGroup(item.variant),
+    );
+    this.variants.markAsDirty();
+  }
+
+  restoreArchivedVariant(variant: AdminProductVariant): void {
+    if (this.variantAt(variant.color, variant.size) !== null) {
+      this.toast.error('Une variante active utilise déjà cette couleur et cette pointure.');
+      return;
+    }
+    this.archivedVariants.update((items) => items.filter((item) => item.id !== variant.id));
+    this.variants.push(this.createVariantGroup(variant));
+    this.variants.markAsDirty();
+    this.toast.success('Variante réactivée. Enregistrez pour confirmer.');
+  }
+
+  addColor(): void {
+    const color = this.draftColor().trim().toUpperCase();
+    if (color === '') return;
+    if (color.length > 32) {
+      this.toast.error('Une couleur ne peut pas dépasser 32 caractères.');
+      return;
+    }
+    if (this.generatorColors().includes(color)) {
+      this.toast.warning('Cette couleur est déjà sélectionnée.');
+      return;
+    }
+    this.generatorColors.update((colors) => [...colors, color]);
+    this.draftColor.set('');
+  }
+
+  removeColor(color: string): void {
+    this.generatorColors.update((colors) => colors.filter((item) => item !== color));
+  }
+
+  addSize(): void {
+    const size = this.draftSize().trim().toUpperCase();
+    if (size === '') return;
+    if (size.length > 16) {
+      this.toast.error('Une pointure ne peut pas dépasser 16 caractères.');
+      return;
+    }
+    if (this.generatorSizes().includes(size)) {
+      this.toast.warning('Cette pointure est déjà sélectionnée.');
+      return;
+    }
+    this.generatorSizes.update((sizes) => [...sizes, size].sort(compareSizes));
+    this.draftSize.set('');
+  }
+
+  removeSize(size: string): void {
+    this.generatorSizes.update((sizes) => sizes.filter((item) => item !== size));
+  }
+
+  addSizeRange(): void {
+    const from = Number(this.sizeRangeFrom());
+    const to = Number(this.sizeRangeTo());
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 15 || to > 60 || from > to) {
+      this.toast.error('Saisissez une plage de pointures entières comprise entre 15 et 60.');
+      return;
+    }
+    if (to - from > 30) {
+      this.toast.error('La plage ne peut pas dépasser 31 pointures.');
+      return;
+    }
+    const added = new Set(this.generatorSizes());
+    for (let size = from; size <= to; size += 1) added.add(String(size));
+    this.generatorSizes.set([...added].sort(compareSizes));
+    this.sizeRangeFrom.set('');
+    this.sizeRangeTo.set('');
+  }
+
+  previewSku(color: string, size: string): string {
+    const brandSlug = this.brands().find(
+      (brand) => brand.id === this.productForm.controls.brandId.value,
+    )?.slug;
+    const productSlug =
+      this.productForm.controls.slug.value.trim() || slugify(this.productForm.controls.name.value);
+    const brand = skuSegment(brandSlug ?? '', 8);
+    const product = skuSegment(productSlug, 10);
+    const sizePart = skuSegment(size, 8);
+    const colorPart = skuSegment(color, 12);
+    if (brand === '' || product === '' || sizePart === '' || colorPart === '') return '';
+    return `${brand}-${product}-${sizePart}-${colorPart}`;
+  }
+
+  generateVariants(): void {
+    const colors = this.generatorColors();
+    const sizes = this.generatorSizes();
+    const stock = Math.max(0, Math.trunc(Number(this.generatorStock()) || 0));
+    const threshold = Math.max(0, Math.trunc(Number(this.generatorThreshold()) || 0));
+    if (colors.length === 0 || sizes.length === 0) {
+      this.toast.error('Sélectionnez au moins une couleur et une pointure.');
+      return;
+    }
+
+    const existing = new Set(
+      this.variants
+        .getRawValue()
+        .map(
+          (variant) =>
+            `${String(variant.color).trim().toUpperCase()}::${String(variant.size).trim().toUpperCase()}`,
+        ),
+    );
+    const archived = new Set(
+      this.archivedVariants().map(
+        (variant) => `${variant.color.trim().toUpperCase()}::${variant.size.trim().toUpperCase()}`,
+      ),
+    );
+    let added = 0;
+    let skippedArchived = 0;
+    for (const color of colors) {
+      for (const size of sizes) {
+        const key = `${color}::${size}`;
+        if (existing.has(key)) continue;
+        if (archived.has(key)) {
+          skippedArchived += 1;
+          continue;
+        }
+        const group = this.createVariantGroup();
+        group.patchValue({ color, size, stock, lowStockThreshold: threshold });
+        this.variants.push(group);
+        existing.add(key);
+        added += 1;
+      }
+    }
+    if (added === 0) {
+      this.toast.warning(
+        skippedArchived > 0
+          ? 'Ces combinaisons existent déjà ou sont archivées. Réactivez la variante archivée concernée.'
+          : 'Toutes ces combinaisons existent déjà.',
+      );
+      return;
+    }
+    this.variants.markAsDirty();
+    this.toast.success(
+      `${added} variante(s) ajoutée(s)${skippedArchived > 0 ? `, ${skippedArchived} archivée(s) ignorée(s)` : ''}.`,
+    );
+  }
+
+  setBulkMode(mode: 'row' | 'column'): void {
+    this.bulkMode.set(mode);
+    this.bulkTarget.set('');
+  }
+
+  setBulkField(value: string): void {
+    this.bulkField.set(value === 'threshold' ? 'threshold' : 'stock');
+  }
+
+  applyBulk(): void {
+    const target = this.bulkTarget();
+    const value = Number(this.bulkValue());
+    if (target === '') {
+      this.toast.error(`Sélectionnez ${this.bulkSelectionLabel()} à remplir.`);
+      return;
+    }
+    if (!Number.isInteger(value) || value < 0) {
+      this.toast.error('La valeur de remplissage doit être un entier positif ou nul.');
+      return;
+    }
+    let count = 0;
+    for (const group of this.variants.controls) {
+      const matches =
+        this.bulkMode() === 'row'
+          ? group.controls.color.value.trim().toUpperCase() === target
+          : group.controls.size.value.trim().toUpperCase() === target;
+      if (!matches) continue;
+      if (this.bulkField() === 'stock') group.controls.stock.setValue(value);
+      else group.controls.lowStockThreshold.setValue(value);
+      group.controls[this.bulkField() === 'stock' ? 'stock' : 'lowStockThreshold'].markAsDirty();
+      count += 1;
+    }
+    this.variants.markAsDirty();
+    if (count === 0) {
+      this.toast.warning('Aucune variante ne correspond à cette sélection.');
+      return;
+    }
+    const label = this.bulkField() === 'stock' ? 'stock' : 'seuil d’alerte';
+    this.toast.success(`${label} appliqué à ${count} variante(s).`);
+  }
+
+  // ------------------------------------------------------------------ images
+
+  setImages(images: ProductImageItem[]): void {
+    this.images.set(
+      images.map((image, position) => ({
+        ...image,
+        position,
+      })),
+    );
+  }
+
+  // ------------------------------------------------------------------- saving
+
+  private buildMetadata(): UpdateProductPayload {
+    const raw = this.productForm.getRawValue();
+    const promoPrice = numberOrNull(raw.promoPrice);
+    return {
+      name: raw.name.trim(),
+      slug: raw.slug.trim() || undefined,
+      description: raw.description.trim(),
+      categoryId: raw.categoryId,
+      brandId: raw.brandId,
+      basePrice: Math.trunc(Number(raw.basePrice)),
+      promoPrice: promoPrice === null ? null : Math.trunc(promoPrice),
+      promoStart:
+        promoPrice !== null && raw.promoStart ? new Date(raw.promoStart).toISOString() : null,
+      promoEnd: promoPrice !== null && raw.promoEnd ? new Date(raw.promoEnd).toISOString() : null,
+      seoTitle: raw.seoTitle.trim(),
+      seoDescription: raw.seoDescription.trim(),
+    };
+  }
+
+  private variantPayload(): ProductVariantPayload[] {
+    return this.variants.getRawValue().map((variant) => {
+      const price = numberOrNull(variant.price);
+      const sku = String(variant.sku).trim().toUpperCase();
+      return {
+        color: String(variant.color).trim(),
+        size: String(variant.size).trim(),
+        ...(sku !== '' ? { sku } : {}),
+        ...(price !== null ? { price: Math.trunc(price) } : {}),
+        stock: Math.trunc(Number(variant.stock)),
+        lowStockThreshold: Math.trunc(Number(variant.lowStockThreshold)),
+      };
+    });
+  }
+
+  private imagePayload(): ProductImagePayload[] {
+    return this.images().map((image, index) => ({
+      url: image.url,
+      ...(image.alt ? { alt: image.alt } : {}),
+      position: index,
+      ...(image.variantColor ? { variantColor: image.variantColor } : {}),
+    }));
+  }
+
+  async save(mode: 'draft' | 'publish'): Promise<void> {
+    if (this.saving() !== null) return;
+    if (this.imageUploading()) {
+      this.toast.warning('Attendez la fin des téléversements avant d’enregistrer.');
+      return;
+    }
+    this.saveError.set('');
+    if (!this.validateForm()) return;
+    if (mode === 'publish' && !this.hasStock()) {
+      this.activeTab.set('variantes');
+      this.toast.error('Un produit publié doit avoir au moins une variante en stock.');
+      return;
+    }
+
+    this.saving.set(mode);
+    const metadata = this.buildMetadata();
+    const variants = this.variantPayload();
+    const id = this.productId();
+    try {
+      if (!id) {
+        const payload: CreateProductPayload = {
+          name: metadata.name!,
+          description: metadata.description!,
+          categoryId: metadata.categoryId!,
+          brandId: metadata.brandId!,
+          basePrice: metadata.basePrice!,
+          status: mode === 'publish' ? 'PUBLISHED' : 'DRAFT',
+          variants,
+          ...(metadata.slug ? { slug: metadata.slug } : {}),
+          ...(metadata.promoPrice !== null
+            ? {
+                promoPrice: metadata.promoPrice,
+                promoStart: metadata.promoStart ?? undefined,
+                promoEnd: metadata.promoEnd ?? undefined,
+              }
+            : {}),
+          ...(metadata.seoTitle ? { seoTitle: metadata.seoTitle } : {}),
+          ...(metadata.seoDescription ? { seoDescription: metadata.seoDescription } : {}),
+          images: this.imagePayload(),
+        };
+        const created = await firstValueFrom(this.productsApi.create(payload));
+        this.applyDetail(created);
+        const imageManager = this.imageManager();
+        if (imageManager) {
+          await imageManager.uploadPending(created.id, created.slug);
+          this.setImages(imageManager.gallery());
+          this.imagesDirty.set(imageManager.hasUnsavedChanges());
+          if (imageManager.failedCount() > 0) {
+            this.toast.warning(
+              `${imageManager.failedCount()} image(s) n’ont pas pu être ajoutée(s). Réessayez depuis l’onglet Images.`,
+            );
+          }
+        }
+        this.toast.success(mode === 'publish' ? 'Produit publié.' : 'Brouillon enregistré.');
+        await this.router.navigate(['/produits', created.id, 'modifier'], { replaceUrl: true });
+        return;
+      }
+
+      let detail = await firstValueFrom(this.productsApi.update(id, metadata, { skipToast: true }));
+      if (this.variantsChanged()) {
+        detail = await firstValueFrom(
+          this.productsApi.replaceVariants(
+            id,
+            variants.map((variant, index) => {
+              const variantId = this.variants.at(index)?.controls.id.value;
+              return variantId ? { ...variant, id: variantId } : variant;
+            }),
+          ),
+        );
+      }
+      if (mode === 'publish' && detail.status !== 'PUBLISHED') {
+        detail = await firstValueFrom(
+          this.productsApi.update(id, { status: 'PUBLISHED' }, { skipToast: true }),
+        );
+      }
+      this.applyDetail(detail);
+      this.toast.success(mode === 'publish' ? 'Produit publié.' : 'Modifications enregistrées.');
+    } catch (error) {
+      const message = readApiErrorMessage(
+        error,
+        'Impossible d’enregistrer le produit. Vérifiez les informations saisies.',
+      );
+      this.saveError.set(message);
+      this.toast.error(message);
+    } finally {
+      this.saving.set(null);
+    }
+  }
+
+  openDuplicate(): void {
+    if (!this.isEdit()) return;
+    this.duplicateOpen.set(true);
+  }
+
+  async confirmDuplicate(): Promise<void> {
+    const id = this.productId();
+    if (!id) return;
+    this.duplicateLoading.set(true);
+    try {
+      const copy = await firstValueFrom(
+        this.productsApi.duplicate(id, {
+          name: `${this.productForm.controls.name.value.trim()} (copie)`.slice(0, 160),
+          copyImages: true,
+          copyVariants: true,
+          resetStock: false,
+        }),
+      );
+      this.duplicateOpen.set(false);
+      this.productForm.markAsPristine();
+      this.toast.success('Produit dupliqué en brouillon.');
+      await this.router.navigate(['/produits', copy.id, 'modifier']);
+    } catch (error) {
+      this.toast.error(readApiErrorMessage(error, 'Impossible de dupliquer ce produit.'));
+    } finally {
+      this.duplicateLoading.set(false);
+    }
+  }
+
+  openPreview(): void {
+    this.previewOpen.set(true);
+  }
+
+  goBack(): void {
+    void this.router.navigate(['/produits']);
+  }
+
+  hasUnsavedChanges(): boolean {
+    return (
+      this.productForm.dirty ||
+      this.imagesDirty() ||
+      this.imageManager()?.hasUnsavedChanges() === true ||
+      this.variantsChanged()
+    );
+  }
+
+  canLeave(): boolean | Promise<boolean> {
+    if (!this.hasUnsavedChanges()) return true;
+    this.leaveDialogOpen.set(true);
+    return new Promise<boolean>((resolve) => {
+      this.pendingLeave = resolve;
+    });
+  }
+
+  confirmLeave(): void {
+    this.leaveDialogOpen.set(false);
+    this.pendingLeave?.(true);
+    this.pendingLeave = null;
+  }
+
+  cancelLeave(): void {
+    this.leaveDialogOpen.set(false);
+    this.pendingLeave?.(false);
+    this.pendingLeave = null;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!this.hasUnsavedChanges()) return;
+    event.preventDefault();
+    event.returnValue = '';
+  }
+}

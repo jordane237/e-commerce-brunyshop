@@ -1,0 +1,20 @@
+<section class="cart-reassurance" aria-label="Nos engagements">
+  <ul class="cart-reassurance__list" role="list">
+    @for (point of points(); track point.label) {
+      <li class="cart-reassurance__item">
+        <bruny-icon
+          [name]="point.icon"
+          [size]="20"
+          aria-hidden="true"
+          class="cart-reassurance__icon"
+        />
+        <div class="cart-reassurance__text">
+          <p class="cart-reassurance__label">{{ point.label }}</p>
+          @if (point.description) {
+            <p class="cart-reassurance__description">{{ point.description }}</p>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+</section>

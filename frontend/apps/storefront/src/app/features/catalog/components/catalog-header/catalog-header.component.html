@@ -1,0 +1,48 @@
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+  <ol class="breadcrumb__list">
+    <li><a routerLink="/">Accueil</a></li>
+    <li aria-hidden="true" class="breadcrumb__separator">›</li>
+    <li><a routerLink="/boutique">Boutique</a></li>
+    @if (title() !== 'Boutique') {
+      <li aria-hidden="true" class="breadcrumb__separator">›</li>
+      <li aria-current="page">{{ title() }}</li>
+    }
+  </ol>
+</nav>
+
+<div class="heading">
+  <div class="heading__text">
+    <h1>{{ title() }}</h1>
+    <p class="heading__count" aria-live="polite">
+      <span class="heading__dot" aria-hidden="true"></span>
+      {{ resultLabel() }}
+    </p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button
+    type="button"
+    class="toolbar__filters"
+    [attr.aria-expanded]="filtersOpen()"
+    aria-controls="catalog-filter-drawer"
+    (click)="openFilters.emit()"
+  >
+    Filtres ({{ activeFilterCount() }})
+  </button>
+
+  <label class="search">
+    <span class="search__label">Rechercher un produit</span>
+    <input
+      class="search__input"
+      type="search"
+      name="catalog-search"
+      autocomplete="off"
+      placeholder="Nom, marque, catégorie"
+      [value]="search()"
+      (input)="onSearch($event)"
+    />
+  </label>
+
+  <bruny-sort-select [value]="sort()" (sortChange)="sortChange.emit($event)" />
+</div>

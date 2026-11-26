@@ -1,0 +1,39 @@
+:host {
+  display: block;
+}
+
+.cart-reassurance__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--bs-space-4, 1rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cart-reassurance__item {
+  display: flex;
+  gap: var(--bs-space-3, 0.75rem);
+  align-items: flex-start;
+}
+
+.cart-reassurance__icon {
+  color: var(--bs-color-primary, #2563eb);
+}
+
+.cart-reassurance__label {
+  margin: 0;
+  font-weight: var(--bs-font-weight-bold, 700);
+}
+
+.cart-reassurance__description {
+  margin: var(--bs-space-1, 0.25rem) 0 0;
+  color: var(--bs-color-text-muted, #6b7280);
+  font-size: var(--bs-font-size-sm, 0.875rem);
+}
+
+@media (min-width: 1024px) {
+  .cart-reassurance__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

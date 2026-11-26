@@ -5,6 +5,10 @@ services:
     ports: !reset []
   redis:
     ports: !reset []
+  mailpit:
+    ports: !reset []
+  minio:
+    ports: !reset []
   api:
     ports: !reset []
   admin:

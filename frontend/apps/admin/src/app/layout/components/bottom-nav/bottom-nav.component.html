@@ -1,0 +1,19 @@
+<nav class="bottom-nav" aria-label="Navigation mobile">
+  <ul class="bottom-nav__list" role="list">
+    @for (item of items(); track item.id) {
+      <li>
+        <a
+          class="bottom-nav__item"
+          [routerLink]="item.route"
+          routerLinkActive="bottom-nav__item--active"
+          #activeLink="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          [attr.aria-current]="activeLink.isActive ? 'page' : null"
+        >
+          <bruny-icon [name]="item.icon" [size]="22" />
+          <span>{{ item.label }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+</nav>

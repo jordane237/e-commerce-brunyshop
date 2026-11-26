@@ -1,0 +1,73 @@
+<bruny-legal-page-layout
+  title="Guide des tailles"
+  eyebrow="Informations"
+  [intro]="intro"
+  [toc]="toc()"
+  [breadcrumb]="breadcrumb"
+>
+  <section id="mesurer" aria-labelledby="mesurer-title">
+    <h2 id="mesurer-title">Mesurer son pied</h2>
+    <ol class="measure-steps">
+      <li>Posez une feuille contre un mur et placez votre talon contre le mur.</li>
+      <li>Tenez-vous debout, poids réparti sur les deux pieds.</li>
+      <li>Marquez la pointe de l’orteil le plus long, puis mesurez en centimètres.</li>
+      <li>Ajoutez 0,5 à 1 cm pour le confort et reportez la mesure dans le tableau.</li>
+    </ol>
+  </section>
+
+  @for (table of tables(); track table.id) {
+    <section [id]="table.id" [attr.aria-labelledby]="table.id + '-title'">
+      <h2 [id]="table.id + '-title'">{{ table.title }}</h2>
+      <div
+        class="table-scroll"
+        role="region"
+        [attr.aria-labelledby]="table.id + '-title'"
+        tabindex="0"
+      >
+        <table>
+          <caption>
+            Correspondances de pointures —
+            {{
+              table.title
+            }}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">EU</th>
+              <th scope="col">US</th>
+              <th scope="col">UK</th>
+              <th scope="col">Pied (cm)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of table.rows; track row.eu) {
+              <tr>
+                <th scope="row">{{ row.eu }}</th>
+                <td>{{ row.us }}</td>
+                <td>{{ row.uk }}</td>
+                <td>{{ row.cm }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  <section id="conseils" aria-labelledby="conseils-title">
+    <h2 id="conseils-title">Nos conseils</h2>
+    <ul>
+      <li>Mesurez les deux pieds : le plus grand détermine la pointure.</li>
+      <li>En fin de journée, le pied est légèrement plus gonflé : la mesure est plus fiable.</li>
+      <li>Entre deux pointures, choisissez la plus grande.</li>
+      <li>Un échange reste possible sous 7 jours si le produit n’a pas été porté à l’extérieur.</li>
+    </ul>
+    <p>
+      Une hésitation sur un modèle précis ? Écrivez-nous à
+      <a href="mailto:support@brunyshop.cm?subject=Guide%20des%20tailles"
+        >support&#64;brunyshop.cm</a
+      >
+      : nous vous aidons à choisir.
+    </p>
+  </section>
+</bruny-legal-page-layout>

@@ -1,0 +1,15 @@
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--bs-color-text-muted, #6b7280);
+}
+
+.empty-state__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  color: var(--bs-color-text, #111827);
+}
+
+.empty-state__description {
+  margin: 0 0 1rem;
+}

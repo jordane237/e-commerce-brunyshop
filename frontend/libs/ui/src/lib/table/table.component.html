@@ -1,0 +1,95 @@
+<div class="bs-table-wrap" [attr.aria-busy]="loading ? 'true' : null">
+  <table class="bs-table">
+    @if (caption) {
+      <caption class="bs-table__caption">
+        {{
+          caption
+        }}
+      </caption>
+    }
+    <thead>
+      <tr>
+        @for (column of columns; track column.key) {
+          <th
+            scope="col"
+            [class]="'bs-table__cell--' + (column.align ?? 'left')"
+            [attr.aria-sort]="column.sortable ? ariaSort(column) : null"
+          >
+            @if (column.sortable) {
+              <button class="bs-table__sort" type="button" (click)="toggleSort(column)">
+                {{ column.label }}
+                <bruny-icon [name]="sortIcon(column)" [size]="14" />
+              </button>
+            } @else {
+              {{ column.label }}
+            }
+          </th>
+        }
+        @if (actions.length) {
+          <th scope="col" class="bs-table__cell--right">Actions</th>
+        }
+      </tr>
+    </thead>
+
+    <tbody>
+      @if (loading) {
+        @for (row of loadingRows; track row) {
+          <tr class="bs-table__row--loading">
+            @for (column of columns; track column.key) {
+              <td [attr.data-label]="column.label">
+                <bruny-skeleton height="0.9rem" width="85%" />
+              </td>
+            }
+            @if (actions.length) {
+              <td data-label="Actions">
+                <bruny-skeleton height="0.9rem" width="60%" />
+              </td>
+            }
+          </tr>
+        }
+      } @else if (!rows.length) {
+        <tr>
+          <td class="bs-table__empty" [attr.colspan]="colSpan">
+            <p>{{ emptyMessage }}</p>
+          </td>
+        </tr>
+      } @else {
+        @for (row of rows; track rowId(row, $index)) {
+          <tr>
+            @for (column of columns; track column.key) {
+              <td
+                [class]="'bs-table__cell--' + (column.align ?? 'left')"
+                [attr.data-label]="column.label"
+              >
+                {{ cellValue(row, column) }}
+              </td>
+            }
+            @if (actions.length) {
+              <td class="bs-table__cell--right bs-table__actions" data-label="Actions">
+                @for (item of actions; track item.id) {
+                  <button
+                    class="bs-table__action"
+                    [class.bs-table__action--danger]="item.variant === 'danger'"
+                    [class.bs-table__action--primary]="item.variant === 'primary'"
+                    type="button"
+                    (click)="emitAction(item, row)"
+                  >
+                    {{ item.label }}
+                  </button>
+                }
+              </td>
+            }
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (!loading && pages > 1) {
+  <nav class="bs-table__pagination" aria-label="Pagination du tableau">
+    <button type="button" [disabled]="page <= 1" (click)="goToPage(page - 1)">Précédent</button>
+    <span>Page {{ page }} sur {{ pages }}</span>
+    <button type="button" [disabled]="page >= pages" (click)="goToPage(page + 1)">Suivant</button>
+  </nav>
+}

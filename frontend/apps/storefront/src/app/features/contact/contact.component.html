@@ -1,0 +1,206 @@
+<bruny-legal-page-layout
+  title="Contactez-nous"
+  eyebrow="Service client"
+  [intro]="intro"
+  [breadcrumb]="breadcrumb"
+>
+  <div class="contact-layout">
+    <section class="contact-card" aria-labelledby="contact-form-title">
+      @if (backendError(); as error) {
+        <div class="contact-alert" role="alert">
+          <bruny-icon name="alert" [size]="18" />
+          <span>{{ error }}</span>
+        </div>
+      }
+
+      @if (successId(); as reference) {
+        <section class="contact-success" aria-labelledby="contact-success-title">
+          <h2 #successTitle id="contact-success-title" tabindex="-1" class="contact-success__title">
+            Message envoyé
+          </h2>
+          <p class="contact-success__body">
+            Merci, nous avons bien reçu votre demande. Nous répondons sous 24 h ouvrées à l'adresse
+            indiquée.
+          </p>
+          <p class="contact-success__reference">
+            Référence : <strong>{{ reference }}</strong>
+          </p>
+          <bruny-button type="button" variant="secondary" (click)="startNewMessage()">
+            Envoyer un autre message
+          </bruny-button>
+        </section>
+      } @else {
+        <form
+          #contactForm
+          [formGroup]="form"
+          (ngSubmit)="onSubmit()"
+          novalidate
+          class="contact-form"
+        >
+          <div class="contact-form__row">
+            <bruny-input
+              name="contact-name"
+              label="Nom complet"
+              autocomplete="name"
+              formControlName="name"
+              [required]="true"
+              [error]="nameError() ?? ''"
+            />
+            <bruny-input
+              name="contact-email"
+              label="E-mail"
+              type="email"
+              inputMode="email"
+              autocomplete="email"
+              placeholder="vous@exemple.com"
+              formControlName="email"
+              [required]="true"
+              [error]="emailError() ?? ''"
+            />
+          </div>
+
+          <div class="contact-form__row">
+            <bruny-input
+              name="contact-phone"
+              label="Téléphone"
+              type="tel"
+              inputMode="tel"
+              autocomplete="tel"
+              placeholder="6 94 28 10 44"
+              prefix="+237"
+              formControlName="phone"
+              hint="Facultatif. Format camerounais : 9 chiffres après +237."
+              [error]="phoneError() ?? ''"
+            />
+            <bruny-select
+              name="contact-subject"
+              label="Sujet"
+              [value]="form.controls.subject.value"
+              [options]="subjectOptions"
+              [required]="true"
+              [error]="subjectError() ?? ''"
+              (valueChange)="onSubjectChange($event)"
+            />
+          </div>
+
+          <bruny-input
+            name="contact-order-reference"
+            label="Référence de commande"
+            autocomplete="off"
+            placeholder="BRN-2611-7K3F"
+            formControlName="orderReference"
+            hint="Facultative, si votre demande concerne une commande."
+            [error]="orderReferenceError() ?? ''"
+          />
+
+          <bruny-contact-textarea
+            name="contact-message"
+            label="Message"
+            placeholder="Décrivez votre demande"
+            hint="20 à 2 000 caractères."
+            [maxLength]="2000"
+            [required]="true"
+            [error]="messageError() ?? ''"
+            formControlName="message"
+          />
+
+          <p class="contact-form__counter" aria-live="polite">
+            {{ messageValue().trim().length }} / 2 000 caractères
+          </p>
+
+          <bruny-checkbox
+            name="contact-consent"
+            label="J'accepte d'être recontacté(e) au sujet de ma demande"
+            [checked]="form.controls.consent.value"
+            [error]="consentError() ?? ''"
+            (checkedChange)="onConsentChange($event)"
+          />
+
+          @if (captchaEnabled()) {
+            <bruny-captcha
+              [siteKey]="siteKey()!"
+              [control]="form.controls.turnstileToken"
+              action="contact"
+            />
+          }
+
+          <div class="contact-honeypot" aria-hidden="true">
+            <label for="contact-honeypot">Ne pas remplir ce champ</label>
+            <input
+              id="contact-honeypot"
+              type="text"
+              name="website"
+              tabindex="-1"
+              autocomplete="off"
+              formControlName="honeypot"
+            />
+          </div>
+
+          <p class="contact-form__privacy">
+            En envoyant ce message, vous acceptez notre
+            <a routerLink="/politique-confidentialite">politique de confidentialité</a>.
+          </p>
+
+          <bruny-button
+            type="submit"
+            variant="primary"
+            size="lg"
+            [block]="true"
+            [loading]="submitting()"
+            [disabled]="submitting() || captchaUnavailable()"
+          >
+            {{ submitting() ? 'Envoi en cours…' : 'Envoyer le message' }}
+          </bruny-button>
+        </form>
+      }
+    </section>
+
+    <aside class="contact-aside" aria-labelledby="contact-aside-title">
+      <h2 id="contact-aside-title">Un autre moyen de nous joindre</h2>
+      <p class="contact-aside__hours">Du lundi au samedi, de 8 h à 18 h.</p>
+      <p class="contact-aside__promise">
+        Nous répondons sous 24 h ouvrées. Pour une question urgente, appelez-nous ou écrivez sur
+        WhatsApp.
+      </p>
+
+      <a
+        class="contact-direct contact-direct--whatsapp"
+        [href]="whatsappUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <bruny-icon name="whatsapp" [size]="20" />
+        <span>
+          <strong>WhatsApp</strong>
+          <small>Discuter maintenant</small>
+        </span>
+      </a>
+
+      <a class="contact-direct contact-direct--phone" [href]="phoneHref()">
+        <bruny-icon name="phone" [size]="20" />
+        <span>
+          <strong>Téléphone</strong>
+          <small>{{ phoneDisplay }}</small>
+        </span>
+      </a>
+
+      <a
+        class="contact-direct contact-direct--facebook"
+        [href]="facebookUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <bruny-icon name="facebook" [size]="20" />
+        <span>
+          <strong>Facebook</strong>
+          <small>BRUNY SHOPPING</small>
+        </span>
+      </a>
+
+      <p class="contact-aside__email">
+        Vous préférez l'e-mail ?
+        <a [href]="'mailto:' + supportEmail">{{ supportEmail }}</a>
+      </p>
+    </aside>
+  </div>
+</bruny-legal-page-layout>

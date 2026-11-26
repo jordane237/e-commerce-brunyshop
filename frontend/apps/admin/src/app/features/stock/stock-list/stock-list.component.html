@@ -1,0 +1,175 @@
+<section class="stock-list">
+  <h1>Gestion du stock</h1>
+
+  <div class="stock-toolbar">
+    <input
+      type="search"
+      [formControl]="searchControl"
+      placeholder="Rechercher un produit, un SKU..."
+      aria-label="Rechercher un produit ou un SKU"
+    />
+    <select (change)="onCategoryFilter($any($event.target).value)" aria-label="Catégorie">
+      <option value="">Toutes les catégories</option>
+      @for (c of categories(); track c.id) {
+        <option [value]="c.id">{{ c.name }}</option>
+      }
+    </select>
+    <select (change)="onStatusFilter($any($event.target).value)" aria-label="Statut du stock">
+      <option value="all">Tous</option>
+      <option value="out">Rupture</option>
+      <option value="low">Stock faible</option>
+      <option value="in_stock">En stock</option>
+    </select>
+    <button type="button" (click)="onExportCsv()">Exporter en CSV</button>
+  </div>
+
+  @if (loading()) {
+    <bruny-skeleton variant="rect" height="300px" />
+  } @else if (isEmpty()) {
+    <bruny-empty-state
+      title="Aucune variante trouvée"
+      message="Modifiez vos filtres ou vérifiez votre catalogue."
+      actionLabel="Réinitialiser les filtres"
+      (actionClicked)="resetFilters()"
+    />
+  } @else if (error()) {
+    <div role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" (click)="reload()">Réessayer</button>
+    </div>
+  } @else {
+    @if (!isMobile()) {
+      <bruny-data-table
+        [columns]="columns"
+        [rows]="variants()"
+        [rowKey]="'variantId'"
+        [actionsTemplate]="rowActions()"
+      />
+    } @else {
+      <bruny-card-list
+        [items]="variants()"
+        [rowKey]="'variantId'"
+        [cardTemplate]="cardTemplateTpl"
+      />
+      <ng-template #cardTemplate let-variant>
+        <article class="stock-card">
+          <h3>{{ variant.productName }} — {{ variant.size }} {{ variant.color }}</h3>
+          <p>SKU : {{ variant.sku }}</p>
+          <p>
+            Stock dispo. : <strong>{{ variant.availableStock }}</strong> (réservé :
+            {{ variant.reservedStock }})
+          </p>
+          <bruny-status-badge
+            [label]="getStatusLabel(variant.stockStatus)"
+            [variant]="getStatusVariant(variant.stockStatus)"
+          />
+          <bruny-action-menu [items]="getRowActions(variant)" />
+        </article>
+      </ng-template>
+    }
+    @if (meta() && meta()!.totalPages > 1) {
+      <div class="pagination">
+        <button type="button" (click)="setPage(meta()!.page - 1)" [disabled]="meta()!.page <= 1">
+          Précédent
+        </button>
+        <span>Page {{ meta()!.page }} / {{ meta()!.totalPages }}</span>
+        <button
+          type="button"
+          (click)="setPage(meta()!.page + 1)"
+          [disabled]="meta()!.page >= meta()!.totalPages"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  }
+
+  <ng-template #rowActionsTpl let-variant>
+    <bruny-action-menu [items]="getRowActions(variant)" />
+  </ng-template>
+
+  <bruny-modal
+    [open]="adjustOpen()"
+    (openChange)="!$event && onCloseAdjust()"
+    title="Ajuster le stock"
+    size="md"
+  >
+    @if (adjusting(); as v) {
+      <p>
+        Stock actuel : <strong>{{ v.stock }}</strong> (disponible : {{ v.availableStock }})
+      </p>
+      <form [formGroup]="adjustForm" (ngSubmit)="onSaveAdjust()">
+        <label for="newStock">Nouveau stock</label>
+        <input id="newStock" type="number" min="0" formControlName="newStock" />
+        @if (adjustForm.controls.newStock.hasError('min')) {
+          <p role="alert">Le stock doit être supérieur ou égal à 0.</p>
+        }
+        <label for="motif">Motif</label>
+        <select id="motif" formControlName="motif">
+          <option value="">— Sélectionnez un motif —</option>
+          <option value="RECEPTION">Réception</option>
+          <option value="INVENTAIRE">Inventaire</option>
+          <option value="CASSE">Casse</option>
+          <option value="RETOUR">Retour</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+        @if (adjustForm.controls.motif.hasError('required') && adjustForm.controls.motif.touched) {
+          <p role="alert">Le motif est requis.</p>
+        }
+        <label for="notes">Notes (optionnel)</label>
+        <textarea id="notes" formControlName="notes" rows="3"></textarea>
+        @if (adjustForm.valid) {
+          <p>
+            Avant : {{ v.stock }} → Après : {{ adjustForm.controls.newStock.value }} (delta :
+            {{ adjustForm.controls.newStock.value - v.stock }})
+          </p>
+        }
+        <div>
+          <button type="button" (click)="onCloseAdjust()">Annuler</button>
+          <button type="submit" [disabled]="adjustForm.invalid">Enregistrer</button>
+        </div>
+      </form>
+    }
+  </bruny-modal>
+
+  <bruny-modal
+    [open]="historyOpen()"
+    (openChange)="!$event && onCloseHistory()"
+    title="Historique des mouvements"
+    size="lg"
+  >
+    @if (historyVariant(); as v) {
+      <p>{{ v.productName }} — {{ v.size }} {{ v.color }}</p>
+    }
+    @if (historyLoading()) {
+      <p>Chargement…</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Utilisateur</th>
+            <th>Motif</th>
+            <th>Avant</th>
+            <th>Après</th>
+            <th>Delta</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of history(); track m.id) {
+            <tr>
+              <td>{{ m.createdAt }}</td>
+              <td>{{ m.userName }}</td>
+              <td>{{ m.motif }}</td>
+              <td>{{ m.before }}</td>
+              <td>{{ m.after }}</td>
+              <td>{{ m.delta }}</td>
+              <td>{{ m.notes }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </bruny-modal>
+</section>

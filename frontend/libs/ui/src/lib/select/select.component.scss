@@ -1,0 +1,98 @@
+:host {
+  display: block;
+}
+
+.bs-field {
+  display: grid;
+  gap: var(--bs-space-2);
+  font-family: var(--bs-font-family-base);
+}
+
+.bs-field__label {
+  font-size: var(--bs-font-size-sm);
+  font-weight: var(--bs-font-weight-bold);
+  color: var(--bs-color-text);
+}
+
+.bs-field__required {
+  color: var(--bs-color-danger-strong);
+}
+
+.bs-field__control {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 48px;
+  border: var(--bs-border-width) solid var(--bs-color-border-strong);
+  border-radius: var(--bs-radius-md);
+  background: var(--bs-color-surface);
+  transition:
+    border-color var(--bs-duration-fast) var(--bs-easing-standard),
+    box-shadow var(--bs-duration-fast) var(--bs-easing-standard);
+}
+
+.bs-field__control:focus-within {
+  border-color: var(--bs-color-primary);
+  box-shadow: var(--bs-shadow-focus);
+}
+
+.bs-field--error .bs-field__control {
+  border-color: var(--bs-color-danger);
+}
+
+.bs-field--disabled .bs-field__control {
+  background: var(--bs-color-neutral-100);
+}
+
+.bs-field__select {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 var(--bs-space-10) 0 var(--bs-space-3);
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--bs-color-text);
+  font-family: inherit;
+  font-size: var(--bs-font-size-md);
+  appearance: none;
+  cursor: pointer;
+}
+
+.bs-field__select:disabled {
+  color: var(--bs-color-text-muted);
+  cursor: not-allowed;
+}
+
+.bs-field__chevron {
+  position: absolute;
+  right: var(--bs-space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  color: var(--bs-color-text-muted);
+  pointer-events: none;
+}
+
+.bs-field__hint,
+.bs-field__error {
+  margin: 0;
+  font-size: var(--bs-font-size-xs);
+  line-height: var(--bs-line-height-normal);
+}
+
+.bs-field__hint {
+  color: var(--bs-color-text-muted);
+}
+
+.bs-field__error {
+  color: var(--bs-color-danger-strong);
+  font-weight: var(--bs-font-weight-semibold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-field__control {
+    transition: none;
+  }
+}

@@ -1,0 +1,25 @@
+<bruny-legal-page-layout
+  title="Questions fréquentes"
+  eyebrow="Aide"
+  [intro]="intro"
+  [toc]="toc"
+  [breadcrumb]="breadcrumb"
+>
+  @for (category of categories; track category.id) {
+    <section [id]="category.id" [attr.aria-labelledby]="category.id + '-title'">
+      <h2 [id]="category.id + '-title'">{{ category.title }}</h2>
+      <bruny-accordion [items]="category.items" />
+    </section>
+  }
+
+  <section class="faq-contact" aria-labelledby="faq-contact-title">
+    <h2 id="faq-contact-title">Vous ne trouvez pas votre réponse ?</h2>
+    <p>Écrivez-nous : nous répondons du lundi au samedi.</p>
+    <a
+      class="faq-contact__action"
+      [href]="'mailto:support@brunyshop.cm?subject=' + 'Question depuis la FAQ'"
+    >
+      Nous contacter
+    </a>
+  </section>
+</bruny-legal-page-layout>

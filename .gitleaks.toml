@@ -1,0 +1,54 @@
+# Gitleaks — détection de secrets accidentellement versionnés
+#
+# Schéma gitleaks v8 ([[allowlists]] et non [allowlist]).
+# Les règles par défaut de gitleaks sont conservées ; seuls les faux positifs
+# documentés du projet sont autorisés explicitement.
+
+title = "BrunyShop — secrets scan"
+
+[extend]
+useDefault = true
+
+# Faux positifs : clés d'idempotence de test et exemples de payload.
+# Ces valeurs ne donnent aucun accès et ne sont pas des secrets.
+[[allowlists]]
+description = "Clés d'idempotence non sensibles (tests et documentation)"
+regexTarget = "line"
+regexes = ['''(?i)idempotency[_-]?key''']
+paths = [
+  '''(^|/)backend/src/.*\.(test|spec)\.ts$''',
+  '''(^|/)docs/''',
+]
+
+[[allowlists]]
+description = "Fichiers générés, dépendances et artefacts"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.pnpm-store/''',
+  '''(^|/)dist/''',
+  '''(^|/)coverage/''',
+  '''(^|/)test-results/''',
+  '''(^|/)playwright-report/''',
+  '''(^|/)findings/''',
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''(^|/)openapi\.json$''',
+  '''(^|/)\.env\.example$''',
+  '''(^|/)\.env\.production\.example$''',
+]
+
+[[allowlists]]
+description = "Fixtures et données de démonstration"
+paths = [
+  '''(^|/)fixtures/''',
+  '''(^|/)test[/-]fixtures/''',
+]
+
+[[allowlists]]
+description = "Placeholders officiels à fournir par le PO"
+regexTarget = "secret"
+regexes = [
+  '''(?i)CHANGEME''',
+  '''(?i)CHANGE_ME''',
+  '''(?i)REPLACE_ME''',
+  '''(?i)placeholder''',
+]
