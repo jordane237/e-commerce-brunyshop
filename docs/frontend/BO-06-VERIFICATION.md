@@ -143,6 +143,8 @@ Décisions techniques principales :
 | `cd backend && pnpm build` | OK |
 | `cd backend && pnpm exec vitest run src/modules/media/media.service.test.ts src/modules/media/image-processor.service.test.ts` | 35/35 tests |
 | `cd backend && pnpm exec vitest run --config vitest.e2e.config.ts test/media-upload.e2e-spec.ts` | 21/21 tests |
+| `cd backend && pnpm test:e2e` (suite complète) | 23 fichiers, 278/278 tests |
+| `cd frontend && pnpm test:e2e` (suite complète, API réelle) | 69/69 tests |
 | `cd frontend && pnpm exec vitest run apps/admin/src/app/features/products/product-form --maxWorkers=2` | 26/26 tests |
 | `cd frontend && pnpm exec nx lint admin` | OK |
 | `cd frontend && pnpm exec nx run-many -t typecheck` | OK (admin + storefront) |
@@ -174,6 +176,17 @@ Parcours Chrome headless via Playwright, avec compte SUPER_ADMIN temporaire et
 Captures : `/tmp/bo06-images-tab.png`, `/tmp/bo06-images-reloaded.png`,
 `/tmp/bo06-images-mobile.png`, `/tmp/bo06-creation-result.png` et
 `/tmp/bo06-layout-390.png`.
+
+La suite E2E complète a aussi révélé un défaut CI préexistant sur ORD-02 : le
+pré-contrôle PAY-01 s’exécutait avant le contrôle RBAC, si bien qu’un livreur
+recevait `400 ORDER_CONFIRMATION_REQUIRED` au lieu de `403` sur une transition
+interdite. Le pré-contrôle a été déplacé dans `OrderWorkflowService`, après
+l’autorisation de rôle, avec un test de non-régression.
+
+La suite E2E frontend a également mis en évidence un bug réel sur `/suivi` : les
+messages d’erreur de référence et de téléphone étaient calculés dans des
+`computed` sans dépendance réactive et ne s’affichaient donc jamais après le
+blur. Ils sont désormais dérivés des événements des contrôles de formulaire.
 
 La vérification navigateur a révélé puis fait corriger deux défauts réels :
 
@@ -225,8 +238,6 @@ La vérification navigateur a révélé puis fait corriger deux défauts réels 
   ligne `ProductImage` orpheline n’est créée.
 - Les images externes par URL sont validées comme URL HTTP(S) mais leur contenu
   n’est pas téléchargé ni optimisé par le backend.
-- La suite backend complète n’a pas été relancée pour ce ticket ; l’échec E2E
-  préexistant ORD-02 documenté en BO-05 reste hors périmètre.
 - Le warning Angular NG8113 sur `bulk-actions-bar` est antérieur à BO-06.
 
 ## J. Conclusion

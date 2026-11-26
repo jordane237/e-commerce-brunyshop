@@ -77,8 +77,6 @@ export class AdminOrdersController {
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string | undefined,
   ): Promise<OrderStatusChangeResponseDto> {
-    // PAY-01 : blocage de la préparation sans confirmation enregistrée.
-    await this.confirmation.validateStatusTransition(id, dto.status);
     return this.workflow.changeStatus(
       id,
       dto,

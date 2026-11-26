@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { PrismaService } from '../../infrastructure/database/database.module';
 import type { AuditLogService } from '../audit/audit.service';
+import type { OrderConfirmationService } from './order-confirmation.service';
 import { OrderWorkflowService } from './order-workflow.service';
 
 const ADMIN = { userId: 'admin-1', roles: ['ADMIN'] };
@@ -44,11 +45,13 @@ function setup(order: Record<string, unknown> | null = ORDER) {
     $transaction: vi.fn(async (callback: (client: unknown) => unknown) => callback(tx)),
   };
   const audit = { record: vi.fn().mockResolvedValue(undefined) };
+  const confirmation = { validateStatusTransition: vi.fn().mockResolvedValue(undefined) };
   const service = new OrderWorkflowService(
     prisma as unknown as PrismaService,
     audit as unknown as AuditLogService,
+    confirmation as unknown as OrderConfirmationService,
   );
-  return { service, prisma, tx, audit };
+  return { service, prisma, tx, audit, confirmation };
 }
 
 describe('OrderWorkflowService — transitions', () => {
@@ -121,13 +124,14 @@ describe('OrderWorkflowService — transitions', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('refuse un rôle non habilité en 403', async () => {
-    const { service, tx } = setup();
+  it('refuse un rôle non habilité en 403 avant le pré-contrôle PAY-01', async () => {
+    const { service, tx, confirmation } = setup({ ...ORDER, status: 'CONFIRMED' });
 
     await expect(
-      service.changeStatus('order-1', { status: 'CONFIRMED' }, DRIVER),
+      service.changeStatus('order-1', { status: 'PREPARING' }, DRIVER),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(tx.order.updateMany).not.toHaveBeenCalled();
+    expect(confirmation.validateStatusTransition).not.toHaveBeenCalled();
   });
 
   it('laisse le livreur constater la livraison', async () => {
