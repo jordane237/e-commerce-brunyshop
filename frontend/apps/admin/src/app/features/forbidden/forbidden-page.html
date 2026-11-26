@@ -1,0 +1,14 @@
+<section class="forbidden" role="alert">
+  <span class="forbidden__icon" aria-hidden="true">
+    <bruny-icon name="lock" [size]="32" />
+  </span>
+  <p class="forbidden__code">403</p>
+  <h1>Accès refusé</h1>
+  <p>Vous n'avez pas accès à cette page.</p>
+  <div class="forbidden__actions">
+    <a class="forbidden__primary" routerLink="/">Retour au tableau de bord</a>
+    <button class="forbidden__link" type="button" [disabled]="loggingOut()" (click)="logout()">
+      Se déconnecter
+    </button>
+  </div>
+</section>

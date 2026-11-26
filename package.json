@@ -19,11 +19,16 @@
     "test": "pnpm -C backend test && pnpm -C frontend test",
     "test:e2e": "pnpm -C backend test:e2e && pnpm -C frontend test:e2e",
     "typecheck": "pnpm -C backend exec tsc --noEmit -p tsconfig.build.json && pnpm -C frontend exec nx run-many -t typecheck",
-    "api:generate": "pnpm -C frontend exec openapi-typescript http://localhost:4000/api/docs-json -o libs/data-access/src/generated/api-types.ts",
+    "api:generate": "pnpm -C frontend exec openapi-typescript ../backend/openapi.json -o libs/data-access/src/generated/api-types.ts && pnpm exec prettier --write frontend/libs/data-access/src/generated/api-types.ts",
+    "api:check": "git diff --exit-code -- frontend/libs/data-access/src/generated/api-types.ts && pnpm api:generate && git diff --exit-code -- frontend/libs/data-access/src/generated/api-types.ts",
     "db:migrate": "pnpm -C backend db:migrate",
     "db:migrate:dev": "pnpm -C backend db:migrate:dev",
     "db:reset": "pnpm -C backend db:reset",
     "db:seed": "pnpm -C backend db:seed",
+    "openapi:export": "pnpm -C backend openapi:export",
+    "openapi:check": "pnpm -C backend openapi:export && git diff --exit-code backend/openapi.json",
+    "prisma:generate": "pnpm -C backend prisma generate",
+    "prisma:migrate": "pnpm -C backend prisma migrate deploy",
     "prepare": "husky"
   },
   "lint-staged": {

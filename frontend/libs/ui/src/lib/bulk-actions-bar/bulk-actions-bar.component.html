@@ -1,0 +1,17 @@
+<div class="bulk-actions-bar" role="toolbar" aria-label="Actions groupées">
+  <span class="bulk-actions-bar__count" aria-live="polite"> {{ count() }} sélectionné(s) </span>
+  <div class="bulk-actions-bar__actions">
+    @for (action of actions(); track action.label) {
+      <button
+        type="button"
+        class="bulk-actions-bar__action"
+        [class.bulk-actions-bar__action--danger]="action.danger"
+        [disabled]="action.disabled"
+        (click)="action.onClick()"
+      >
+        {{ action.label }}
+      </button>
+    }
+    <button type="button" class="bulk-actions-bar__clear" (click)="clear.emit()">Effacer</button>
+  </div>
+</div>

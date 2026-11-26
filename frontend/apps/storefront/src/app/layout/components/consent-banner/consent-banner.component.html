@@ -1,0 +1,80 @@
+@if (consent.showBanner() && !customizeOpen()) {
+  <section
+    class="consent-banner"
+    role="region"
+    aria-labelledby="consent-title"
+    aria-describedby="consent-description"
+  >
+    <div class="consent-banner__content">
+      <h2 id="consent-title" class="consent-banner__title">Nous respectons votre vie privée</h2>
+      <p id="consent-description" class="consent-banner__text">
+        Nous utilisons des cookies et le Pixel Meta pour mesurer l’efficacité de nos publicités et
+        améliorer votre expérience. Vous pouvez accepter, refuser ou personnaliser vos choix.
+        <a routerLink="/politique-confidentialite">En savoir plus</a>
+      </p>
+    </div>
+
+    <div class="consent-banner__actions">
+      <button type="button" class="consent-banner__customize" (click)="onCustomize()">
+        Personnaliser
+      </button>
+      <bruny-button class="consent-banner__button" variant="secondary" (click)="onReject()">
+        Refuser
+      </bruny-button>
+      <bruny-button class="consent-banner__button" variant="primary" (click)="onAccept()">
+        Accepter
+      </bruny-button>
+    </div>
+  </section>
+}
+
+<bruny-modal
+  id="consent-preferences"
+  title="Gérer mes préférences"
+  size="md"
+  [open]="customizeOpen()"
+  (openChange)="customizeOpen.set($event)"
+>
+  <p class="consent-preferences__intro">
+    Choisissez les traceurs que vous autorisez. Votre choix est conservé sur cet appareil et peut
+    être modifié à tout moment depuis le pied de page.
+  </p>
+
+  <div class="consent-preferences__category">
+    <div>
+      <h3 class="consent-preferences__title">Cookies essentiels</h3>
+      <p class="consent-preferences__description">
+        Nécessaires au fonctionnement du site : panier, session et sécurité. Ils restent toujours
+        actifs.
+      </p>
+    </div>
+    <span class="consent-preferences__required">Requis</span>
+  </div>
+
+  <div class="consent-preferences__category">
+    <bruny-checkbox
+      label="Mesure d’audience"
+      name="consent-analytics"
+      id="consent-analytics"
+      hint="Nous aide à comprendre l’utilisation du site, de façon anonyme."
+      [checked]="analyticsEnabled()"
+      (checkedChange)="analyticsEnabled.set($event)"
+    />
+  </div>
+
+  <div class="consent-preferences__category">
+    <bruny-checkbox
+      label="Publicité (Pixel Meta)"
+      name="consent-marketing"
+      id="consent-marketing"
+      hint="Mesure l’efficacité de nos publicités Facebook."
+      [checked]="marketingEnabled()"
+      (checkedChange)="marketingEnabled.set($event)"
+    />
+  </div>
+
+  <div bsModalFooter class="consent-preferences__actions">
+    <bruny-button variant="secondary" (click)="onCancelCustom()">Annuler</bruny-button>
+    <bruny-button variant="primary" (click)="onSaveCustom()">Enregistrer mes choix</bruny-button>
+  </div>
+</bruny-modal>

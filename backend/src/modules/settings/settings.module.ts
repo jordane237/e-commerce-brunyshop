@@ -1,4 +1,11 @@
 import { Module } from '@nestjs/common';
 
-@Module({})
+import { DatabaseModule } from '../../infrastructure/database/database.module';
+import { SettingsService } from './settings.service';
+
+@Module({
+  imports: [DatabaseModule],
+  providers: [SettingsService],
+  exports: [SettingsService],
+})
 export class SettingsModule {}

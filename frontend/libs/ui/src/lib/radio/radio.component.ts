@@ -16,6 +16,10 @@ export class RadioComponent {
   @Input() hint = '';
   @Input() error = '';
   @Input() disabled = false;
+  /** `card` présente l'option comme une carte sélectionnable (tunnel de commande). */
+  @Input() variant: 'default' | 'card' = 'default';
+  /** Pastille courte affichée à droite du libellé (ex. « Bientôt »). */
+  @Input() badge = '';
   @Output() selected = new EventEmitter<string>();
 
   get fieldId(): string {

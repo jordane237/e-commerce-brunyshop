@@ -1,0 +1,44 @@
+:host {
+  display: block;
+}
+
+.bs-reassurance {
+  padding: var(--bs-space-5);
+  border-radius: var(--bs-radius-lg);
+  background: var(--bs-color-neutral-50);
+}
+
+.bs-reassurance__list {
+  display: grid;
+  gap: var(--bs-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bs-reassurance__item {
+  display: flex;
+  gap: var(--bs-space-3);
+  align-items: flex-start;
+}
+
+.bs-reassurance__icon {
+  color: var(--bs-color-accent-text);
+}
+
+.bs-reassurance__label {
+  margin: 0;
+  font-weight: var(--bs-font-weight-bold);
+}
+
+.bs-reassurance__description {
+  margin: var(--bs-space-1) 0 0;
+  color: var(--bs-color-text-muted);
+  font-size: var(--bs-font-size-sm);
+}
+
+@media (min-width: 1024px) {
+  .bs-reassurance__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

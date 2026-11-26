@@ -52,14 +52,15 @@ export class JwtAuthGuard implements CanActivate {
     const header = request.headers.authorization;
     const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
     if (!token) {
-      throw new UnauthorizedException({ code: 'UNAUTHENTICATED' });
+      throw new UnauthorizedException({ code: 'UNAUTHORIZED' });
     }
 
     let payload: AccessTokenPayload;
     try {
       payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token);
-    } catch {
-      throw new UnauthorizedException({ code: 'INVALID_TOKEN' });
+    } catch (error) {
+      const expired = error instanceof Error && error.name === 'TokenExpiredError';
+      throw new UnauthorizedException({ code: expired ? 'TOKEN_EXPIRED' : 'INVALID_TOKEN' });
     }
     if (payload.typ !== 'access') {
       throw new UnauthorizedException({ code: 'INVALID_TOKEN' });
@@ -71,7 +72,11 @@ export class JwtAuthGuard implements CanActivate {
       where: { id: payload.sub },
       include: { roles: { include: { role: true } } },
     });
-    if (!user || user.deletedAt || user.status !== 'ACTIVE') {
+    // PENDING_VERIFICATION reste autorisé : aucun parcours de vérification
+    // n'existe encore (AUT-01), un compte fraîchement créé doit pouvoir se
+    // connecter. Seuls SUSPENDED et DISABLED sont refusés.
+    const blocked = user?.status === 'SUSPENDED' || user?.status === 'DISABLED';
+    if (!user || user.deletedAt || blocked) {
       throw new UnauthorizedException({ code: 'INVALID_TOKEN' });
     }
 

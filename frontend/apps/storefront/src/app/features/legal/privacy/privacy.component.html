@@ -1,0 +1,218 @@
+<bruny-legal-page-layout
+  title="Politique de confidentialité"
+  eyebrow="Légal"
+  [intro]="intro"
+  [lastUpdated]="legal.lastUpdated"
+  [lastUpdatedIso]="legal.lastUpdatedIso"
+  [version]="legal.version"
+  [toc]="toc"
+  [breadcrumb]="breadcrumb"
+>
+  <section id="responsable" aria-labelledby="responsable-title">
+    <h2 id="responsable-title">Responsable du traitement</h2>
+    <p>
+      Le responsable du traitement est {{ legal.companyName }}, joignable à
+      <a [href]="'mailto:' + legal.email">{{ legal.email }}</a
+      >.
+    </p>
+  </section>
+
+  <section id="donnees" aria-labelledby="donnees-title">
+    <h2 id="donnees-title">Données collectées</h2>
+    <ul>
+      <li>Identité et contact : prénom, nom, e-mail, téléphone.</li>
+      <li>Adresses de livraison : ville, quartier, adresse, repère, téléphone.</li>
+      <li>Commandes : articles, montants, statuts, historique.</li>
+      <li>
+        Paiement Mobile Money (V2) : numéro de téléphone Mobile Money, montant, référence de
+        transaction, statut de paiement (via prestataire agréé).
+      </li>
+      <li>Données techniques : journaux de connexion, adresse IP, appareil, pages consultées.</li>
+      <li>Préférences : favoris, consentements.</li>
+    </ul>
+    <p>
+      <em>[Prestataire Mobile Money : à préciser après sélection — voir CNT-07]</em>
+      <em>TODO : validation juriste (CNT-03) avant mise en production.</em>
+    </p>
+  </section>
+
+  <section id="finalites" aria-labelledby="finalites-title">
+    <h2 id="finalites-title">Finalités et bases légales</h2>
+    <div class="table-scroll" role="region" aria-labelledby="finalites-title" tabindex="0">
+      <table>
+        <caption>
+          Finalités et bases légales
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Finalité</th>
+            <th scope="col">Base légale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Traiter et livrer les commandes</th>
+            <td>Exécution du contrat</td>
+          </tr>
+          <tr>
+            <th scope="row">Gérer le compte et l’authentification</th>
+            <td>Exécution du contrat</td>
+          </tr>
+          <tr>
+            <th scope="row">Répondre aux demandes de support</th>
+            <td>Intérêt légitime</td>
+          </tr>
+          <tr>
+            <th scope="row">Prévenir la fraude</th>
+            <td>Intérêt légitime</td>
+          </tr>
+          <tr>
+            <th scope="row">Conserver les factures</th>
+            <td>Obligation légale</td>
+          </tr>
+          <tr>
+            <th scope="row">Mesurer l’audience (si activé)</th>
+            <td>Consentement</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              Mesurer l’efficacité des publicités Facebook (Pixel Meta, si activé)
+            </th>
+            <td>Consentement</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="durees" aria-labelledby="durees-title">
+    <h2 id="durees-title">Durées de conservation</h2>
+    <ul>
+      <li>Compte actif : pendant la durée de la relation.</li>
+      <li>
+        Compte supprimé : données personnelles anonymisées, commandes conservées pour les
+        obligations comptables.
+      </li>
+      <li>Demandes de support : 3 ans après le dernier échange.</li>
+      <li>Journaux techniques : 12 mois.</li>
+      <li>Cookies de mesure d’audience et publicitaires : 13 mois maximum.</li>
+    </ul>
+  </section>
+
+  <section id="destinataires" aria-labelledby="destinataires-title">
+    <h2 id="destinataires-title">Destinataires</h2>
+    <p>
+      Les données sont accessibles aux équipes habilitées de BRUNY SHOPPING et aux prestataires
+      nécessaires à la commande : hébergeur, transporteur, prestataire de paiement, prestataire
+      d’envoi de SMS et d’e-mails. Si vous acceptez les cookies publicitaires, Meta Platforms
+      (Facebook) traite des données techniques de navigation pour mesurer l’efficacité des
+      publicités. Ces prestataires agissent sur instruction et selon des garanties contractuelles.
+    </p>
+  </section>
+
+  <section id="transferts" aria-labelledby="transferts-title">
+    <h2 id="transferts-title">Transferts hors Cameroun</h2>
+    <p>
+      Certains prestataires peuvent être situés hors du Cameroun, notamment Meta Platforms pour le
+      Pixel publicitaire lorsque vous y consentez. Dans ce cas, le transfert est encadré par des
+      garanties appropriées et limité aux données nécessaires.
+    </p>
+  </section>
+
+  <section id="securite" aria-labelledby="securite-title">
+    <h2 id="securite-title">Sécurité</h2>
+    <p>
+      Nous mettons en œuvre des mesures techniques et organisationnelles : chiffrement des échanges,
+      contrôle d’accès, journalisation, sauvegardes, limitation des privilèges. Aucun système
+      n’étant infaillible, nous vous invitons à utiliser un mot de passe unique.
+    </p>
+  </section>
+
+  <section id="turnstile" aria-labelledby="turnstile-title">
+    <h2 id="turnstile-title">Protection contre les robots</h2>
+    <p>
+      Certains formulaires protégés (inscription, connexion, commande, contact) utilisent Cloudflare
+      Turnstile, un service de vérification anti-robot. Le jeton généré est vérifié par notre
+      serveur auprès de Cloudflare ; il ne contient pas de donnée de profil publicitaire. Cloudflare
+      peut traiter des données techniques (adresse IP, informations sur le navigateur) pour
+      distinguer un visiteur d’un robot. À ce jour, seul le formulaire de connexion de
+      l’administration est équipé ; les formulaires client seront protégés lors de leur mise en
+      service.
+    </p>
+    <p>
+      En cas d’indisponibilité du service, la demande protégée est refusée par sécurité et peut être
+      retentée quelques instants plus tard.
+    </p>
+  </section>
+
+  <section id="droits" aria-labelledby="droits-title">
+    <h2 id="droits-title">Vos droits</h2>
+    <p>
+      Vous pouvez demander l’accès, la rectification, l’effacement ou la limitation de vos données,
+      et vous opposer à certains traitements. Écrivez à
+      <a [href]="'mailto:' + legal.email">{{ legal.email }}</a
+      >. Une réponse vous sera apportée dans un délai de 30 jours. Vous pouvez également introduire
+      une réclamation auprès de l’autorité compétente.
+    </p>
+  </section>
+
+  <section id="cookies" aria-labelledby="cookies-title">
+    <h2 id="cookies-title">Cookies et traceurs</h2>
+    <p>
+      Le site utilise des cookies et traceurs strictement nécessaires : session, panier, sécurité et
+      mémorisation de vos choix. Ils sont toujours actifs car ils permettent au site de fonctionner.
+    </p>
+
+    <h3>Mesure d’audience</h3>
+    <p>
+      Les cookies de mesure d’audience, s’ils sont activés, nous aident à comprendre l’utilisation
+      du site à l’aide de statistiques. Ils ne sont déposés qu’après votre consentement.
+    </p>
+
+    <h3>Publicité — Pixel Meta</h3>
+    <p>
+      Si vous acceptez les cookies publicitaires, le Pixel Meta dépose notamment les cookies
+      <code>_fbp</code> et <code>_fbc</code>. Il nous permet de mesurer l’efficacité de nos
+      publicités Facebook et de vous montrer des annonces pertinentes. Meta Platforms peut traiter
+      des données techniques (adresse IP, navigateur, page consultée). Aucun nom, e-mail, téléphone
+      ou adresse postale n’est transmis dans les événements publicitaires. Le Pixel n’est chargé
+      qu’après votre accord explicite.
+    </p>
+
+    <h3>Gestion du consentement</h3>
+    <p>
+      Un bandeau s’affiche lors de votre première visite. Vous pouvez accepter, refuser ou
+      personnaliser les traceurs. Votre choix est conservé sur votre appareil pendant 13 mois au
+      maximum. Vous pouvez le modifier ou le retirer à tout moment avec le lien « Gérer mes
+      préférences cookies » présent dans le pied de page. Le retrait du consentement supprime les
+      cookies publicitaires Meta et arrête l’envoi d’événements.
+    </p>
+
+    <h3>Durée de conservation</h3>
+    <p>
+      Les cookies de mesure d’audience et publicitaires sont conservés 13 mois au maximum. Votre
+      choix de consentement est lui aussi redemandé après cette période.
+    </p>
+    <p>
+      <em>TODO : validation juriste (CNT-03) avant mise en production.</em>
+    </p>
+  </section>
+
+  <section id="contact" aria-labelledby="contact-title">
+    <h2 id="contact-title">Contact</h2>
+    <p>
+      Pour toute question relative à vos données :
+      <a [href]="'mailto:' + legal.email">{{ legal.email }}</a
+      >.
+    </p>
+  </section>
+
+  <nav class="legal-cross-links" aria-label="Voir aussi">
+    <p>
+      Voir aussi :
+      <a routerLink="/mentions-legales">Mentions légales</a>
+      ·
+      <a routerLink="/cgv">Conditions générales de vente</a>
+    </p>
+  </nav>
+</bruny-legal-page-layout>

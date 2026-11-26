@@ -1,0 +1,115 @@
+<button
+  class="mini-cart__trigger"
+  type="button"
+  aria-haspopup="dialog"
+  [attr.aria-expanded]="open()"
+  [attr.aria-label]="'Ouvrir le panier (' + itemLabel() + ')'"
+  (click)="toggle()"
+>
+  <bruny-icon name="cart" [size]="21" />
+  <span class="mini-cart__label">Panier</span>
+  <span class="mini-cart__badge" aria-hidden="true">{{ cart.itemCount() }}</span>
+</button>
+<span class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement() }}</span>
+
+<bruny-drawer
+  title="Mon panier"
+  closeLabel="Fermer le panier"
+  side="right"
+  [isOpen]="open()"
+  (isOpenChange)="open.set($event)"
+>
+  <div drawer-body>
+    @if (cart.hasIssues()) {
+      <div class="mini-cart__issues" role="status" aria-live="polite">
+        <h3>Votre panier a changé</h3>
+        <ul>
+          @for (issue of cart.issues(); track issue.code + (issue.variantId ?? '')) {
+            <li>{{ issue.message }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (cart.error()) {
+      <div class="mini-cart__error" role="alert">
+        <p>{{ cart.error() }}</p>
+        <button type="button" (click)="retry()">Réessayer</button>
+      </div>
+    } @else if (cart.loading() && cart.isEmpty()) {
+      <div class="mini-cart__skeletons" aria-live="polite" aria-busy="true">
+        <bruny-skeleton variant="rect" height="80px" />
+        <bruny-skeleton variant="rect" height="80px" />
+        <bruny-skeleton variant="rect" height="80px" />
+      </div>
+    } @else if (cart.isEmpty()) {
+      <div class="mini-cart__empty">
+        <h3>Votre panier est vide</h3>
+        <p>Ajoutez un produit pour commencer votre commande.</p>
+        <a routerLink="/boutique" (click)="close()">Découvrir la boutique</a>
+      </div>
+    } @else {
+      <ul class="mini-cart__lines" role="list" aria-label="Articles dans votre panier">
+        @for (line of cart.lines(); track line.variantId) {
+          <li class="mini-cart__line">
+            @if (line.imageUrl) {
+              <img
+                [src]="line.imageUrl"
+                [alt]="line.imageAlt ?? line.productName"
+                width="64"
+                height="64"
+              />
+            } @else {
+              <span class="mini-cart__image-placeholder" aria-hidden="true"></span>
+            }
+            <div class="mini-cart__line-info">
+              <a routerLink="/produit/{{ line.productSlug }}" (click)="close()">{{
+                line.productName
+              }}</a>
+              <p>{{ line.color }} · Pointure {{ line.size }} · Qté {{ line.quantity }}</p>
+              <bruny-price-tag [amount]="cart.lineTotal(line.variantId)" size="sm" />
+            </div>
+            <button
+              class="mini-cart__remove"
+              type="button"
+              [attr.aria-label]="'Retirer ' + line.productName"
+              (click)="remove(line.variantId)"
+            >
+              <bruny-icon name="close" [size]="16" />
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div drawer-footer class="mini-cart__footer">
+    @if (!cart.isEmpty()) {
+      <div class="mini-cart__totals">
+        <p class="mini-cart__total">
+          <span>Sous-total</span>
+          <bruny-price-tag [amount]="cart.subtotal()" size="sm" />
+        </p>
+        <p class="mini-cart__total mini-cart__total--grand">
+          <span>Total</span>
+          <bruny-price-tag [amount]="cart.displayTotal()" size="lg" />
+        </p>
+      </div>
+      <a class="mini-cart__view" routerLink="/panier" (click)="close()">Voir le panier</a>
+      <bruny-button
+        class="mini-cart__secondary"
+        variant="secondary"
+        [block]="true"
+        (click)="continueShopping()"
+        >Continuer mes achats</bruny-button
+      >
+      <bruny-button
+        class="mini-cart__primary"
+        variant="primary"
+        [block]="true"
+        (click)="goToCheckout()"
+        >Passer la commande</bruny-button
+      >
+    }
+  </div>
+</bruny-drawer>

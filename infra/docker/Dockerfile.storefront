@@ -1,21 +1,49 @@
-FROM node:24.15-alpine AS build
-WORKDIR /workspace
-RUN corepack enable
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY backend/package.json backend/package.json
-COPY frontend/package.json frontend/package.json
-RUN pnpm install --frozen-lockfile
-COPY frontend frontend
-RUN pnpm -C frontend exec ng build storefront --configuration=production
-
-FROM node:24.15-alpine AS runtime
-ENV NODE_ENV=production PORT=4000
+# syntax=docker/dockerfile:1.7
+# =============================================================================
+# Stage 1: Base — Node.js Alpine
+# =============================================================================
+FROM node:24.15-alpine AS base
 WORKDIR /app
+RUN corepack enable && apk upgrade --no-cache
+
+# =============================================================================
+# Stage 2: Dependencies
+# =============================================================================
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY frontend/package.json frontend/
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# =============================================================================
+# Stage 3: Build — Angular SSR production build
+# =============================================================================
+FROM deps AS build
+COPY frontend frontend
+RUN pnpm -C frontend build:storefront
+RUN pnpm prune --prod
+RUN test -f frontend/dist/apps/storefront/server/server.mjs || \
+    (echo "SSR build failed: server.mjs missing" && exit 1)
+
+# =============================================================================
+# Stage 4: Runtime — Node.js SSR server, non-root
+# =============================================================================
+FROM node:24.15-alpine AS runtime
+RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 RUN addgroup -S bruny && adduser -S bruny -G bruny
-COPY --from=build --chown=bruny:bruny /workspace/node_modules ./node_modules
-COPY --from=build --chown=bruny:bruny /workspace/frontend/node_modules ./frontend/node_modules
-COPY --from=build --chown=bruny:bruny /workspace/frontend/dist/apps/storefront ./frontend/dist/apps/storefront
-WORKDIR /app/frontend/dist/apps/storefront/server
-USER bruny
+WORKDIR /app
+
+COPY --from=build --chown=bruny:bruny /app/node_modules ./node_modules
+COPY --from=build --chown=bruny:bruny /app/frontend/node_modules ./frontend/node_modules
+COPY --from=build --chown=bruny:bruny /app/frontend/dist/apps/storefront/browser ./frontend/dist/apps/storefront/browser
+COPY --from=build --chown=bruny:bruny /app/frontend/dist/apps/storefront/server ./frontend/dist/apps/storefront/server
+
 EXPOSE 4000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD wget -qO- http://127.0.0.1:4000/ || exit 1
+
+USER bruny
+ENV NODE_ENV=production
+ENV PORT=4000
+WORKDIR /app/frontend/dist/apps/storefront/server
 CMD ["node", "server.mjs"]

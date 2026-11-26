@@ -1,0 +1,189 @@
+@if (loading()) {
+<section class="container product-detail product-detail--loading" aria-busy="true">
+  <p class="product-detail__loading" role="status">Chargement de la fiche produit…</p>
+  <div class="product-detail__layout">
+    <bruny-skeleton variant="rect" height="480px" />
+    <div class="product-detail__skeleton-info">
+      <bruny-skeleton variant="text" />
+      <bruny-skeleton variant="text" />
+      <bruny-skeleton variant="text" />
+    </div>
+  </div>
+</section>
+} @else if (error() || !product()) {
+<section class="container product-detail">
+  <bruny-empty-state
+    title="Produit introuvable"
+    description="Ce produit n’existe pas ou n’est plus disponible."
+    actionLabel="Découvrir la boutique"
+    (actionClicked)="goToCatalog()"
+  />
+</section>
+} @else {
+<article class="container product-detail">
+  <nav class="product-detail__breadcrumb" aria-label="Fil d’Ariane">
+    <a routerLink="/">Accueil</a>
+    <span aria-hidden="true">›</span>
+    <a routerLink="/boutique">Boutique</a>
+    <span aria-hidden="true">›</span>
+    <span aria-current="page">{{ product()!.name }}</span>
+  </nav>
+
+  <div class="product-detail__layout">
+    <section class="product-detail__gallery" aria-label="Photos du produit">
+      <app-product-gallery
+        [images]="galleryImages()"
+        [activeIndex]="activeImageIndex()"
+        [productName]="product()!.name"
+        (setActiveIndex)="onImageChange($event)"
+        (openZoom)="zoomOpen.set(true)"
+      />
+    </section>
+
+    <section class="product-detail__info" aria-labelledby="product-title">
+      <p class="product-detail__brand">
+        {{ product()!.brand.name }} · {{ product()!.category.name }}
+      </p>
+      <h1 id="product-title" class="product-detail__name">{{ product()!.name }}</h1>
+
+      <div class="product-detail__price">
+        <bruny-price-tag [amount]="displayPrice()" [compareAt]="compareAtPrice()" size="lg" />
+        @if (product()!.isPromoActive && promoPercent() > 0) {
+        <bruny-badge variant="promo">−{{ promoPercent() }} %</bruny-badge>
+        }
+      </div>
+      @if (savings() > 0) {
+      <p class="product-detail__saving">Économisez {{ savings() | fcfa }}</p>
+      }
+
+      <p class="product-detail__stock" [class.product-detail__stock--out]="!product()!.inStock">
+        {{ product()!.inStock ? 'En stock' : 'Rupture de stock' }}
+      </p>
+
+      <app-color-selector
+        [colors]="product()!.colors"
+        [selectedColor]="selectedColor()"
+        (selectColor)="onColorSelect($event)"
+      />
+
+      <section class="product-detail__sizes" aria-labelledby="size-title">
+        <div class="product-detail__sizes-head">
+          <h2 id="size-title">
+            Pointure @if (selectedSize(); as size) {
+            <span class="product-detail__selected-size"> : {{ size }}</span>
+            }
+          </h2>
+          <button type="button" class="product-detail__size-guide" (click)="onOpenSizeGuide()">
+            Guide des tailles
+          </button>
+        </div>
+        <bruny-size-selector
+          [items]="sizeItems()"
+          [selected]="selectedSizeItem()"
+          [showLabel]="false"
+          term="Pointure"
+          [lowStockThreshold]="5"
+          listLabel="Choix de la pointure"
+          (select)="onSizeSelect($event.size)"
+        />
+      </section>
+
+      <section class="product-detail__quantity" aria-labelledby="quantity-title">
+        <h2 id="quantity-title">Quantité</h2>
+        <bruny-quantity-selector
+          [value]="quantity()"
+          [max]="maxQuantity()"
+          [productName]="product()!.name"
+          (valueChange)="onQuantityChange($event)"
+        />
+      </section>
+
+      <div class="product-detail__buy">
+        <bruny-button
+          variant="primary"
+          [block]="true"
+          [disabled]="!canAddToCart()"
+          [attr.aria-describedby]="addToCartMessage() ? 'add-to-cart-help' : null"
+          (click)="onAddToCart()"
+        >
+          Ajouter au panier
+        </bruny-button>
+        @if (addToCartMessage()) {
+        <p id="add-to-cart-help" class="product-detail__buy-help" role="status">
+          {{ addToCartMessage() }}
+        </p>
+        }
+      </div>
+
+      <app-share-buttons
+        [productSlug]="product()!.slug"
+        [productName]="product()!.name"
+        [productDescription]="product()!.description"
+        [productImageUrl]="galleryImages()[0]?.url ?? product()!.images[0]?.url ?? null"
+        [productPrice]="product()!.effectivePrice"
+      />
+
+      <bruny-reassurance-band [points]="reassurancePoints" ariaLabel="Nos engagements produit" />
+    </section>
+  </div>
+
+  <section class="product-detail__tabs" aria-label="Informations produit">
+    <bruny-tabs [tabs]="tabs" [activeId]="activeTab()" (tabChange)="activeTab.set($event)" />
+    <div
+      class="product-detail__tab-panel"
+      role="tabpanel"
+      tabindex="0"
+      [id]="'bs-tab-panel-' + activeTab()"
+      [attr.aria-labelledby]="'bs-tab-' + activeTab()"
+    >
+      @switch (activeTab()) { @case ('description') {
+      <p>{{ product()!.description }}</p>
+      } @case ('delivery') {
+      <ul>
+        <li>Douala Centre : 1 jour ouvré, 1 500 FCFA.</li>
+        <li>Yaoundé : 3 jours ouvrés, 3 000 FCFA.</li>
+        <li>Bafoussam : 4 jours ouvrés, 4 000 FCFA.</li>
+      </ul>
+      <p class="product-detail__muted">Paiement à la livraison disponible.</p>
+      } @case ('returns') {
+      <p>
+        Vous avez 7 jours après réception pour demander un retour ou un échange. Le produit doit
+        être non porté et dans son emballage d’origine.
+      </p>
+      <p class="product-detail__muted">Échange de pointure sous 7 jours.</p>
+      } }
+    </div>
+  </section>
+
+  @if (product()!.similarProducts.length > 0) {
+  <section class="product-detail__similar" aria-labelledby="similar-title">
+    <h2 id="similar-title">Produits similaires</h2>
+    <div class="product-detail__similar-grid" role="list">
+      @for (similar of product()!.similarProducts; track similar.id) {
+      <div role="listitem">
+        <bruny-product-card [product]="similar" />
+      </div>
+      }
+    </div>
+  </section>
+  }
+
+  <app-sticky-buy-bar
+    [effectivePrice]="displayPrice()"
+    [originalPrice]="compareAtPrice()"
+    [canAddToCart]="canAddToCart()"
+    [addToCartMessage]="addToCartMessage()"
+    [whatsappUrl]="whatsappUrl()"
+    [productName]="product()!.name"
+    (addToCart)="onAddToCart()"
+  />
+</article>
+
+<app-size-guide-modal [(isOpen)]="sizeGuideOpen" [categoryId]="product()!.category.id" />
+
+<bruny-modal [open]="zoomOpen()" [title]="product()!.name" size="lg" (closed)="zoomOpen.set(false)">
+  @if (zoomImage(product()!); as image) {
+  <img class="product-detail__zoom-image" [src]="image.url" [alt]="image.alt ?? product()!.name" />
+  }
+</bruny-modal>
+}

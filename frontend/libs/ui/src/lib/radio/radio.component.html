@@ -1,4 +1,10 @@
-<div class="bs-choice" [class.bs-choice--error]="!!error" [class.bs-choice--disabled]="disabled">
+<div
+  class="bs-choice"
+  [class.bs-choice--error]="!!error"
+  [class.bs-choice--disabled]="disabled"
+  [class.bs-choice--card]="variant === 'card'"
+  [class.bs-choice--checked]="checked"
+>
   <label class="bs-choice__row" [attr.for]="fieldId">
     <input
       class="bs-choice__input"
@@ -14,6 +20,9 @@
     />
     <span class="bs-choice__circle" aria-hidden="true"></span>
     <span class="bs-choice__label">{{ label }}</span>
+    @if (badge) {
+      <span class="bs-choice__badge">{{ badge }}</span>
+    }
   </label>
 
   @if (error) {

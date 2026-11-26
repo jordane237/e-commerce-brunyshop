@@ -1,0 +1,172 @@
+<app-auth-layout
+  eyebrow="ESPACE CLIENT"
+  title="Créer un compte"
+  subtitle="Suivez vos commandes et retrouvez vos adresses en un clin d'œil."
+  asideTitle="Rejoignez Bruny Shopping"
+  [asidePoints]="['Suivi de vos commandes', 'Vos adresses enregistrées', 'Vos favoris retrouvés']"
+>
+  @if (successIdentifier(); as identifier) {
+    <section class="register-success" aria-labelledby="register-success-title">
+      <h2 #successTitle id="register-success-title" tabindex="-1" class="register-success__title">
+        Votre compte est créé
+      </h2>
+      <p class="register-success__body">
+        Connectez-vous avec l'identifiant que vous venez d'utiliser.
+      </p>
+      <a class="register-success__link" routerLink="/connexion" [queryParams]="loginQueryParams()">
+        Se connecter
+      </a>
+      <p class="register-success__identifier">{{ identifier }}</p>
+    </section>
+  } @else {
+    @if (backendError(); as error) {
+      <div class="auth-error" role="alert">{{ error }}</div>
+    }
+
+    <form #registerForm [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+      <div class="auth-tabs" role="tablist" aria-label="Moyen d'identification">
+        <button
+          type="button"
+          class="auth-tabs__tab"
+          [class.is-active]="form.controls.channel.value === 'email'"
+          [attr.aria-selected]="form.controls.channel.value === 'email'"
+          [attr.tabindex]="form.controls.channel.value === 'email' ? 0 : -1"
+          role="tab"
+          data-channel="email"
+          aria-controls="register-identity-panel"
+          (click)="selectChannel('email')"
+          (keydown)="onTabKeydown($event, 'email')"
+        >
+          E-mail
+        </button>
+        <button
+          type="button"
+          class="auth-tabs__tab"
+          [class.is-active]="form.controls.channel.value === 'phone'"
+          [attr.aria-selected]="form.controls.channel.value === 'phone'"
+          [attr.tabindex]="form.controls.channel.value === 'phone' ? 0 : -1"
+          role="tab"
+          data-channel="phone"
+          aria-controls="register-identity-panel"
+          (click)="selectChannel('phone')"
+          (keydown)="onTabKeydown($event, 'phone')"
+        >
+          Téléphone
+        </button>
+      </div>
+
+      <div class="auth-form__row">
+        <bruny-input
+          id="register-first-name"
+          name="firstName"
+          label="Prénom"
+          autocomplete="given-name"
+          formControlName="firstName"
+          [required]="true"
+          [error]="firstNameError() ?? ''"
+        />
+        <bruny-input
+          id="register-last-name"
+          name="lastName"
+          label="Nom"
+          autocomplete="family-name"
+          formControlName="lastName"
+          [required]="true"
+          [error]="lastNameError() ?? ''"
+        />
+      </div>
+
+      <div id="register-identity-panel" role="tabpanel">
+        @if (form.controls.channel.value === 'email') {
+          <bruny-input
+            id="register-email"
+            name="email"
+            label="E-mail"
+            type="email"
+            inputMode="email"
+            autocomplete="email"
+            placeholder="vous@exemple.com"
+            formControlName="email"
+            [required]="true"
+            [error]="emailError() ?? ''"
+          />
+        } @else {
+          <bruny-input
+            id="register-phone"
+            name="phone"
+            label="Numéro de téléphone"
+            type="tel"
+            inputMode="tel"
+            autocomplete="tel-national"
+            placeholder="6 94 28 10 44"
+            prefix="+237"
+            formControlName="phone"
+            [required]="true"
+            hint="Format camerounais : 9 chiffres après +237."
+            [error]="phoneError() ?? ''"
+          />
+        }
+      </div>
+
+      <div class="auth-form__password">
+        <bruny-input
+          id="register-password"
+          name="password"
+          label="Mot de passe"
+          type="password"
+          inputMode="text"
+          autocomplete="new-password"
+          formControlName="password"
+          [required]="true"
+          hint="Au moins 10 caractères. Une phrase longue est plus sûre qu'un mot court."
+          [error]="passwordError() ?? ''"
+        />
+        <bruny-password-strength-indicator [password]="passwordValue()" />
+      </div>
+
+      <bruny-input
+        id="register-password-confirm"
+        name="confirmPassword"
+        label="Confirmer le mot de passe"
+        type="password"
+        inputMode="text"
+        autocomplete="new-password"
+        formControlName="confirmPassword"
+        [required]="true"
+        [error]="confirmPasswordError() ?? ''"
+      />
+
+      <bruny-cgv-checkbox
+        inputId="register-cgv"
+        [control]="form.controls.cgv"
+        [error]="cgvError()"
+      />
+
+      @if (captchaEnabled()) {
+        <bruny-captcha
+          [siteKey]="siteKey()"
+          [control]="form.controls.turnstileToken"
+          action="register"
+        />
+      }
+
+      <bruny-button
+        type="submit"
+        variant="primary"
+        size="lg"
+        [block]="true"
+        [loading]="submitting()"
+        [disabled]="submitting() || captchaUnavailable()"
+      >
+        {{ submitting() ? 'Création du compte…' : 'Créer mon compte' }}
+      </bruny-button>
+    </form>
+
+    <p class="auth-switch">
+      Déjà un compte ?
+      <a routerLink="/connexion">Se connecter</a>
+    </p>
+
+    <p class="auth-reassurance">Vos données restent privées.</p>
+  }
+</app-auth-layout>

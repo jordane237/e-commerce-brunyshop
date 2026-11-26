@@ -1,0 +1,40 @@
+<section class="rayons" aria-labelledby="home-rayons-title">
+  <div class="container">
+    <header class="rayons__header">
+      <h2 id="home-rayons-title" class="rayons__title">Rayons Phares</h2>
+      <a class="rayons__all" routerLink="/boutique">Catalogue 2025</a>
+    </header>
+
+    @if (loading()) {
+      <div class="rayons__list" aria-busy="true" aria-label="Chargement des rayons">
+        @for (item of placeholders; track item) {
+          <span class="pill pill--skeleton">
+            <bruny-skeleton width="88px" height="20px" radius="full" />
+          </span>
+        }
+      </div>
+    } @else if (error()) {
+      <div class="rayons__state" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="rayons__retry" (click)="retry.emit()">Réessayer</button>
+      </div>
+    } @else if (categories()?.length) {
+      <ul class="rayons__list" role="list">
+        @for (category of categories(); track category.id) {
+          <li>
+            <a
+              class="pill"
+              [routerLink]="['/boutique']"
+              [queryParams]="{ category: category.slug }"
+              [attr.aria-label]="'Voir le rayon ' + category.name"
+            >
+              {{ category.name }}
+            </a>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="rayons__state">Aucun rayon pour le moment.</p>
+    }
+  </div>
+</section>

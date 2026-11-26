@@ -1,0 +1,379 @@
+<div class="image-manager">
+  @if (configError()) {
+    <p class="manager-alert" role="status">{{ configError() }}</p>
+  }
+
+  <section class="upload-card" aria-labelledby="upload-title">
+    <div class="upload-card__heading">
+      <div>
+        <h3 id="upload-title">Ajouter des photos</h3>
+        <p>
+          Glissez plusieurs images ou sélectionnez-les depuis votre appareil. JPEG, PNG ou WebP ·
+          {{ maxSizeLabel() }} Mo maximum par image.
+        </p>
+      </div>
+      <span class="image-counter">{{ activeCount() }} / {{ maxImages() }}</span>
+    </div>
+
+    <div class="upload-card__color">
+      <label for="upload-color">Couleur des nouvelles images</label>
+      <select
+        id="upload-color"
+        class="field-input"
+        [disabled]="disabled() || uploading()"
+        (change)="uploadColor.set($any($event.target).value)"
+      >
+        @for (option of uploadColorOptions(); track option.value) {
+          <option [value]="option.value" [selected]="option.value === uploadColor()">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+      <p>
+        Choisissez une couleur pour lui rattacher les prochaines photos, ou gardez-les communes.
+      </p>
+    </div>
+
+    <div
+      class="dropzone"
+      role="button"
+      tabindex="0"
+      [class.dropzone--active]="dragActive()"
+      [class.dropzone--disabled]="disabled() || remainingSlots() === 0"
+      [attr.aria-disabled]="disabled() || remainingSlots() === 0"
+      [attr.aria-label]="
+        disabled()
+          ? 'Téléversement désactivé pendant l’enregistrement'
+          : 'Glissez des photos ici ou appuyez pour parcourir vos fichiers'
+      "
+      (click)="openPicker(filePicker)"
+      (keydown)="onDropzoneKeydown($event, filePicker)"
+      (dragenter)="onDragEnter($event)"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDropFiles($event)"
+    >
+      <span class="dropzone__icon" aria-hidden="true">⇪</span>
+      <strong>Déposez vos photos ici</strong>
+      <span>ou appuyez pour parcourir vos fichiers</span>
+      <small>
+        @if (disabled()) {
+          Enregistrement en cours…
+        } @else if (remainingSlots() === 0) {
+          Limite de {{ maxImages() }} images atteinte.
+        } @else {
+          {{ remainingSlots() }} emplacement(s) disponible(s).
+        }
+      </small>
+    </div>
+
+    <input
+      #filePicker
+      class="visually-hidden"
+      type="file"
+      [accept]="acceptAttribute()"
+      multiple
+      [disabled]="disabled() || remainingSlots() === 0"
+      (change)="onFilesSelected($event)"
+    />
+    <input
+      #cameraPicker
+      class="visually-hidden"
+      type="file"
+      [accept]="acceptAttribute()"
+      capture="environment"
+      [disabled]="disabled() || remainingSlots() === 0"
+      (change)="onFilesSelected($event)"
+    />
+
+    <div class="upload-card__secondary">
+      <bruny-button
+        variant="secondary"
+        size="sm"
+        [disabled]="disabled() || remainingSlots() === 0"
+        (clicked)="cameraPicker.click()"
+      >
+        Prendre une photo
+      </bruny-button>
+      @if (!productId()) {
+        <p class="upload-card__hint">
+          Les fichiers sélectionnés restent sur cet appareil et seront téléversés après
+          l’enregistrement du brouillon. Aucune image orpheline n’est créée.
+        </p>
+      }
+    </div>
+  </section>
+
+  @if (queue().length > 0) {
+    <section class="transfer-card" aria-labelledby="transfers-title">
+      <div class="transfer-card__heading">
+        <h3 id="transfers-title">Téléversements</h3>
+        @if (activeQueue().length > 0) {
+          <span role="status">{{ overallProgress() }} % au total</span>
+        } @else {
+          <button type="button" class="text-action" (click)="clearCompleted()">
+            Effacer les terminés
+          </button>
+        }
+      </div>
+
+      @if (activeQueue().length > 0) {
+        <div
+          class="global-progress"
+          role="progressbar"
+          aria-label="Progression globale des téléversements"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="overallProgress()"
+        >
+          <span [style.width.%]="overallProgress()"></span>
+        </div>
+      }
+
+      <ul class="transfer-list">
+        @for (item of queue(); track item.localId) {
+          <li class="transfer" [class.transfer--error]="item.status === 'error'">
+            <div class="transfer__preview">
+              @if (item.previewUrl) {
+                <img [src]="item.previewUrl" alt="" />
+              } @else {
+                <span aria-hidden="true">{{ item.status === 'success' ? '✓' : '!' }}</span>
+              }
+            </div>
+            <div class="transfer__body">
+              <div class="transfer__title">
+                <strong>{{ item.fileName }}</strong>
+                <span class="transfer__status">{{ statusLabel(item.status) }}</span>
+              </div>
+              @if (item.status === 'uploading') {
+                <div
+                  class="file-progress"
+                  role="progressbar"
+                  aria-label="Progression du téléversement"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-valuenow]="item.progress"
+                >
+                  <span [style.width.%]="item.progress"></span>
+                </div>
+              }
+              @if (progressLabel(item); as label) {
+                <p class="transfer__meta">{{ label }}</p>
+              }
+              @if (item.error) {
+                <p class="transfer__error" role="alert">{{ item.error }}</p>
+              }
+            </div>
+            <div class="transfer__actions">
+              @if (item.status === 'error') {
+                <button type="button" class="text-action" (click)="retry(item)">Réessayer</button>
+              }
+              @if (
+                item.status === 'pending' || item.status === 'error' || item.status === 'success'
+              ) {
+                <button type="button" class="text-action" (click)="removeQueueItem(item)">
+                  Retirer
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (!productId()) {
+    <section class="url-card">
+      <button
+        type="button"
+        class="url-card__toggle"
+        [attr.aria-expanded]="urlFormOpen()"
+        aria-controls="url-image-form"
+        (click)="urlFormOpen.set(!urlFormOpen())"
+      >
+        {{ urlFormOpen() ? 'Masquer l’ajout par URL' : 'Ajouter une image par URL externe' }}
+      </button>
+      @if (urlFormOpen()) {
+        <div id="url-image-form" class="url-card__grid">
+          <label>
+            URL de l’image
+            <input
+              class="field-input"
+              type="url"
+              placeholder="https://cdn.exemple.cm/produit.jpg"
+              [value]="newImageUrl()"
+              (input)="newImageUrl.set($any($event.target).value)"
+            />
+          </label>
+          <label>
+            Texte alternatif
+            <input
+              class="field-input"
+              maxlength="255"
+              placeholder="Vue de profil"
+              [value]="newImageAlt()"
+              (input)="newImageAlt.set($any($event.target).value)"
+            />
+          </label>
+          <label>
+            Couleur
+            <select class="field-input" (change)="newImageColor.set($any($event.target).value)">
+              @for (option of uploadColorOptions(); track option.value) {
+                <option [value]="option.value" [selected]="option.value === newImageColor()">
+                  {{ option.label }}
+                </option>
+              }
+            </select>
+          </label>
+          <bruny-button variant="secondary" (clicked)="addImageFromUrl()">Ajouter</bruny-button>
+        </div>
+        @if (imageUrlError()) {
+          <p class="field-error" role="alert">{{ imageUrlError() }}</p>
+        }
+      }
+    </section>
+  }
+
+  <section class="gallery" aria-labelledby="gallery-title">
+    <div class="gallery__heading">
+      <div>
+        <h3 id="gallery-title">Galerie du produit</h3>
+        <p>
+          Glissez une carte pour changer l’ordre, ou utilisez les boutons. La première image est
+          l’image principale du produit.
+        </p>
+      </div>
+      <span>{{ gallery().length }} image(s)</span>
+    </div>
+
+    @if (gallery().length === 0) {
+      <div class="empty-images">
+        <p>Aucune image pour ce produit.</p>
+        <span>Ajoutez au moins une photo avant de publier.</span>
+      </div>
+    } @else {
+      <div class="image-grid">
+        @for (image of gallery(); track image.id ?? image.url; let i = $index) {
+          <article
+            class="image-card"
+            [class.image-card--primary]="i === 0"
+            [class.image-card--dragging]="draggingIndex() === i"
+            [class.image-card--over]="dragOverIndex() === i && draggingIndex() !== i"
+            (dragover)="onImageDragOver(i, $event)"
+            (drop)="onImageDrop(i, $event)"
+          >
+            <div class="image-card__visual">
+              <img
+                [src]="image.thumbnailUrl || image.url"
+                [alt]="image.alt || 'Image du produit'"
+                loading="lazy"
+                decoding="async"
+              />
+              @if (i === 0) {
+                <span class="image-card__badge">Principale</span>
+              }
+              <span
+                class="image-card__drag"
+                draggable="true"
+                title="Glisser pour réorganiser"
+                aria-hidden="true"
+                (dragstart)="onImageDragStart(i, $event)"
+                (dragend)="onImageDragEnd()"
+              >
+                ⠿
+              </span>
+            </div>
+
+            <div class="image-card__body">
+              <label class="image-field">
+                Texte alternatif
+                <input
+                  class="field-input"
+                  maxlength="255"
+                  [id]="'image-alt-' + (image.id ?? i)"
+                  [value]="image.alt"
+                  [disabled]="disabled() || metadataSavingIds().includes(image.id ?? '')"
+                  (blur)="onAltBlur(image, $event)"
+                />
+              </label>
+
+              <label class="image-field">
+                Couleur associée
+                <select
+                  class="field-input"
+                  [disabled]="disabled() || metadataSavingIds().includes(image.id ?? '')"
+                  (change)="onImageColorChange(image, $any($event.target).value)"
+                >
+                  @for (option of colorOptionsFor(image.variantColor); track option.value) {
+                    <option
+                      [value]="option.value"
+                      [selected]="option.value === (image.variantColor ?? '')"
+                    >
+                      {{ option.label }}
+                    </option>
+                  }
+                </select>
+              </label>
+
+              <p class="image-card__meta">
+                Position {{ i + 1 }}
+                @if (metadataSavingIds().includes(image.id ?? '')) {
+                  · Enregistrement…
+                }
+              </p>
+
+              <div class="image-card__actions">
+                @if (i > 0) {
+                  <button
+                    type="button"
+                    class="text-action"
+                    [disabled]="disabled() || uploading()"
+                    (click)="setPrimary(i)"
+                  >
+                    Définir principale
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="icon-button"
+                  [disabled]="i === 0 || disabled() || uploading()"
+                  (click)="moveImage(i, -1)"
+                  aria-label="Déplacer l’image vers le haut"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  class="icon-button"
+                  [disabled]="i === gallery().length - 1 || disabled() || uploading()"
+                  (click)="moveImage(i, 1)"
+                  aria-label="Déplacer l’image vers le bas"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  class="text-action text-action--danger"
+                  [disabled]="disabled() || uploading()"
+                  (click)="requestDelete(image)"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</div>
+
+<bruny-confirm-dialog
+  [open]="deleteTarget() !== null"
+  title="Supprimer cette image ?"
+  message="L’image sera retirée du produit et du stockage. Si c’était l’image principale, la suivante prendra sa place."
+  confirmLabel="Supprimer"
+  [loading]="false"
+  (confirmed)="confirmDelete()"
+  (cancelled)="deleteTarget.set(null)"
+/>
