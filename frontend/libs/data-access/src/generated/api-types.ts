@@ -682,6 +682,26 @@ export interface paths {
     patch: operations['AdminDeliveryZonesController_update_v1'];
     trace?: never;
   };
+  '/api/v1/admin/media/config': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Lire les limites de téléversement des images
+     * @description Expose uniquement les limites publiques au back-office (taille, quota, durée de signature, formats). Les identifiants du stockage restent côté serveur.
+     */
+    get: operations['AdminMediaController_getConfig_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/admin/media/presign': {
     parameters: {
       query?: never;
@@ -720,6 +740,26 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/api/v1/admin/media/images/{id}/metadata': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Modifier le texte alternatif ou la couleur d’une image
+     * @description Met à jour les métadonnées sans retoucher au fichier. Une nouvelle couleur doit exister parmi les variantes actives du produit ; une couleur historique peut être conservée tant qu’elle n’est pas remplacée. Audit MEDIA_UPDATED et invalidation du cache.
+     */
+    patch: operations['AdminMediaController_updateImage_v1'];
     trace?: never;
   };
   '/api/v1/admin/media/images/{id}': {
@@ -2150,10 +2190,28 @@ export interface components {
       modes?: ('HOME' | 'RELAY' | 'PICKUP')[];
       isActive?: boolean;
     };
+    MediaConfigDto: {
+      /**
+       * @description Taille maximale réelle par fichier
+       * @example 5242880
+       */
+      maxFileSizeBytes: number;
+      /**
+       * @description Nombre maximal d’images par produit
+       * @example 10
+       */
+      maxImagesPerProduct: number;
+      /**
+       * @description Durée de validité d’une URL signée en secondes
+       * @example 300
+       */
+      presignExpiresSeconds: number;
+      allowedMimeTypes: ('image/jpeg' | 'image/png' | 'image/webp')[];
+    };
     PresignUploadDto: {
       /** @example sneakers-urbanstep-air */
       productSlug: string;
-      /** @example noir */
+      /** @example BLEU MARINE */
       variantColor?: string;
       /**
        * @example image/jpeg
@@ -2192,7 +2250,7 @@ export interface components {
       key: string;
       /** @example sneakers-urbanstep-air */
       productSlug: string;
-      /** @example noir */
+      /** @example BLEU MARINE */
       variantColor?: string;
       position?: number;
       /** @example Vue de profil */
@@ -2208,6 +2266,12 @@ export interface components {
       alt: string | null;
       position: number;
       variantColor: string | null;
+    };
+    UpdateProductImageDto: {
+      /** @description Texte alternatif ; null efface la valeur. */
+      alt?: string | null;
+      /** @description Couleur existante du produit (null pour une image commune). Une couleur retirée des variantes reste conservée tant qu’elle n’est pas modifiée. */
+      variantColor?: string | null;
     };
     ReorderImageItemDto: {
       /** Format: uuid */
@@ -4007,6 +4071,40 @@ export interface operations {
       };
     };
   };
+  AdminMediaController_getConfig_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Limites média actives. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MediaConfigDto'];
+        };
+      };
+      /** @description Jeton absent, invalide ou expiré. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   AdminMediaController_presign_v1: {
     parameters: {
       query?: never;
@@ -4110,6 +4208,60 @@ export interface operations {
         content?: never;
       };
       /** @description Produit ou fichier téléversé introuvable (PRODUCT_NOT_FOUND, MEDIA_NOT_FOUND). */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminMediaController_updateImage_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateProductImageDto'];
+      };
+    };
+    responses: {
+      /** @description Métadonnées mises à jour. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MediaImageResponseDto'];
+        };
+      };
+      /** @description Couleur inconnue du produit (INVALID_VARIANT_COLOR) ou payload invalide. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Jeton absent, invalide ou expiré. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Rôle insuffisant (FORBIDDEN). */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Image introuvable (IMAGE_NOT_FOUND). */
       404: {
         headers: {
           [name: string]: unknown;

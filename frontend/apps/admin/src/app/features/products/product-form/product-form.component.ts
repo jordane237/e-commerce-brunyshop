@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -29,7 +30,6 @@ import {
   AdminBrandOption,
   AdminCatalogApi,
   AdminCategoryOption,
-  AdminMediaApi,
   AdminProductDetail,
   AdminProductStatus,
   AdminProductVariant,
@@ -50,6 +50,9 @@ import {
   TabItem,
 } from '@bruny/ui';
 
+import { ProductImagesComponent } from './product-images/product-images.component';
+import type { ProductImageItem } from './product-images/product-images.types';
+
 interface VariantControls {
   id: FormControl<string | null>;
   sku: FormControl<string>;
@@ -63,15 +66,6 @@ interface VariantControls {
 
 type VariantForm = FormGroup<VariantControls>;
 
-interface ProductImageItem {
-  id: string | null;
-  url: string;
-  alt: string;
-  variantColor: string | null;
-  position: number;
-  persisted: boolean;
-}
-
 interface PendingArchivedVariant {
   index: number;
   variant: AdminProductVariant;
@@ -84,9 +78,6 @@ const TABS: readonly TabItem[] = [
   { id: 'tarifs', label: 'Tarifs' },
   { id: 'seo', label: 'SEO' },
 ];
-
-const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 function positiveIntegerValidator(control: AbstractControl): ValidationErrors | null {
   if (control.value === null || control.value === '' || control.value === undefined) return null;
@@ -206,6 +197,7 @@ function toDateTimeLocal(iso: string | null): string {
     StatusBadgeComponent,
     ModalComponent,
     ConfirmDialogComponent,
+    ProductImagesComponent,
   ],
   templateUrl: './product-form.component.html',
   styleUrl: './product-form.component.scss',
@@ -216,7 +208,6 @@ export class ProductFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly productsApi = inject(AdminProductsApi);
   private readonly catalogApi = inject(AdminCatalogApi);
-  private readonly mediaApi = inject(AdminMediaApi);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -238,18 +229,10 @@ export class ProductFormComponent implements OnInit {
   readonly images = signal<ProductImageItem[]>([]);
   readonly imagesDirty = signal(false);
   readonly imageUploading = signal(false);
-  readonly imageError = signal('');
-  readonly imageDeleteTarget = signal<ProductImageItem | null>(null);
   readonly previewOpen = signal(false);
   readonly duplicateOpen = signal(false);
   readonly duplicateLoading = signal(false);
   readonly leaveDialogOpen = signal(false);
-
-  readonly uploadColor = signal('');
-  readonly newImageUrl = signal('');
-  readonly newImageAlt = signal('');
-  readonly newImageColor = signal('');
-  readonly imageUrlError = signal('');
 
   readonly generatorColors = signal<string[]>([]);
   readonly generatorSizes = signal<string[]>([]);
@@ -272,6 +255,7 @@ export class ProductFormComponent implements OnInit {
   private autoSlug = true;
   private variantBaseline = '';
   private pendingLeave: ((allow: boolean) => void) | null = null;
+  private readonly imageManager = viewChild(ProductImagesComponent);
 
   readonly productForm = this.fb.group(
     {
@@ -369,6 +353,7 @@ export class ProductFormComponent implements OnInit {
     this.bulkMode() === 'row' ? 'la ligne' : 'la colonne',
   );
   readonly archivedCount = computed(() => this.archivedVariants().length);
+  readonly imageColorOptions = computed(() => this.gridColors());
   readonly formErrorCount = computed(() => {
     this.formTick();
     let count = 0;
@@ -496,6 +481,7 @@ export class ProductFormComponent implements OnInit {
       product.images.map((image) => ({
         id: image.id,
         url: image.url,
+        thumbnailUrl: image.url,
         alt: image.alt ?? '',
         variantColor: image.variantColor,
         position: image.position,
@@ -948,177 +934,13 @@ export class ProductFormComponent implements OnInit {
 
   // ------------------------------------------------------------------ images
 
-  addImageFromUrl(): void {
-    this.imageUrlError.set('');
-    const url = this.newImageUrl().trim();
-    if (url === '') {
-      this.imageUrlError.set('L’URL de l’image est obligatoire.');
-      return;
-    }
-    try {
-      const parsed = new URL(url);
-      if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('protocol');
-    } catch {
-      this.imageUrlError.set('Saisissez une URL complète commençant par http:// ou https://.');
-      return;
-    }
-    this.images.update((items) => [
-      ...items,
-      {
-        id: null,
-        url,
-        alt: this.newImageAlt().trim(),
-        variantColor: this.newImageColor().trim().toUpperCase() || null,
-        position: items.length,
-        persisted: false,
-      },
-    ]);
-    this.imagesDirty.set(true);
-    this.newImageUrl.set('');
-    this.newImageAlt.set('');
-    this.newImageColor.set('');
-  }
-
-  removeImage(image: ProductImageItem): void {
-    if (image.persisted && image.id) {
-      this.imageDeleteTarget.set(image);
-      return;
-    }
-    this.images.update((items) =>
-      items.filter((item) => item !== image).map((item, index) => ({ ...item, position: index })),
+  setImages(images: ProductImageItem[]): void {
+    this.images.set(
+      images.map((image, position) => ({
+        ...image,
+        position,
+      })),
     );
-    this.imagesDirty.set(true);
-  }
-
-  async confirmDeleteImage(): Promise<void> {
-    const image = this.imageDeleteTarget();
-    if (!image?.id) return;
-    this.imageDeleteTarget.set(null);
-    this.imageUploading.set(true);
-    this.imageError.set('');
-    try {
-      await firstValueFrom(this.mediaApi.deleteImage(image.id));
-      this.images.update((items) =>
-        items
-          .filter((item) => item.id !== image.id)
-          .map((item, index) => ({ ...item, position: index })),
-      );
-      await this.persistImageOrder();
-      this.toast.success('Image supprimée.');
-    } catch (error) {
-      this.imageError.set(readApiErrorMessage(error, 'Impossible de supprimer cette image.'));
-    } finally {
-      this.imageUploading.set(false);
-    }
-  }
-
-  async moveImage(index: number, direction: -1 | 1): Promise<void> {
-    const target = index + direction;
-    const items = this.images();
-    if (target < 0 || target >= items.length) return;
-    const reordered = [...items];
-    const current = reordered[index];
-    const other = reordered[target];
-    if (!current || !other) return;
-    reordered[index] = other;
-    reordered[target] = current;
-    this.images.set(reordered.map((item, position) => ({ ...item, position })));
-    if (this.isEdit()) {
-      try {
-        await this.persistImageOrder();
-      } catch {
-        this.images.set(items);
-      }
-    } else {
-      this.imagesDirty.set(true);
-    }
-  }
-
-  private async persistImageOrder(): Promise<void> {
-    const id = this.productId();
-    if (!id) return;
-    const persisted = this.images().filter((image) => image.id !== null);
-    if (persisted.length === 0) return;
-    try {
-      await firstValueFrom(
-        this.mediaApi.reorder(
-          id,
-          persisted.map((image) => ({ id: image.id!, position: image.position })),
-        ),
-      );
-    } catch (error) {
-      this.imageError.set(readApiErrorMessage(error, 'Impossible de réorganiser les images.'));
-      throw error;
-    }
-  }
-
-  async onFilesSelected(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    input.value = '';
-    if (files.length === 0) return;
-    const productId = this.productId();
-    if (!productId) {
-      this.imageError.set('Enregistrez d’abord le brouillon pour pouvoir téléverser des images.');
-      return;
-    }
-    this.imageError.set('');
-    this.imageUploading.set(true);
-    let uploaded = 0;
-    try {
-      for (const file of files) {
-        if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-          throw new Error('Format non autorisé. Utilisez JPEG, PNG ou WebP.');
-        }
-        if (file.size > MAX_IMAGE_BYTES) throw new Error('Image trop volumineuse (max 20 Mo).');
-        const color = this.uploadColor().trim();
-        const variantColor = color ? slugify(color) : undefined;
-        const presign = await firstValueFrom(
-          this.mediaApi.presign({
-            productSlug: this.productSlug(),
-            ...(variantColor ? { variantColor } : {}),
-            contentType: file.type,
-            declaredSize: file.size,
-          }),
-        );
-        const response = await fetch(presign.uploadUrl, {
-          method: presign.method,
-          headers: presign.headers,
-          body: file,
-        });
-        if (!response.ok) throw new Error('Le téléversement a échoué. Réessayez.');
-        const image = await firstValueFrom(
-          this.mediaApi.confirm({
-            key: presign.key,
-            productSlug: this.productSlug(),
-            ...(variantColor ? { variantColor } : {}),
-            position: this.images().length,
-            alt: file.name.replace(/\.[^.]+$/, '').slice(0, 255),
-          }),
-        );
-        this.images.update((items) => [
-          ...items,
-          {
-            id: image.id,
-            url: image.url,
-            alt: image.alt ?? '',
-            variantColor: image.variantColor,
-            position: image.position,
-            persisted: true,
-          },
-        ]);
-        uploaded += 1;
-      }
-      if (uploaded > 0) this.toast.success(`${uploaded} image(s) ajoutée(s).`);
-    } catch (error) {
-      const apiMessage = readApiErrorMessage(error, '');
-      this.imageError.set(
-        apiMessage ||
-          (error instanceof Error ? error.message : 'Impossible de téléverser l’image.'),
-      );
-    } finally {
-      this.imageUploading.set(false);
-    }
   }
 
   // ------------------------------------------------------------------- saving
@@ -1168,6 +990,10 @@ export class ProductFormComponent implements OnInit {
 
   async save(mode: 'draft' | 'publish'): Promise<void> {
     if (this.saving() !== null) return;
+    if (this.imageUploading()) {
+      this.toast.warning('Attendez la fin des téléversements avant d’enregistrer.');
+      return;
+    }
     this.saveError.set('');
     if (!this.validateForm()) return;
     if (mode === 'publish' && !this.hasStock()) {
@@ -1204,6 +1030,17 @@ export class ProductFormComponent implements OnInit {
         };
         const created = await firstValueFrom(this.productsApi.create(payload));
         this.applyDetail(created);
+        const imageManager = this.imageManager();
+        if (imageManager) {
+          await imageManager.uploadPending(created.id, created.slug);
+          this.setImages(imageManager.gallery());
+          this.imagesDirty.set(imageManager.hasUnsavedChanges());
+          if (imageManager.failedCount() > 0) {
+            this.toast.warning(
+              `${imageManager.failedCount()} image(s) n’ont pas pu être ajoutée(s). Réessayez depuis l’onglet Images.`,
+            );
+          }
+        }
         this.toast.success(mode === 'publish' ? 'Produit publié.' : 'Brouillon enregistré.');
         await this.router.navigate(['/produits', created.id, 'modifier'], { replaceUrl: true });
         return;
@@ -1278,7 +1115,12 @@ export class ProductFormComponent implements OnInit {
   }
 
   hasUnsavedChanges(): boolean {
-    return this.productForm.dirty || this.imagesDirty() || this.variantsChanged();
+    return (
+      this.productForm.dirty ||
+      this.imagesDirty() ||
+      this.imageManager()?.hasUnsavedChanges() === true ||
+      this.variantsChanged()
+    );
   }
 
   canLeave(): boolean | Promise<boolean> {

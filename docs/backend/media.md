@@ -1,8 +1,10 @@
-# Médias produits — téléversement sécurisé (CAT-05)
+# Médias produits — téléversement sécurisé (CAT-05 / BO-06)
 
 Documentation du module média de BRUNY SHOPPING : URLs signées, validation
 magic bytes, traitement `sharp`, stockage MinIO/S3 et gestion des images
-`ProductImage`.
+`ProductImage`. BO-06 ajoute les limites exposées au back-office, la mise à jour
+contrôlée du texte alternatif et de la couleur, ainsi que l’association des
+images aux couleurs multi-mots (`BLEU MARINE`).
 
 ## Architecture
 
@@ -112,11 +114,15 @@ Rôles : `STOCK_MANAGER`, `ADMIN`, `SUPER_ADMIN`. Rate limit : 30/min/IP.
 ```json
 {
   "productSlug": "sneakers-urbanstep-lady",
-  "variantColor": "rose",
+  "variantColor": "bleu marine",
   "contentType": "image/jpeg",
   "declaredSize": 102400
 }
 ```
+
+Une couleur peut contenir espaces, tirets et soulignés. Elle doit correspondre à
+une couleur de variante active du produit ; elle est normalisée en libellé
+(`BLEU MARINE`) tandis que le segment de stockage est slugifié (`bleu-marine`).
 
 ```json
 {
@@ -167,6 +173,39 @@ Refus réel d’un PDF :
 
 Le fichier brut est supprimé, aucune ligne `ProductImage` n’est créée et
 `MEDIA_UPLOAD_REJECTED` est audité.
+
+### `GET /api/v1/admin/media/config`
+
+Rôles : `STOCK_MANAGER`, `ADMIN`, `SUPER_ADMIN`. Expose uniquement les limites
+utiles au back-office, sans aucun identifiant de stockage :
+
+```json
+{
+  "maxFileSizeBytes": 5242880,
+  "maxImagesPerProduct": 10,
+  "presignExpiresSeconds": 300,
+  "allowedMimeTypes": ["image/jpeg", "image/png", "image/webp"]
+}
+```
+
+### `PATCH /api/v1/admin/media/images/:id/metadata`
+
+Met à jour le texte alternatif et/ou la couleur d’une image existante. Les deux
+champs sont optionnels ; envoyer `null` efface la valeur.
+
+```json
+{ "alt": "Vue de trois quarts", "variantColor": "BLEU MARINE" }
+```
+
+```json
+{ "id": "…", "url": "…", "thumbnailUrl": "…", "alt": "Vue de trois quarts", "position": 0, "variantColor": "BLEU MARINE" }
+```
+
+Une couleur multi-mots est acceptée, normalisée en majuscules et doit exister
+parmi les variantes actives du produit. Une couleur retirée des variantes reste
+conservée tant qu’elle n’est pas modifiée. Chaque mise à jour audite
+`MEDIA_UPDATED` et invalide le cache catalogue. Erreurs : `IMAGE_NOT_FOUND`
+(404), `INVALID_VARIANT_COLOR` (400), `VALIDATION_ERROR` (400).
 
 ### `DELETE /api/v1/admin/media/images/:id`
 
@@ -227,9 +266,11 @@ Le script crée le bucket s’il manque et applique une policy de lecture publiq
 - Fichier brut et versions partielles nettoyés en cas d’échec.
 - Aucun binaire ni credential loggé.
 - Bucket dédié, lecture publique, écriture réservée au backend.
-- Cache invalidé après confirm, delete et reorder.
+- Cache invalidé après confirm, mise à jour de métadonnées, delete et reorder.
+- Couleur de métadonnée limitée aux variantes actives du produit.
 - Audit : `MEDIA_PRESIGN_GENERATED`, `MEDIA_UPLOADED`,
-  `MEDIA_UPLOAD_REJECTED`, `MEDIA_DELETED`, `MEDIA_REORDERED`.
+  `MEDIA_UPLOAD_REJECTED`, `MEDIA_UPDATED`, `MEDIA_DELETED`,
+  `MEDIA_REORDERED`.
 
 ## Presign + confirm vs multipart direct
 

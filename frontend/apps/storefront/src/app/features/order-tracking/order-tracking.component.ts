@@ -2,8 +2,8 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 
 import { EmptyStateComponent } from '@bruny/ui';
 import { StatusBadgeComponent } from '@bruny/ui';
@@ -56,8 +56,20 @@ export class OrderTrackingComponent {
 
   readonly form = this.buildForm();
 
-  readonly referenceError = computed(() => this.getFieldError('reference'));
-  readonly phoneError = computed(() => this.getFieldError('phone'));
+  readonly referenceError = toSignal(
+    this.form.controls.reference.events.pipe(
+      startWith(null),
+      map(() => this.getFieldError('reference')),
+    ),
+    { initialValue: null },
+  );
+  readonly phoneError = toSignal(
+    this.form.controls.phone.events.pipe(
+      startWith(null),
+      map(() => this.getFieldError('phone')),
+    ),
+    { initialValue: null },
+  );
 
   readonly whatsappHelpUrl = computed(() => {
     const order = this.order();

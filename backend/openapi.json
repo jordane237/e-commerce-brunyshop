@@ -2291,6 +2291,38 @@
         "tags": ["admin-delivery-zones"]
       }
     },
+    "/api/v1/admin/media/config": {
+      "get": {
+        "description": "Expose uniquement les limites publiques au back-office (taille, quota, durée de signature, formats). Les identifiants du stockage restent côté serveur.",
+        "operationId": "AdminMediaController_getConfig_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Limites média actives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaConfigDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Lire les limites de téléversement des images",
+        "tags": ["admin-media"]
+      }
+    },
     "/api/v1/admin/media/presign": {
       "post": {
         "description": "Approche presign + confirm : le client PUT directement le fichier sur MinIO/S3 via l'URL signée, puis appelle /admin/media/confirm. Le Content-Type et la taille déclarés ici ne sont jamais considérés comme une validation : le confirm re-télécharge le fichier et vérifie les magic bytes et la taille réelles. Le fichier est renommé (UUID) et stocké hors de tout dossier exécutable.",
@@ -2387,6 +2419,64 @@
           }
         ],
         "summary": "Valider et traiter une image téléversée",
+        "tags": ["admin-media"]
+      }
+    },
+    "/api/v1/admin/media/images/{id}/metadata": {
+      "patch": {
+        "description": "Met à jour les métadonnées sans retoucher au fichier. Une nouvelle couleur doit exister parmi les variantes actives du produit ; une couleur historique peut être conservée tant qu’elle n’est pas remplacée. Audit MEDIA_UPDATED et invalidation du cache.",
+        "operationId": "AdminMediaController_updateImage_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Métadonnées mises à jour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaImageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Couleur inconnue du produit (INVALID_VARIANT_COLOR) ou payload invalide."
+          },
+          "401": {
+            "description": "Jeton absent, invalide ou expiré."
+          },
+          "403": {
+            "description": "Rôle insuffisant (FORBIDDEN)."
+          },
+          "404": {
+            "description": "Image introuvable (IMAGE_NOT_FOUND)."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Modifier le texte alternatif ou la couleur d’une image",
         "tags": ["admin-media"]
       }
     },
@@ -5460,6 +5550,39 @@
           }
         }
       },
+      "MediaConfigDto": {
+        "type": "object",
+        "properties": {
+          "maxFileSizeBytes": {
+            "type": "number",
+            "example": 5242880,
+            "description": "Taille maximale réelle par fichier"
+          },
+          "maxImagesPerProduct": {
+            "type": "number",
+            "example": 10,
+            "description": "Nombre maximal d’images par produit"
+          },
+          "presignExpiresSeconds": {
+            "type": "number",
+            "example": 300,
+            "description": "Durée de validité d’une URL signée en secondes"
+          },
+          "allowedMimeTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["image/jpeg", "image/png", "image/webp"]
+            }
+          }
+        },
+        "required": [
+          "maxFileSizeBytes",
+          "maxImagesPerProduct",
+          "presignExpiresSeconds",
+          "allowedMimeTypes"
+        ]
+      },
       "PresignUploadDto": {
         "type": "object",
         "properties": {
@@ -5469,7 +5592,7 @@
           },
           "variantColor": {
             "type": "string",
-            "example": "noir"
+            "example": "BLEU MARINE"
           },
           "contentType": {
             "type": "string",
@@ -5530,7 +5653,7 @@
           },
           "variantColor": {
             "type": "string",
-            "example": "noir"
+            "example": "BLEU MARINE"
           },
           "position": {
             "type": "number",
@@ -5572,6 +5695,23 @@
           }
         },
         "required": ["id", "url", "thumbnailUrl", "alt", "position", "variantColor"]
+      },
+      "UpdateProductImageDto": {
+        "type": "object",
+        "properties": {
+          "alt": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Texte alternatif ; null efface la valeur."
+          },
+          "variantColor": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 32,
+            "description": "Couleur existante du produit (null pour une image commune). Une couleur retirée des variantes reste conservée tant qu’elle n’est pas modifiée."
+          }
+        }
       },
       "ReorderImageItemDto": {
         "type": "object",

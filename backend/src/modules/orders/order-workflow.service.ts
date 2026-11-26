@@ -14,6 +14,7 @@ import {
 } from './dto/order-status-history.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { ORDER_AUDIT_ACTIONS } from './events/order-created.event';
+import { OrderConfirmationService } from './order-confirmation.service';
 import { allowedTransitionsFor, canRoleTransition, canTransition } from './order-status';
 import { OrderErrorCode } from './orders.errors';
 
@@ -51,6 +52,7 @@ export class OrderWorkflowService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditLogService,
+    private readonly confirmation: OrderConfirmationService,
   ) {}
 
   async changeStatus(
@@ -76,6 +78,10 @@ export class OrderWorkflowService {
     }
 
     this.assertTransitionAllowed(order, dto.status, actor);
+
+    // PAY-01 : le pré-contrôle métier intervient après le contrôle RBAC afin
+    // qu'une transition interdite réponde 403, et non 400.
+    await this.confirmation.validateStatusTransition(order.id, dto.status);
 
     return this.prisma.$transaction(
       async (tx) => {

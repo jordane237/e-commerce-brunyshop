@@ -86,12 +86,12 @@ test('CA #1 : soumission valide affiche le résultat et la timeline', async ({ p
   await page.getByLabel('Téléphone').fill('+237612345678');
   await page.getByRole('button', { name: 'Suivre ma commande' }).click();
   await expect(page.getByText('BRN-2611-7K3F')).toBeVisible();
-  await expect(page.getByText('Expédiée')).toBeVisible();
-  await expect(page.getByRole('listitem', { name: /Expédiée/i }))
-    .toBeVisible()
-    .catch(() => {});
+  await expect(page.getByRole('status').getByText('Expédiée')).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Chronologie de la commande' })).toContainText(
+    'Expédiée',
+  );
   await expect(page.getByText('Mocassin Test')).toBeVisible();
-  await expect(page.getByText('Total')).toBeVisible();
+  await expect(page.getByText('Total', { exact: true })).toBeVisible();
 });
 
 test('CA #1 : référence invalide → erreur inline', async ({ page }) => {
@@ -142,7 +142,7 @@ test('CA #2 : bouton WhatsApp contextualisé avec la référence', async ({ page
   await page.getByLabel('Numéro de commande').fill('BRN-2611-7K3F');
   await page.getByLabel('Téléphone').fill('+237612345678');
   await page.getByRole('button', { name: 'Suivre ma commande' }).click();
-  const link = page.getByRole('link', { name: /Besoin d'aide sur la commande/i });
+  const link = page.getByRole('link', { name: /Besoin d.aide sur la commande/i });
   await expect(link).toBeVisible();
   const href = await link.getAttribute('href');
   expect(href).toContain('wa.me');

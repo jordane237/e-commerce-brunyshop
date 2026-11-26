@@ -44,3 +44,17 @@ export class ReorderResponseDto {
   @ApiProperty({ example: 4 })
   updated!: number;
 }
+
+export class MediaConfigDto {
+  @ApiProperty({ example: 5242880, description: 'Taille maximale réelle par fichier' })
+  maxFileSizeBytes!: number;
+
+  @ApiProperty({ example: 10, description: 'Nombre maximal d’images par produit' })
+  maxImagesPerProduct!: number;
+
+  @ApiProperty({ example: 300, description: 'Durée de validité d’une URL signée en secondes' })
+  presignExpiresSeconds!: number;
+
+  @ApiProperty({ enum: ['image/jpeg', 'image/png', 'image/webp'], isArray: true })
+  allowedMimeTypes!: string[];
+}
